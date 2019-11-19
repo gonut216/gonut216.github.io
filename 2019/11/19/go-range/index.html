@@ -79,18 +79,18 @@
 
 
 
-<meta name="description" content="##go range 今天写代码遇到一个问题，在用go range遍历时，遍历的变量取地址时，最终得到的只是最后一个元素，看如下代码： 12345678910var results []*intfunc main() &amp;#123;	variables := []int&amp;#123;1, 2&amp;#125;	for _, variable := range variables &amp;#123;		result">
+<meta name="description" content="go range今天写代码遇到一个问题，在用go range遍历时，遍历的变量取地址时，最终得到的只是最后一个元素，看如下代码： 12345678910var results []*intfunc main() &amp;#123;	variables := []int&amp;#123;1, 2, 3, 4&amp;#125;	for _, variable := range variables &amp;#123;		res">
 <meta name="keywords" content="go">
 <meta property="og:type" content="article">
 <meta property="og:title" content="go range遍历循环变量复用地址问题">
 <meta property="og:url" content="http://yoursite.com/2019/11/19/go-range/index.html">
 <meta property="og:site_name" content="Wxning">
-<meta property="og:description" content="##go range 今天写代码遇到一个问题，在用go range遍历时，遍历的变量取地址时，最终得到的只是最后一个元素，看如下代码： 12345678910var results []*intfunc main() &amp;#123;	variables := []int&amp;#123;1, 2&amp;#125;	for _, variable := range variables &amp;#123;		result">
+<meta property="og:description" content="go range今天写代码遇到一个问题，在用go range遍历时，遍历的变量取地址时，最终得到的只是最后一个元素，看如下代码： 12345678910var results []*intfunc main() &amp;#123;	variables := []int&amp;#123;1, 2, 3, 4&amp;#125;	for _, variable := range variables &amp;#123;		res">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:updated_time" content="2019-11-19T12:05:24.004Z">
+<meta property="og:updated_time" content="2019-11-19T12:10:17.592Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="go range遍历循环变量复用地址问题">
-<meta name="twitter:description" content="##go range 今天写代码遇到一个问题，在用go range遍历时，遍历的变量取地址时，最终得到的只是最后一个元素，看如下代码： 12345678910var results []*intfunc main() &amp;#123;	variables := []int&amp;#123;1, 2&amp;#125;	for _, variable := range variables &amp;#123;		result">
+<meta name="twitter:description" content="go range今天写代码遇到一个问题，在用go range遍历时，遍历的变量取地址时，最终得到的只是最后一个元素，看如下代码： 12345678910var results []*intfunc main() &amp;#123;	variables := []int&amp;#123;1, 2, 3, 4&amp;#125;	for _, variable := range variables &amp;#123;		res">
 
 
 
@@ -336,11 +336,10 @@
       
 
       
-        <p>##go range</p>
-<p>今天写代码遇到一个问题，在用go range遍历时，遍历的变量取地址时，最终得到的只是最后一个元素，看如下代码：</p>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> results []*<span class="keyword">int</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	variables := []<span class="keyword">int</span>&#123;<span class="number">1</span>, <span class="number">2</span>&#125;</span><br><span class="line">	<span class="keyword">for</span> _, variable := <span class="keyword">range</span> variables &#123;</span><br><span class="line">		results = <span class="built_in">append</span>(results, &amp;variable)</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">for</span> _, res := <span class="keyword">range</span> results &#123;</span><br><span class="line">		fmt.Printf(<span class="string">"%d\n"</span>, *res)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+        <h3 id="go-range"><a href="#go-range" class="headerlink" title="go range"></a>go range</h3><p>今天写代码遇到一个问题，在用go range遍历时，遍历的变量取地址时，最终得到的只是最后一个元素，看如下代码：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> results []*<span class="keyword">int</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	variables := []<span class="keyword">int</span>&#123;<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>&#125;</span><br><span class="line">	<span class="keyword">for</span> _, variable := <span class="keyword">range</span> variables &#123;</span><br><span class="line">		results = <span class="built_in">append</span>(results, &amp;variable)</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">for</span> _, res := <span class="keyword">range</span> results &#123;</span><br><span class="line">		fmt.Printf(<span class="string">"%d\n"</span>, *res)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
-<p>上面代码最终打印结果是4，4。为什么保存的都是最后一个元素呢？</p>
+<p>上面代码最终打印结果是4,4,4,4。为什么保存的都是最后一个元素呢？</p>
 <p>我们打印一下遍历的结果看看：</p>
 <figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> results []*<span class="keyword">int</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	variables := []<span class="keyword">int</span>&#123;<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>&#125;</span><br><span class="line">	<span class="keyword">for</span> _, variable := <span class="keyword">range</span> variables &#123;</span><br><span class="line">		fmt.Println(&amp;variable)</span><br><span class="line">		results = <span class="built_in">append</span>(results, &amp;variable)</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">for</span> _, res := <span class="keyword">range</span> results &#123;</span><br><span class="line">		fmt.Printf(<span class="string">"%d\n"</span>, *res)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
@@ -502,8 +501,17 @@
       
 
       
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
 
-      <section class="site-overview-wrap sidebar-panel sidebar-panel-active">
+      <section class="site-overview-wrap sidebar-panel">
         <div class="site-overview">
           <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
             
@@ -575,6 +583,22 @@
         </div>
       </section>
 
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#go-range"><span class="nav-number">1.</span> <span class="nav-text">go range</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
       
 
       
