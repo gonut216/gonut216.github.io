@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="go,">
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="bufio - 带缓存的IObufio 包实现了缓存IO。它包装了 io.Reader 和 io.Writer 对象，创建了另外的Reader和Writer对象，它们实现了 io.Reader 和 io.Writer 接口，但是它们是有缓存的。 1. Reader 类型和方法1.1 buffo.Reader12345678910type Reader struct &amp;#123;        bu">
+<meta name="keywords" content="go">
+<meta property="og:type" content="article">
+<meta property="og:title" content="go-package02">
+<meta property="og:url" content="http://yoursite.com/2020/03/09/go-package02/index.html">
+<meta property="og:site_name" content="Wxning">
+<meta property="og:description" content="bufio - 带缓存的IObufio 包实现了缓存IO。它包装了 io.Reader 和 io.Writer 对象，创建了另外的Reader和Writer对象，它们实现了 io.Reader 和 io.Writer 接口，但是它们是有缓存的。 1. Reader 类型和方法1.1 buffo.Reader12345678910type Reader struct &amp;#123;        bu">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2020-03-09T09:11:05.924Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="go-package02">
+<meta name="twitter:description" content="bufio - 带缓存的IObufio 包实现了缓存IO。它包装了 io.Reader 和 io.Writer 对象，创建了另外的Reader和Writer对象，它们实现了 io.Reader 和 io.Writer 接口，但是它们是有缓存的。 1. Reader 类型和方法1.1 buffo.Reader12345678910type Reader struct &amp;#123;        bu">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2020/03/09/go-package02/">
+
+
+
+
+
+  <title>go-package02 | Wxning</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+    <a href="https://github.com/wxning1107" class="github-corner" aria-label="View source on GitHub"><svg width="80" height="80" viewbox="0 0 250 250" style="fill:#151513; color:#fff; position: absolute; top: 0; border: 0; right: 0;" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"/><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"/><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"/></svg></a><style>.github-corner:hover .octo-arm{animation:octocat-wave 560ms ease-in-out}@keyframes octocat-wave{0%,100%{transform:rotate(0)}20%,60%{transform:rotate(-25deg)}40%,80%{transform:rotate(10deg)}}@media (max-width:500px){.github-corner:hover .octo-arm{animation:none}.github-corner .octo-arm{animation:octocat-wave 560ms ease-in-out}}</style>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Wxning</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br>
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br>
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-个人简历">
+          <a href="/个人简历/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br>
+            
+            个人简历
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/03/09/go-package02/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Wxning">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Wxning">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">go-package02</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-03-09T17:11:06+08:00">
+                2020-03-09
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+            <span class="post-meta-divider">|</span>
+            <span class="page-pv"><i class="fa fa-file-o"></i> 阅读数
+            <span class="busuanzi-value" id="busuanzi_value_page_pv"></span>次
+            </span>
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="bufio-带缓存的IO"><a href="#bufio-带缓存的IO" class="headerlink" title="bufio - 带缓存的IO"></a>bufio - 带缓存的IO</h2><p>bufio 包实现了缓存IO。它包装了 io.Reader 和 io.Writer 对象，创建了另外的Reader和Writer对象，它们实现了 io.Reader 和 io.Writer 接口，但是它们是有缓存的。</p>
+<h3 id="1-Reader-类型和方法"><a href="#1-Reader-类型和方法" class="headerlink" title="1. Reader 类型和方法"></a>1. Reader 类型和方法</h3><h4 id="1-1-buffo-Reader"><a href="#1-1-buffo-Reader" class="headerlink" title="1.1 buffo.Reader"></a>1.1 buffo.Reader</h4><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> Reader <span class="keyword">struct</span> &#123;</span><br><span class="line">        buf          []<span class="keyword">byte</span>        <span class="comment">// 缓存</span></span><br><span class="line">        rd           io.Reader    <span class="comment">// 底层的io.Reader</span></span><br><span class="line">        <span class="comment">// r:从buf中读走的字节（偏移）；w:buf中填充内容的偏移；</span></span><br><span class="line">        <span class="comment">// w - r 是buf中可被读的长度（缓存数据的大小），也是Buffered()方法的返回值</span></span><br><span class="line">        r, w         <span class="keyword">int</span></span><br><span class="line">        err          error        <span class="comment">// 读过程中遇到的错误</span></span><br><span class="line">        lastByte     <span class="keyword">int</span>        <span class="comment">// 最后一次读到的字节（ReadByte/UnreadByte)</span></span><br><span class="line">        lastRuneSize <span class="keyword">int</span>        <span class="comment">// 最后一次读到的Rune的大小 (ReadRune/UnreadRune)</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>bufio 包提供了两个实例化 bufio.Reader 对象的函数：NewReader 和 NewReaderSize。其中，NewReader 函数是调用 NewReaderSize 函数实现的。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">NewReader</span><span class="params">(rd io.Reader)</span> *<span class="title">Reader</span></span> &#123;</span><br><span class="line">        <span class="comment">// 默认缓存大小：defaultBufSize=4096</span></span><br><span class="line">        <span class="keyword">return</span> NewReaderSize(rd, defaultBufSize)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>我们来看一下NewReaderSize：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// NewReaderSize returns a new Reader whose buffer has at least the specified</span></span><br><span class="line"><span class="comment">// size. If the argument io.Reader is already a Reader with large enough</span></span><br><span class="line"><span class="comment">// size, it returns the underlying Reader.</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">NewReaderSize</span><span class="params">(rd io.Reader, size <span class="keyword">int</span>)</span> *<span class="title">Reader</span></span> &#123;</span><br><span class="line">    <span class="comment">// Is it already a Reader?</span></span><br><span class="line">  	<span class="comment">// 已经是bufio.Reader类型，且缓存大小不小于 size，则直接返回</span></span><br><span class="line">    b, ok := rd.(*Reader)</span><br><span class="line">    <span class="keyword">if</span> ok &amp;&amp; <span class="built_in">len</span>(b.buf) &gt;= size &#123;</span><br><span class="line">      <span class="keyword">return</span> b</span><br><span class="line">    &#125;</span><br><span class="line">  	<span class="comment">// 缓存大小不会小于 minReadBufferSize （16字节）</span></span><br><span class="line">    <span class="keyword">if</span> size &lt; minReadBufferSize &#123;</span><br><span class="line">      size = minReadBufferSize</span><br><span class="line">    &#125;</span><br><span class="line">  	<span class="comment">// 构造一个bufio.Reader实例</span></span><br><span class="line">    r := <span class="built_in">new</span>(Reader)</span><br><span class="line">    r.reset(<span class="built_in">make</span>([]<span class="keyword">byte</span>, size), rd)</span><br><span class="line">    <span class="keyword">return</span> r</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="1-2-ReadSlice"><a href="#1-2-ReadSlice" class="headerlink" title="1.2 ReadSlice"></a>1.2 ReadSlice</h4><p>ReadBytes、ReadString 和 ReadLine都是通过ReadSlice实现的，我们先看看ReadSlice：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(b *Reader)</span> <span class="title">ReadSlice</span><span class="params">(delim <span class="keyword">byte</span>)</span> <span class="params">(line []<span class="keyword">byte</span>, err error)</span></span></span><br></pre></td></tr></table></figure>
+
+<p>ReadSlice从输入中读取，直到遇到第一个界定符 delim 为止，返回一个指向缓存中字节的 slice，在下次调用读操作 read</p>
+<p>时，这些字节会无效。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">wxningReader := bufio.NewReader(strings.NewReader(<span class="string">"http://wxning.com.\nIt is the home of 			gophers"</span>))</span><br><span class="line">line, _ := wxningReader.ReadSlice(<span class="string">'\n'</span>)</span><br><span class="line">fmt.Printf(<span class="string">"%s: %d\n"</span>, line, <span class="built_in">len</span>(line))</span><br><span class="line">b, _ := wxningReader.ReadSlice(<span class="string">'\n'</span>)</span><br><span class="line">fmt.Printf(<span class="string">"%s: %d\n"</span>, line, <span class="built_in">len</span>(line))</span><br><span class="line">fmt.Printf(<span class="string">"%s\n"</span>, b)</span><br></pre></td></tr></table></figure>
+
+<p>输出结果为：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">http:<span class="comment">//wxning.com.</span></span><br><span class="line">: <span class="number">19</span></span><br><span class="line">It is the home of g: <span class="number">19</span></span><br><span class="line">It is the home of gophers</span><br></pre></td></tr></table></figure>
+
+<p>可以看到，第一次ReadSlice的结果，在第二次调用读操作后，内容发生了变化。也就是说，ReadSlice 返回的 []byte 是指向 Reader 中的 buffer ，而不是 copy 一份返回。正因为ReadSlice 返回的数据会被下次的 I/O 操作重写，因此许多的客户端会选择使用 ReadBytes 或者 ReadString 来代替。</p>
+<p>我们将ReadSlice改成ReadString，会发现line没有改变。</p>
+<p>注意，返回的结果line是包含分隔符delim本身的，所以结果会有换行。</p>
+<p>如果 ReadSlice 在找到界定符之前遇到了 error ，它就会返回缓存中所有的数据和错误本身（经常是 io.EOF）。如果在找到界定符之前缓存已经满了，ReadSlice 会返回 bufio.ErrBufferFull 错误。当且仅当返回的结果（line）没有以界定符结束的时候，ReadSlice 返回err != nil，也就是说，如果ReadSlice 返回的结果 line 不是以界定符 delim 结尾，那么返回的 err也一定不等于 nil（可能是bufio.ErrBufferFull或io.EOF）。</p>
+<p>如下代码：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">wxningReader := bufio.NewReaderSize(strings.NewReader(<span class="string">"http://wxning.com"</span>), <span class="number">16</span>)</span><br><span class="line">line, err := wxningReader.ReadSlice(<span class="string">'\n'</span>)</span><br><span class="line"><span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">	fmt.Println(err)</span><br><span class="line">&#125;</span><br><span class="line">fmt.Printf(<span class="string">"%s: %d\n"</span>, line, <span class="built_in">len</span>(line))</span><br><span class="line">b, err := wxningReader.ReadSlice(<span class="string">'\n'</span>)</span><br><span class="line"><span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">	fmt.Println(err)</span><br><span class="line">&#125;</span><br><span class="line">fmt.Printf(<span class="string">"%s\n"</span>, b)</span><br></pre></td></tr></table></figure>
+
+<p>输出如下：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">bufio: buffer full</span><br><span class="line">http:<span class="comment">//wxning.co: 16</span></span><br><span class="line">EOF</span><br><span class="line">m</span><br></pre></td></tr></table></figure>
+
+<p>####1.3. ReadBytes 和 ReadString</p>
+<p>正因为ReadSlice会覆盖buffer，所以我们用ReadBytes和ReadString。</p>
+<p>ReadBytes方法签名如下：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(b *Reader)</span> <span class="title">ReadBytes</span><span class="params">(delim <span class="keyword">byte</span>)</span> <span class="params">([]<span class="keyword">byte</span>, error)</span></span> &#123;&#125;</span><br></pre></td></tr></table></figure>
+
+<p>由于ReadSlice返回的 []byte 是指向 Reader 中的 buffer，而不是 copy 一份返回，也正因为如此，通常我们会使用 ReadBytes 或 ReadString。很显然，ReadBytes 返回的 []byte 不会是指向 Reader 中的 buffer，通过查看源码可以证实这一点。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Make a copy of the buffer.</span></span><br><span class="line">buf := <span class="built_in">make</span>([]<span class="keyword">byte</span>, <span class="built_in">len</span>(frag))</span><br><span class="line"><span class="built_in">copy</span>(buf, frag)</span><br><span class="line">full = <span class="built_in">append</span>(full, buf)</span><br></pre></td></tr></table></figure>
+
+<p>ReadString方法源码如下：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(b *Reader)</span> <span class="title">ReadString</span><span class="params">(delim <span class="keyword">byte</span>)</span> <span class="params">(<span class="keyword">string</span>, error)</span></span> &#123;</span><br><span class="line">    bytes, err := b.ReadBytes(delim)</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">string</span>(bytes), err</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>内部调用了ReadBytes方法，区别就是返回了字符串而不是切片。</p>
+<h4 id="1-4-Peek"><a href="#1-4-Peek" class="headerlink" title="1.4 Peek"></a>1.4 Peek</h4><p>从方法的名称可以猜到，该方法只是“窥探”一下 Reader 中没有读取的 n 个字节。好比栈数据结构中的取栈顶元素，但不出栈。</p>
+<p>Peek方法签名如下：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(b *Reader)</span> <span class="title">Peek</span><span class="params">(n <span class="keyword">int</span>)</span> <span class="params">([]<span class="keyword">byte</span>, error)</span></span> &#123;&#125;</span><br></pre></td></tr></table></figure>
+
+<p>同上面的 ReadSlice一样，返回的 []byte 只是 buffer 中的引用，在下次IO操作后会无效，可见该方法对多 goroutine 是不安全的，也就是在多并发环境下，不能依赖其结果。</p>
+<p>Reader 的 Peek 方法如果返回的 []byte 长度小于 n，这时返回的 <code>err != nil</code> ，用于解释为啥会小于 n。如果 n 大于 reader 的 buffer 长度，err 会是 ErrBufferFull。</p>
+<h2 id="2-Scanner-类型和方法"><a href="#2-Scanner-类型和方法" class="headerlink" title="2. Scanner 类型和方法"></a>2. Scanner 类型和方法</h2><p>对于简单的读取一行，在 Reader 类型中，感觉没有让人特别满意的方法。于是，Go1.1增加了一个类型：Scanner。官方关于<strong>Go1.1</strong>增加该类型的说明如下：</p>
+<blockquote>
+<p>在 bufio 包中有多种方式获取文本输入，ReadBytes、ReadString 和独特的 ReadLine，对于简单的目的这些都有些过于复杂了。在 Go 1.1 中，添加了一个新类型，Scanner，以便更容易的处理如按行读取输入序列或空格分隔单词等，这类简单的任务。它终结了如输入一个很长的有问题的行这样的输入错误，并且提供了简单的默认行为：基于行的输入，每行都剔除分隔标识。这里的代码展示一次输入一行：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">&gt;  scanner := bufio.NewScanner(os.Stdin)</span><br><span class="line">&gt;       <span class="keyword">for</span> scanner.Scan() &#123;</span><br><span class="line">&gt;           fmt.Println(scanner.Text()) <span class="comment">// Println will add back the final '\n'</span></span><br><span class="line">&gt;       &#125;</span><br><span class="line">&gt;       <span class="keyword">if</span> err := scanner.Err(); err != <span class="literal">nil</span> &#123;</span><br><span class="line">&gt;           fmt.Fprintln(os.Stderr, <span class="string">"reading standard input:"</span>, err)</span><br><span class="line">&gt;       &#125;</span><br><span class="line">&gt;</span><br></pre></td></tr></table></figure>
+</blockquote>
+<blockquote>
+<p>输入的行为可以通过一个函数控制，来控制输入的每个部分（参阅 SplitFunc 的文档），但是对于复杂的问题或持续传递错误的，可能还是需要原有接口。</p>
+</blockquote>
+<p>Scanner结构定义如下：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> Scanner <span class="keyword">struct</span> &#123;</span><br><span class="line">    r            io.Reader <span class="comment">// The reader provided by the client.</span></span><br><span class="line">    split        SplitFunc <span class="comment">// The function to split the tokens.</span></span><br><span class="line">    maxTokenSize <span class="keyword">int</span>       <span class="comment">// Maximum size of a token; modified by tests.</span></span><br><span class="line">    token        []<span class="keyword">byte</span>    <span class="comment">// Last token returned by split.</span></span><br><span class="line">    buf          []<span class="keyword">byte</span>    <span class="comment">// Buffer used as argument to split.</span></span><br><span class="line">    start        <span class="keyword">int</span>       <span class="comment">// First non-processed byte in buf.</span></span><br><span class="line">    end          <span class="keyword">int</span>       <span class="comment">// End of data in buf.</span></span><br><span class="line">    err          error     <span class="comment">// Sticky error.</span></span><br><span class="line">    empties      <span class="keyword">int</span>       <span class="comment">// Count of successive empty tokens.</span></span><br><span class="line">    scanCalled   <span class="keyword">bool</span>      <span class="comment">// Scan has been called; buffer is in use.</span></span><br><span class="line">    done         <span class="keyword">bool</span>      <span class="comment">// Scan has finished.</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>Scanner 类型和 Reader 类型一样，没有任何导出的字段，同时它也包装了一个 io.Reader 对象，但它没有实现 io.Reader 接口。</p>
+<p>在讲解Scanner之前，需要先讲解 split 字段的类型 SplitFunc。</p>
+<h4 id="2-1-SplitFunc-类型和实例"><a href="#2-1-SplitFunc-类型和实例" class="headerlink" title="2.1 SplitFunc 类型和实例"></a>2.1 SplitFunc 类型和实例</h4><p>SplitFunc类型定义如下：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> SplitFunc <span class="function"><span class="keyword">func</span><span class="params">(data []<span class="keyword">byte</span>, atEOF <span class="keyword">bool</span>)</span> <span class="params">(advance <span class="keyword">int</span>, token []<span class="keyword">byte</span>, err error)</span></span></span><br></pre></td></tr></table></figure>
+
+<p>SplitFunc 定义了 用于对输入进行分词的 split 函数的签名。参数 data 是还未处理的数据，atEOF 标识 Reader 是否还有更多数据（是否到了EOF）。返回值 advance 表示从输入中读取的字节数，token 表示下一个结果数据，err 则代表可能的错误。</p>
+<p>举例说明一下这里的 token 代表的意思：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">有数据 <span class="string">"studygolang\tpolaris\tgolangchina"</span>，通过<span class="string">"\t"</span>进行分词，那么会得到三个token，它们的内容分别是：studygolang、polaris 和 golangchina。而 SplitFunc 的功能是：进行分词，并返回未处理的数据中第一个 token。对于这个数据，就是返回 studygolang。</span><br></pre></td></tr></table></figure>
+
+<p>如果 data 中没有一个完整的 token，例如，在扫描行（scanning lines）时没有换行符，SplitFunc 会返回(0,nil,nil)通知 Scanner 读取更多数据到 slice 中。</p>
+<p>bufio 包定义的 split 函数，即 SplitFunc 的实例：</p>
+<blockquote>
+<p>在 bufio 包中预定义了一些 split 函数，也就是说，在 Scanner 结构中的 split 字段，可以通过这些预定义的 split 赋值，同时 Scanner 类型的 Split 方法也可以接收这些预定义函数作为参数。所以，我们可以说，这些预定义 split 函数都是 SplitFunc 类型的实例。这些函数包括：ScanBytes、ScanRunes、ScanWords 和 ScanLines。（由于都是 SplitFunc 的实例，自然这些函数的签名都和 SplitFunc 一样）</p>
+<p><strong>ScanBytes</strong> 返回单个字节作为一个 token。</p>
+<p><strong>ScanRunes</strong> 返回单个 UTF-8 编码的 rune 作为一个 token。返回的 rune 序列（token）和 range string类型 返回的序列是等价的，也就是说，对于无效的 UTF-8 编码会解释为 U+FFFD = “\xef\xbf\xbd”。</p>
+<p><strong>ScanWords</strong> 返回通过“空格”分词的单词。如：study golang，调用会返回study。注意，这里的“空格”是 <code>unicode.IsSpace()</code>，即包括：’\t’, ‘\n’, ‘\v’, ‘\f’, ‘\r’, ‘ ‘, U+0085 (NEL), U+00A0 (NBSP)。</p>
+<p><strong>ScanLines</strong> 返回一行文本，不包括行尾的换行符。这里的换行包括了Windows下的”\r\n”和Unix下的”\n”。</p>
+<p>一般地，我们不会单独使用这些函数，而是提供给 Scanner 实例使用。现在我们回到 Scanner 的 split、maxTokenSize 和 token 字段上来。</p>
+<p><strong>split 字段</strong>（SplitFunc 类型实例），很显然，代表了当前 Scanner 使用的分词策略，可以使用上面介绍的预定义 SplitFunc 实例赋值，也可以自定义 SplitFunc 实例。（当然，要给 split 字段赋值，必须调用 Scanner 的 Split 方法）</p>
+<p><strong>maxTokenSize 字段</strong> 表示通过 split 分词后的一个 token 允许的最大长度。在该包中定义了一个常量 MaxScanTokenSize = 64 * 1024，这是允许的最大 token 长度（64k）。</p>
+<p><strong>token 字段</strong> 上文已经解释了这个是什么意思。</p>
+</blockquote>
+<h4 id="2-2-Scanner-的实例化"><a href="#2-2-Scanner-的实例化" class="headerlink" title="2.2 Scanner 的实例化"></a>2.2 Scanner 的实例化</h4><p>Scanner 没有导出任何字段，而它需要有外部的 io.Reader 对象，因此，我们不能直接实例化 Scanner 对象，必须通过 bufio 包提供的实例化函数来实例化。实例化函数签名以及内部实现：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// NewScanner returns a new Scanner to read from r.</span></span><br><span class="line"><span class="comment">// The split function defaults to ScanLines.</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">NewScanner</span><span class="params">(r io.Reader)</span> *<span class="title">Scanner</span></span> &#123;</span><br><span class="line">    <span class="keyword">return</span> &amp;Scanner&#123;</span><br><span class="line">      r:            r,</span><br><span class="line">      split:        ScanLines,</span><br><span class="line">      maxTokenSize: MaxScanTokenSize,</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>返回的 Scanner 实例默认的 split 函数是 ScanLines。</p>
+<h4 id="2-3-Scanner的方法"><a href="#2-3-Scanner的方法" class="headerlink" title="2.3 Scanner的方法"></a>2.3 Scanner的方法</h4><p>可以通过 Split 方法为 Scanner 实例设置分词行为。由于 Scanner 实例的默认 split 总是 ScanLines，如果我们想要用其他的 split，可以通过 Split 方法做到。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Split sets the split function for the Scanner.</span></span><br><span class="line"><span class="comment">// The default split function is ScanLines.</span></span><br><span class="line"><span class="comment">// Split panics if it is called after scanning has started.</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(s *Scanner)</span> <span class="title">Split</span><span class="params">(split SplitFunc)</span></span> &#123;</span><br><span class="line">    <span class="keyword">if</span> s.scanCalled &#123;</span><br><span class="line">      <span class="built_in">panic</span>(<span class="string">"Split called after Scan"</span>)</span><br><span class="line">    &#125;</span><br><span class="line">    s.split = split</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>Split方法可以设置Scanner的split函数。默认的函数是ScanLines</p>
+<p>比如，我们想要统计一段英文有多少个单词（不排除重复），我们可以这么做：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> input = <span class="string">"This is The Golang Standard Library.\nWelcome you!"</span></span><br><span class="line">      scanner := bufio.NewScanner(strings.NewReader(input))</span><br><span class="line">      scanner.Split(bufio.ScanWords)</span><br><span class="line">      count := <span class="number">0</span></span><br><span class="line">      <span class="keyword">for</span> scanner.Scan() &#123;</span><br><span class="line">          count++</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="keyword">if</span> err := scanner.Err(); err != <span class="literal">nil</span> &#123;</span><br><span class="line">          fmt.Fprintln(os.Stderr, <span class="string">"reading input:"</span>, err)</span><br><span class="line">      &#125;</span><br><span class="line">      fmt.Println(count)</span><br></pre></td></tr></table></figure>
+
+<p>上面代码输出是8。</p>
+<p>我们实例化 Scanner 后，通过调用 scanner.Split(bufio.ScanWords) 来更改 split 函数。注意，我们应该在调用 Scan 方法之前调用 Split 方法。</p>
+<p><strong>Scan 方法</strong>该方法好比 iterator 中的 Next 方法，它用于将 Scanner 获取下一个 token，以便 Bytes 和 Text 方法可用。当扫描停止时，它返回false，这时候，要么是到了输入的末尾要么是遇到了一个错误。注意，当 Scan 返回 false 时，通过 Err 方法可以获取第一个遇到的错误（但如果错误是 io.EOF，Err 方法会返回 nil）。</p>
+<p><strong>Bytes 和 Text 方法</strong> 这两个方法的行为一致，都是返回最近的 token，无非 Bytes 返回的是 []byte，Text 返回的是 string。该方法应该在 Scan 调用后调用，而且，下次调用 Scan 会覆盖这次的 token。</p>
+<p><strong>Err 方法</strong> 前面已经提到，通过 Err 方法可以获取第一个遇到的错误（但如果错误是 io.EOF，Err 方法会返回 nil）</p>
+<h4 id="2-4-Scanner用法举例"><a href="#2-4-Scanner用法举例" class="headerlink" title="2.4 Scanner用法举例"></a>2.4 Scanner用法举例</h4><p>我们经常会有这样的需求：读取文件中的数据，一次读取一行。在学习了 Reader 类型，我们可以使用它的 ReadBytes 或 ReadString来实现，甚至使用 ReadLine 来实现。然而，在 Go1.1 中，我们可以使用 Scanner 来做这件事，而且更简单好用。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">file, err := os.Create(<span class="string">"scanner.txt"</span>)</span><br><span class="line">    <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">        <span class="built_in">panic</span>(err)</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">defer</span> file.Close()</span><br><span class="line">    file.WriteString(<span class="string">"http://wxning.com.\nIt is a blog of a gophers.\nIf you are studying golang, welcome you!"</span>)</span><br><span class="line">    <span class="comment">// 将文件 offset 设置到文件开头</span></span><br><span class="line">    file.Seek(<span class="number">0</span>, io.SeekStart)</span><br><span class="line">    scanner := bufio.NewScanner(file)</span><br><span class="line">    <span class="keyword">for</span> scanner.Scan() &#123;</span><br><span class="line">        fmt.Println(scanner.Text())</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+
+<p>输出如下：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">http:<span class="comment">//wxning.com.</span></span><br><span class="line">It is a blog of a gophers.</span><br><span class="line">If you are studying golang, welcome you!</span><br></pre></td></tr></table></figure>
+
+<p>官网完整例子如下：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// An artificial input source.</span></span><br><span class="line"><span class="keyword">const</span> input = <span class="string">"1234 5678 1234567901234567890"</span></span><br><span class="line">scanner := bufio.NewScanner(strings.NewReader(input))</span><br><span class="line"><span class="comment">// Create a custom split function by wrapping the existing ScanWords function.</span></span><br><span class="line">split := <span class="function"><span class="keyword">func</span><span class="params">(data []<span class="keyword">byte</span>, atEOF <span class="keyword">bool</span>)</span> <span class="params">(advance <span class="keyword">int</span>, token []<span class="keyword">byte</span>, err error)</span></span> &#123;</span><br><span class="line">    advance, token, err = bufio.ScanWords(data, atEOF)</span><br><span class="line">    <span class="keyword">if</span> err == <span class="literal">nil</span> &amp;&amp; token != <span class="literal">nil</span> &#123;</span><br><span class="line">        _, err = strconv.ParseInt(<span class="keyword">string</span>(token), <span class="number">10</span>, <span class="number">32</span>)</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// Set the split function for the scanning operation.</span></span><br><span class="line">scanner.Split(split)</span><br><span class="line"><span class="comment">// Validate the input</span></span><br><span class="line"><span class="keyword">for</span> scanner.Scan() &#123;</span><br><span class="line">    fmt.Printf(<span class="string">"%s\n"</span>, scanner.Text())</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> err := scanner.Err(); err != <span class="literal">nil</span> &#123;</span><br><span class="line">    fmt.Printf(<span class="string">"Invalid input: %s"</span>, err)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="3-Writer-类型和方法"><a href="#3-Writer-类型和方法" class="headerlink" title="3. Writer 类型和方法"></a>3. Writer 类型和方法</h2><p>bufio.Writer 结构包装了一个 io.Writer 对象，提供缓存功能，同时实现了 io.Writer 接口。</p>
+<p>Writer 结构没有任何导出的字段，结构定义如下：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> Writer <span class="keyword">struct</span> &#123;</span><br><span class="line">       err error        <span class="comment">// 写过程中遇到的错误</span></span><br><span class="line">       buf []<span class="keyword">byte</span>        <span class="comment">// 缓存</span></span><br><span class="line">       n   <span class="keyword">int</span>            <span class="comment">// 当前缓存中的字节数</span></span><br><span class="line">       wr  io.Writer    <span class="comment">// 底层的 io.Writer 对象</span></span><br><span class="line">   &#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="3-1-Writer-实例化"><a href="#3-1-Writer-实例化" class="headerlink" title="3.1 Writer 实例化"></a>3.1 Writer 实例化</h3><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">NewWriter</span><span class="params">(w io.Writer)</span> *<span class="title">Writer</span></span> &#123;</span><br><span class="line">  	<span class="comment">// 默认缓存大小：defaultBufSize=4096</span></span><br><span class="line">		<span class="keyword">return</span> NewWriterSize(w, defaultBufSize)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>我们看一下 NewWriterSize 的源码：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">NewWriterSize</span><span class="params">(wr io.Writer, size <span class="keyword">int</span>)</span> *<span class="title">Writer</span></span> &#123;</span><br><span class="line">        <span class="comment">// 已经是 bufio.Writer 类型，且缓存大小不小于 size，则直接返回</span></span><br><span class="line">        b, ok := wr.(*Writer)</span><br><span class="line">        <span class="keyword">if</span> ok &amp;&amp; <span class="built_in">len</span>(b.buf) &gt;= size &#123;</span><br><span class="line">            <span class="keyword">return</span> b</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span> size &lt;= <span class="number">0</span> &#123;</span><br><span class="line">            size = defaultBufSize</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> &amp;Writer&#123;</span><br><span class="line">            buf: <span class="built_in">make</span>([]<span class="keyword">byte</span>, size),</span><br><span class="line">            wr:  w,</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="3-2-Flush"><a href="#3-2-Flush" class="headerlink" title="3.2 Flush"></a>3.2 Flush</h3><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(b *Writer)</span> <span class="title">Flush</span><span class="params">()</span> <span class="title">error</span></span> &#123;&#125;</span><br></pre></td></tr></table></figure>
+
+<p>该方法将缓存中的所有数据写入底层的 io.Writer 对象中。使用 bufio.Writer 时，在所有的 Write 操作完成之后，应该调用 Flush 方法使得缓存都写入 io.Writer 对象中。</p>
+
+      
+    </div>
+    
+    
+    
+
+    <div>
+      
+        <div>
+    
+        <div style="text-align:center;color: #ccc;font-size:14px;">-------------本文结束<i class="fa fa-paw"></i>感谢您的阅读-------------</div>
+    
+</div>
+
+      
+    </div>
+
+    <div>
+          
+            
+<div class="my_post_copyright">
+  <script src="//cdn.bootcss.com/clipboard.js/1.5.10/clipboard.min.js"></script>
+
+  <!-- JS库 sweetalert 可修改路径 -->
+  <script src="https://cdn.bootcss.com/jquery/2.0.0/jquery.min.js"></script>
+  <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+  <p><span>本文标题:</span><a href="/2020/03/09/go-package02/">go-package02</a></p>
+  <p><span>文章作者:</span><a href="/" title="访问 Wxning 的个人博客">Wxning</a></p>
+  <p><span>发布时间:</span>2020年03月09日 - 17:03</p>
+  <p><span>最后更新:</span>2020年03月09日 - 17:03</p>
+  <p><span>原始链接:</span><a href="/2020/03/09/go-package02/" title="go-package02">http://yoursite.com/2020/03/09/go-package02/</a>
+    <span class="copy-path" title="点击复制文章链接"><i class="fa fa-clipboard" data-clipboard-text="http://yoursite.com/2020/03/09/go-package02/" aria-label="复制成功！"></i></span>
+  </p>
+  <p><span>许可协议:</span><i class="fa fa-creative-commons"></i> <a rel="license" href="https://creativecommons.org/licenses/by-nc-nd/4.0/" target="_blank" title="Attribution-NonCommercial-NoDerivatives 4.0 International (CC BY-NC-ND 4.0)">署名-非商业性使用-禁止演绎 4.0 国际</a> 转载请保留原文链接及作者。</p>
+</div>
+<script>
+    var clipboard = new Clipboard('.fa-clipboard');
+    $(".fa-clipboard").click(function(){
+      clipboard.on('success', function(){
+        swal({
+          title: "",
+          text: '复制成功',
+          icon: "success",
+          showConfirmButton: true
+          });
+    });
+    });
+</script>
+
+
+          
+    </div>
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/go/" rel="tag"># go</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2020/03/06/go-package01/" rel="next" title="go语言的Reader接口和Writer接口">
+                <i class="fa fa-chevron-left"></i> go语言的Reader接口和Writer接口
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+    <div class="comments" id="comments">
+      <div id="lv-container" data-id="city" data-uid="MTAyMC80NTE2Ny8yMTY4NA=="></div>
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="/images/avatar.gif" alt="Wxning">
+            
+              <p class="site-author-name" itemprop="name">Wxning</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/">
+              
+                  <span class="site-state-item-count">9</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">2</span>
+                  <span class="site-state-item-name">分类</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">4</span>
+                  <span class="site-state-item-name">标签</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+            <div class="links-of-author motion-element">
+                
+                  <span class="links-of-author-item">
+                    <a href="https://github.com/wxning1107" target="_blank" title="GitHub">
+                      
+                        <i class="fa fa-fw fa-github"></i>GitHub</a>
+                  </span>
+                
+            </div>
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#bufio-带缓存的IO"><span class="nav-number">1.</span> <span class="nav-text">bufio - 带缓存的IO</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-Reader-类型和方法"><span class="nav-number">1.1.</span> <span class="nav-text">1. Reader 类型和方法</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1-1-buffo-Reader"><span class="nav-number">1.1.1.</span> <span class="nav-text">1.1 buffo.Reader</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#1-2-ReadSlice"><span class="nav-number">1.1.2.</span> <span class="nav-text">1.2 ReadSlice</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#1-4-Peek"><span class="nav-number">1.1.3.</span> <span class="nav-text">1.4 Peek</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-Scanner-类型和方法"><span class="nav-number">2.</span> <span class="nav-text">2. Scanner 类型和方法</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#2-1-SplitFunc-类型和实例"><span class="nav-number">2.0.1.</span> <span class="nav-text">2.1 SplitFunc 类型和实例</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-2-Scanner-的实例化"><span class="nav-number">2.0.2.</span> <span class="nav-text">2.2 Scanner 的实例化</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-3-Scanner的方法"><span class="nav-number">2.0.3.</span> <span class="nav-text">2.3 Scanner的方法</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-4-Scanner用法举例"><span class="nav-number">2.0.4.</span> <span class="nav-text">2.4 Scanner用法举例</span></a></li></ol></li></ol><li class="nav-item nav-level-2"><a class="nav-link" href="#3-Writer-类型和方法"><span class="nav-number">3.</span> <span class="nav-text">3. Writer 类型和方法</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#3-1-Writer-实例化"><span class="nav-number">3.1.</span> <span class="nav-text">3.1 Writer 实例化</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-2-Flush"><span class="nav-number">3.2.</span> <span class="nav-text">3.2 Flush</span></a></li></ol></li></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Wxning</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Mist</a> v5.1.4</div>
+
+
+
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+  
+    <span class="site-uv">
+      <i class="fa fa-user"></i> 访问人数
+      <span class="busuanzi-value" id="busuanzi_value_site_uv"></span>
+      人
+    </span>
+  
+
+  
+    <span class="site-pv">
+      <i class="fa fa-eye"></i> 总访问量
+      <span class="busuanzi-value" id="busuanzi_value_site_pv"></span>
+      次
+    </span>
+  
+</div>
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/canvas-nest/canvas-nest.min.js"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+    <script type="text/javascript">
+      (function(d, s) {
+        var j, e = d.getElementsByTagName(s)[0];
+        if (typeof LivereTower === 'function') { return; }
+        j = d.createElement(s);
+        j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+        j.async = true;
+        e.parentNode.insertBefore(j, e);
+      })(document, 'script');
+    </script>
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
