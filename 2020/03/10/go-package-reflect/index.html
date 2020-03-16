@@ -68,7 +68,7 @@
 
 
 
-  <meta name="keywords" content="go,">
+  <meta name="keywords" content="go,go语言包,">
 
 
 
@@ -79,25 +79,18 @@
 
 
 
-<meta name="description" content="map简介说起map就要先说hash表，hash table是一个无序的key/value的集合，通过指定的key可以在常数时间复杂度内检索，更新，删除对应的value。在go语言中，一个map就是一个哈希表的引用，在这个散列表中，主要结构有两个，一个叫hmap：a header for a go map,hmap存储着元素个数，flags，扩容相关字段，buckets数组指针等。  另一个叫bu">
-<meta name="keywords" content="go">
+<meta name="description" content="Go语言反射反射是指在程序运行期对程序本身进行访问和修改的能力。程序在编译时，变量被转换为内存地址，变量名不会被编译器写入到可执行部分。在运行程序时，程序无法获取自身的信息。 支持反射的语言可以在程序编译期将变量的反射信息，如字段名称、类型信息、结构体信息等整合到可执行文件中，并给程序提供接口访问反射信息，这样就可以在程序运行期获取类型的反射信息，并且有能力修改它们。 反射是把双刃剑，功能强大但代">
+<meta name="keywords" content="go,go语言包">
 <meta property="og:type" content="article">
-<meta property="og:title" content="go语言map线程安全问题">
-<meta property="og:url" content="http://yoursite.com/2019/09/26/go-map/index.html">
+<meta property="og:title" content="go-package-reflect">
+<meta property="og:url" content="http://yoursite.com/2020/03/10/go-package-reflect/index.html">
 <meta property="og:site_name" content="Wxning">
-<meta property="og:description" content="map简介说起map就要先说hash表，hash table是一个无序的key/value的集合，通过指定的key可以在常数时间复杂度内检索，更新，删除对应的value。在go语言中，一个map就是一个哈希表的引用，在这个散列表中，主要结构有两个，一个叫hmap：a header for a go map,hmap存储着元素个数，flags，扩容相关字段，buckets数组指针等。  另一个叫bu">
+<meta property="og:description" content="Go语言反射反射是指在程序运行期对程序本身进行访问和修改的能力。程序在编译时，变量被转换为内存地址，变量名不会被编译器写入到可执行部分。在运行程序时，程序无法获取自身的信息。 支持反射的语言可以在程序编译期将变量的反射信息，如字段名称、类型信息、结构体信息等整合到可执行文件中，并给程序提供接口访问反射信息，这样就可以在程序运行期获取类型的反射信息，并且有能力修改它们。 反射是把双刃剑，功能强大但代">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:image" content="http://yoursite.com/images/map1.jpg">
-<meta property="og:image" content="http://yoursite.com/images/map2.jpg">
-<meta property="og:image" content="http://yoursite.com/images/map3.jpg">
-<meta property="og:image" content="http://yoursite.com/images/map4.jpg">
-<meta property="og:image" content="http://yoursite.com/images/map5.jpg">
-<meta property="og:image" content="http://yoursite.com/images/map6.jpg">
-<meta property="og:updated_time" content="2019-09-26T07:29:56.538Z">
+<meta property="og:updated_time" content="2020-03-12T07:03:45.577Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="go语言map线程安全问题">
-<meta name="twitter:description" content="map简介说起map就要先说hash表，hash table是一个无序的key/value的集合，通过指定的key可以在常数时间复杂度内检索，更新，删除对应的value。在go语言中，一个map就是一个哈希表的引用，在这个散列表中，主要结构有两个，一个叫hmap：a header for a go map,hmap存储着元素个数，flags，扩容相关字段，buckets数组指针等。  另一个叫bu">
-<meta name="twitter:image" content="http://yoursite.com/images/map1.jpg">
+<meta name="twitter:title" content="go-package-reflect">
+<meta name="twitter:description" content="Go语言反射反射是指在程序运行期对程序本身进行访问和修改的能力。程序在编译时，变量被转换为内存地址，变量名不会被编译器写入到可执行部分。在运行程序时，程序无法获取自身的信息。 支持反射的语言可以在程序编译期将变量的反射信息，如字段名称、类型信息、结构体信息等整合到可执行文件中，并给程序提供接口访问反射信息，这样就可以在程序运行期获取类型的反射信息，并且有能力修改它们。 反射是把双刃剑，功能强大但代">
 
 
 
@@ -127,13 +120,13 @@
 
 
 
-  <link rel="canonical" href="http://yoursite.com/2019/09/26/go-map/">
+  <link rel="canonical" href="http://yoursite.com/2020/03/10/go-package-reflect/">
 
 
 
 
 
-  <title>go语言map线程安全问题 | Wxning</title>
+  <title>go-package-reflect | Wxning</title>
   
 
 
@@ -271,7 +264,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/09/26/go-map/">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/03/10/go-package-reflect/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="Wxning">
@@ -288,7 +281,7 @@
 
         
         
-          <h1 class="post-title" itemprop="name headline">go语言map线程安全问题</h1>
+          <h1 class="post-title" itemprop="name headline">go-package-reflect</h1>
         
 
         <div class="post-meta">
@@ -300,8 +293,8 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-09-26T10:23:10+08:00">
-                2019-09-26
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-03-10T10:39:20+08:00">
+                2020-03-10
               </time>
             
 
@@ -310,6 +303,28 @@
             
           </span>
 
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/go语言包/" itemprop="url" rel="index">
+                    <span itemprop="name">go语言包</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
           
 
           
@@ -343,42 +358,18 @@
       
 
       
-        <h2 id="map简介"><a href="#map简介" class="headerlink" title="map简介"></a>map简介</h2><p>说起map就要先说hash表，hash table是一个无序的key/value的集合，通过指定的key可以在常数时间复杂度内检索，更新，删除对应的value。在go语言中，一个map就是一个哈希表的引用，在这个散列表中，主要结构有两个，一个叫hmap：a header for a go map,hmap存储着元素个数，flags，扩容相关字段，buckets数组指针等。</p>
-<p><img src="/images/map1.jpg" alt></p>
-<p>另一个叫bucket，顾名思义是负责存储的，存储的结构是bucket数组，bucket是一个表，以字节数组的形式存储着map中的key和value，其中还有一个字段负责记录当前bucket索引的结构叫做tophash，另外有个指向扩容bucket的指针。一个hmap可以包含多个bucket</p>
-<p><img src="/images/map2.jpg" alt></p>
-<h2 id="线程不安全"><a href="#线程不安全" class="headerlink" title="线程不安全"></a>线程不安全</h2><p>golang的map和众多其他语言一样也是线程不安全的，在多协程对map操作时就会引发线程安全问题，对于这个老生常谈的问题，通常解决办法是加锁，go官方也对map线程安全问题给出说明：</p>
-<p><img src="/images/map3.jpg" alt></p>
-<p>对map加锁是用包sync的RWMutex，本文不再阐述加锁方法，本文的重点是在1.9版本后引入sync包下的并发安全的map，让我们来看一下吧！</p>
-<p><img src="/images/map4.jpg" alt></p>
-<h4 id="map主要字段"><a href="#map主要字段" class="headerlink" title="map主要字段"></a>map主要字段</h4><ol>
-<li><p>mu</p>
-<p>mu是一个Mutex，是一个互斥锁，主要作用是锁定dirty map。</p>
-</li>
-<li><p>dirty</p>
-<p>dirty是一个map，包含着map的内容并且需要mu去锁定，在read map中它也包含不可删除的入口以确保dirty map能快速转化为read map。</p>
-</li>
-<li><p>read</p>
-<p>优先读map，安全的</p>
-</li>
-<li><p>misses</p>
-<p>misses主要记录read读取不到数据加锁时读取read map和dirty map的次数，当nisses等于dirty的长度时，会将dirty复制到read</p>
-</li>
-</ol>
-<h4 id="readOnly"><a href="#readOnly" class="headerlink" title="readOnly"></a>readOnly</h4><p>readOnly是一个不可改变的struct，并且原子得存储在map.read字段</p>
-<p><img src="/images/map5.jpg" alt></p>
-<h4 id="entry"><a href="#entry" class="headerlink" title="entry"></a>entry</h4><p>entry是在map中与特定key对应的插槽</p>
-<p><img src="/images/map6.jpg" alt></p>
-<h2 id="sync-Map工作原理"><a href="#sync-Map工作原理" class="headerlink" title="sync.Map工作原理"></a>sync.Map工作原理</h2><p>使用空间换时间的策略，通过冗余read和dirty实现加锁对性能的影响，通过引入两个map将读写分离到不同map，其中read map提供并发读和已存元素的原子写，而dirty map则负责读写，这样read map就可以在不加锁的情况下进行并发读取，当read map中没有读渠道值时，再加锁进行后续读取，并累加未命中数，当未命中数大于等于dirty map的长度，将dirty map上升为read map，从之前的结构体定义可以发现，虽然引入了两个map，但是底层存储的是指针，指向的是同一个值。</p>
-<h4 id="流程"><a href="#流程" class="headerlink" title="流程"></a>流程</h4><p>开始时sync.Map写入数据，dirty map会接受到写请求，此时read map是没有数据的，读取数据的时候从read map中读取，此时read map并没有数据，misses记录从read map读取失败的次数，当misses&gt;=len(dirty map)时，将dirty map直接升级为read map，这里直接对dirty map进行地址拷贝并且dirty map会被清空，misses被置为0。如果需要修改数据，sync.Map会直接修改read map的元素，如果需要添加元素操作就需要dirty map了，如果misses达到阙值后dirty map直接升级为read map并且dirty map为空map，则dirty map需要从read map复制数据，如果是删除操作，分为几种情况：1.read map存在该元素且read的amended==false，直接将read中 元素置为nil。2. 元素刚刚写入dirty map且未升级为read map，直接调用golang内置函数delete删除dirty map元素。3. read map和dirty map同时存在该元素，则将read map中的元素置为nil，因为read map和dirty map使用的均为元素地址，所以均被置为nil。</p>
-<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><ol>
-<li>空间换时间，通过冗余的两个数据结构read和dirty实现加锁对性能的影响。</li>
-<li>使用只读数据read避免读写冲突。</li>
-<li>动态调整，miss次数多了之后，将dirty数据提升为read</li>
-<li>double-checking双重检测</li>
-<li>延迟删除，删除一个键值只是打标记，只有在提升为dirty的时候才彻底清理掉数据。</li>
-<li>优先从read读取，更新，删除，因为对read的读取不需要加锁。</li>
-</ol>
+        <h2 id="Go语言反射"><a href="#Go语言反射" class="headerlink" title="Go语言反射"></a>Go语言反射</h2><p>反射是指在程序运行期对程序本身进行访问和修改的能力。程序在编译时，变量被转换为内存地址，变量名不会被编译器写入到可执行部分。在运行程序时，程序无法获取自身的信息。</p>
+<p>支持反射的语言可以在程序编译期将变量的反射信息，如字段名称、类型信息、结构体信息等整合到可执行文件中，并给程序提供接口访问反射信息，这样就可以在程序运行期获取类型的反射信息，并且有能力修改它们。</p>
+<p>反射是把双刃剑，功能强大但代码可读性并不理想，若非必要并不推荐使用反射。</p>
+<h3 id="1-reflect-Type"><a href="#1-reflect-Type" class="headerlink" title="1. reflect.Type"></a>1. reflect.Type</h3><p>使用 reflect.TypeOf() 函数可以获得任意值的类型对象（reflect.Type），程序通过类型对象可以访问任意值的类型信息。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">    <span class="string">"fmt"</span></span><br><span class="line">    <span class="string">"reflect"</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">goTypeOf</span><span class="params">(i <span class="keyword">interface</span>&#123;&#125;)</span></span> &#123;</span><br><span class="line">    t := reflect.TypeOf(i)</span><br><span class="line">    fmt.Printf(<span class="string">"%v\n"</span>, t)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">    <span class="keyword">var</span> a <span class="keyword">int</span> = <span class="number">2</span></span><br><span class="line">    <span class="keyword">var</span> b <span class="keyword">float64</span> = <span class="number">1.234</span></span><br><span class="line">    goTypeOf(a)  <span class="comment">// int</span></span><br><span class="line">    goTypeOf(b)  <span class="comment">// float64</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="1-1-Type-Name-和-Type-Kind"><a href="#1-1-Type-Name-和-Type-Kind" class="headerlink" title="1.1 Type.Name() 和 Type.Kind()"></a>1.1 Type.Name() 和 Type.Kind()</h4><p>在使用反射时，需要首先理解类型（Type）和种类（Kind）的区别。编程中，使用最多的是类型，但在反射中，当需要区分一个大品种的类型时，就会用到种类（Kind）。例如需要统一判断类型中的指针时，使用种类（Kind）信息就较为方便。</p>
+<p>Go语言程序中的类型（Type）指的是系统原生数据类型，如 int、string、bool、float64 等类型，以及使用 type 关键字定义的类型，这些类型的名称就是其类型本身的名称。种类（Kind）指的是对象归属的品种。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> (</span><br><span class="line">    Invalid Kind = <span class="literal">iota</span>  <span class="comment">// 非法类型</span></span><br><span class="line">    Bool</span><br><span class="line">    Int</span><br><span class="line">    Int8</span><br><span class="line">    Int16</span><br><span class="line">    Int32</span><br><span class="line">    Int64</span><br><span class="line">    Uint</span><br><span class="line">    Uint8</span><br><span class="line">    Uint16</span><br><span class="line">    Uint32</span><br><span class="line">    Uint64</span><br><span class="line">    Uintptr  <span class="comment">// 指针</span></span><br><span class="line">    Float32</span><br><span class="line">    Float64</span><br><span class="line">    Complex64</span><br><span class="line">    Complex128</span><br><span class="line">    Array</span><br><span class="line">    Chan</span><br><span class="line">    Func</span><br><span class="line">    Interface</span><br><span class="line">    Map</span><br><span class="line">    Ptr  <span class="comment">// 指针</span></span><br><span class="line">    Slice</span><br><span class="line">    String</span><br><span class="line">    Struct</span><br><span class="line">    UnsafePointer  <span class="comment">// 底层指针</span></span><br><span class="line">)</span><br></pre></td></tr></table></figure>
+
+<p>当需要区分指针、结构体等大品种的类型时，就会用到种类 kind。</p>
+<p>Go语言的反射中像数组、切片、Map、指针等类型的变量它们的 .Name() 都是返回空。</p>
 
       
     </div>
@@ -406,12 +397,12 @@
   <!-- JS库 sweetalert 可修改路径 -->
   <script src="https://cdn.bootcss.com/jquery/2.0.0/jquery.min.js"></script>
   <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
-  <p><span>本文标题:</span><a href="/2019/09/26/go-map/">go语言map线程安全问题</a></p>
+  <p><span>本文标题:</span><a href="/2020/03/10/go-package-reflect/">go-package-reflect</a></p>
   <p><span>文章作者:</span><a href="/" title="访问 Wxning 的个人博客">Wxning</a></p>
-  <p><span>发布时间:</span>2019年09月26日 - 10:09</p>
-  <p><span>最后更新:</span>2019年09月26日 - 15:09</p>
-  <p><span>原始链接:</span><a href="/2019/09/26/go-map/" title="go语言map线程安全问题">http://yoursite.com/2019/09/26/go-map/</a>
-    <span class="copy-path" title="点击复制文章链接"><i class="fa fa-clipboard" data-clipboard-text="http://yoursite.com/2019/09/26/go-map/" aria-label="复制成功！"></i></span>
+  <p><span>发布时间:</span>2020年03月10日 - 10:03</p>
+  <p><span>最后更新:</span>2020年03月12日 - 15:03</p>
+  <p><span>原始链接:</span><a href="/2020/03/10/go-package-reflect/" title="go-package-reflect">http://yoursite.com/2020/03/10/go-package-reflect/</a>
+    <span class="copy-path" title="点击复制文章链接"><i class="fa fa-clipboard" data-clipboard-text="http://yoursite.com/2020/03/10/go-package-reflect/" aria-label="复制成功！"></i></span>
   </p>
   <p><span>许可协议:</span><i class="fa fa-creative-commons"></i> <a rel="license" href="https://creativecommons.org/licenses/by-nc-nd/4.0/" target="_blank" title="Attribution-NonCommercial-NoDerivatives 4.0 International (CC BY-NC-ND 4.0)">署名-非商业性使用-禁止演绎 4.0 国际</a> 转载请保留原文链接及作者。</p>
 </div>
@@ -445,6 +436,8 @@
           
             <a href="/tags/go/" rel="tag"># go</a>
           
+            <a href="/tags/go语言包/" rel="tag"># go语言包</a>
+          
         </div>
       
 
@@ -456,8 +449,8 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2019/08/03/go-crawler2/" rel="next" title="go实现并发版爬虫">
-                <i class="fa fa-chevron-left"></i> go实现并发版爬虫
+              <a href="/2020/03/09/go-package02/" rel="next" title="bufio - 带缓存的IO">
+                <i class="fa fa-chevron-left"></i> bufio - 带缓存的IO
               </a>
             
           </div>
@@ -466,8 +459,8 @@
 
           <div class="post-nav-prev post-nav-item">
             
-              <a href="/2019/09/30/cleanCode/" rel="prev" title="CleanCode">
-                CleanCode <i class="fa fa-chevron-right"></i>
+              <a href="/2020/03/16/gin/" rel="prev" title="Gin框架">
+                Gin框架 <i class="fa fa-chevron-right"></i>
               </a>
             
           </div>
@@ -617,7 +610,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#map简介"><span class="nav-number">1.</span> <span class="nav-text">map简介</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#线程不安全"><span class="nav-number">2.</span> <span class="nav-text">线程不安全</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#map主要字段"><span class="nav-number">2.0.1.</span> <span class="nav-text">map主要字段</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#readOnly"><span class="nav-number">2.0.2.</span> <span class="nav-text">readOnly</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#entry"><span class="nav-number">2.0.3.</span> <span class="nav-text">entry</span></a></li></ol></li></ol><li class="nav-item nav-level-2"><a class="nav-link" href="#sync-Map工作原理"><span class="nav-number">3.</span> <span class="nav-text">sync.Map工作原理</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#流程"><span class="nav-number">3.0.1.</span> <span class="nav-text">流程</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#总结"><span class="nav-number">4.</span> <span class="nav-text">总结</span></a></li></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Go语言反射"><span class="nav-number">1.</span> <span class="nav-text">Go语言反射</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-reflect-Type"><span class="nav-number">1.1.</span> <span class="nav-text">1. reflect.Type</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1-1-Type-Name-和-Type-Kind"><span class="nav-number">1.1.1.</span> <span class="nav-text">1.1 Type.Name() 和 Type.Kind()</span></a></li></ol></li></ol></li></ol></div>
             
 
           </div>
