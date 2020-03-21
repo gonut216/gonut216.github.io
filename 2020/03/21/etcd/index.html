@@ -68,7 +68,7 @@
 
 
 
-  <meta name="keywords" content="go,">
+  <meta name="keywords" content="etcd,">
 
 
 
@@ -79,18 +79,23 @@
 
 
 
-<meta name="description" content="go range今天写代码遇到一个问题，在用go range遍历时，遍历的变量取地址时，最终得到的只是最后一个元素，看如下代码： 12345678910var results []*intfunc main() &amp;#123;	variables := []int&amp;#123;1, 2, 3, 4&amp;#125;	for _, variable := range variables &amp;#123;		res">
-<meta name="keywords" content="go">
+<meta name="description" content="etcd介绍根据etcd github介绍：  etcd is a distributed reliable key-value store for the most critical data of a distributed system, with a focus on being:  Simple: well-defined, user-facing API (gRPC) Secure:">
+<meta name="keywords" content="etcd">
 <meta property="og:type" content="article">
-<meta property="og:title" content="go range遍历循环变量复用地址问题">
-<meta property="og:url" content="http://yoursite.com/2019/11/19/go-range/index.html">
+<meta property="og:title" content="etcd">
+<meta property="og:url" content="http://yoursite.com/2020/03/21/etcd/index.html">
 <meta property="og:site_name" content="Wxning">
-<meta property="og:description" content="go range今天写代码遇到一个问题，在用go range遍历时，遍历的变量取地址时，最终得到的只是最后一个元素，看如下代码： 12345678910var results []*intfunc main() &amp;#123;	variables := []int&amp;#123;1, 2, 3, 4&amp;#125;	for _, variable := range variables &amp;#123;		res">
+<meta property="og:description" content="etcd介绍根据etcd github介绍：  etcd is a distributed reliable key-value store for the most critical data of a distributed system, with a focus on being:  Simple: well-defined, user-facing API (gRPC) Secure:">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:updated_time" content="2019-11-19T12:10:17.592Z">
+<meta property="og:image" content="http://yoursite.com/images/etcd_01.png">
+<meta property="og:image" content="http://yoursite.com/images/etcd_02.jpg">
+<meta property="og:image" content="http://yoursite.com/images/etcd_03.png">
+<meta property="og:image" content="http://yoursite.com/images/etcd_04.jpg">
+<meta property="og:updated_time" content="2020-03-21T13:13:05.330Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="go range遍历循环变量复用地址问题">
-<meta name="twitter:description" content="go range今天写代码遇到一个问题，在用go range遍历时，遍历的变量取地址时，最终得到的只是最后一个元素，看如下代码： 12345678910var results []*intfunc main() &amp;#123;	variables := []int&amp;#123;1, 2, 3, 4&amp;#125;	for _, variable := range variables &amp;#123;		res">
+<meta name="twitter:title" content="etcd">
+<meta name="twitter:description" content="etcd介绍根据etcd github介绍：  etcd is a distributed reliable key-value store for the most critical data of a distributed system, with a focus on being:  Simple: well-defined, user-facing API (gRPC) Secure:">
+<meta name="twitter:image" content="http://yoursite.com/images/etcd_01.png">
 
 
 
@@ -120,13 +125,13 @@
 
 
 
-  <link rel="canonical" href="http://yoursite.com/2019/11/19/go-range/">
+  <link rel="canonical" href="http://yoursite.com/2020/03/21/etcd/">
 
 
 
 
 
-  <title>go range遍历循环变量复用地址问题 | Wxning</title>
+  <title>etcd | Wxning</title>
   
 
 
@@ -264,7 +269,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/11/19/go-range/">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/03/21/etcd/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="Wxning">
@@ -281,7 +286,7 @@
 
         
         
-          <h1 class="post-title" itemprop="name headline">go range遍历循环变量复用地址问题</h1>
+          <h1 class="post-title" itemprop="name headline">etcd</h1>
         
 
         <div class="post-meta">
@@ -293,8 +298,8 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-11-19T19:00:33+08:00">
-                2019-11-19
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-03-21T21:11:57+08:00">
+                2020-03-21
               </time>
             
 
@@ -303,6 +308,28 @@
             
           </span>
 
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/分布式/" itemprop="url" rel="index">
+                    <span itemprop="name">分布式</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
           
 
           
@@ -336,29 +363,65 @@
       
 
       
-        <h3 id="go-range"><a href="#go-range" class="headerlink" title="go range"></a>go range</h3><p>今天写代码遇到一个问题，在用go range遍历时，遍历的变量取地址时，最终得到的只是最后一个元素，看如下代码：</p>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> results []*<span class="keyword">int</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	variables := []<span class="keyword">int</span>&#123;<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>&#125;</span><br><span class="line">	<span class="keyword">for</span> _, variable := <span class="keyword">range</span> variables &#123;</span><br><span class="line">		results = <span class="built_in">append</span>(results, &amp;variable)</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">for</span> _, res := <span class="keyword">range</span> results &#123;</span><br><span class="line">		fmt.Printf(<span class="string">"%d\n"</span>, *res)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>上面代码最终打印结果是4,4,4,4。为什么保存的都是最后一个元素呢？</p>
-<p>我们打印一下遍历的结果看看：</p>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> results []*<span class="keyword">int</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	variables := []<span class="keyword">int</span>&#123;<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>&#125;</span><br><span class="line">	<span class="keyword">for</span> _, variable := <span class="keyword">range</span> variables &#123;</span><br><span class="line">		fmt.Println(&amp;variable)</span><br><span class="line">		results = <span class="built_in">append</span>(results, &amp;variable)</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">for</span> _, res := <span class="keyword">range</span> results &#123;</span><br><span class="line">		fmt.Printf(<span class="string">"%d\n"</span>, *res)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>结果发现地址居然是一样的！</p>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="number">0xc0000aa008</span></span><br><span class="line"><span class="number">0xc0000aa008</span></span><br></pre></td></tr></table></figure>
-
-<p>原来每次遍历的值都是保存在同一个地址中，当遍历最后一个元素时将其他元素覆盖了，所以最终保存的只有最后一个值。</p>
-<p>for range会保存每个元素的副本，而不是直接返回每个元素的引用，循环内部创建的函数变量都是共享同一块内存地址，for循环总是使用同一块内存去接收循环中的的value变量的值。不管循环多少次，value的内存地址都是相同的。其实这也可以理解，因为系统并不知道你要遍历的切片有多少元素，如果要是很多元素，系统不能每次遍历都给重新分布一块内存，这样占用内存会很大，所以一般的编程语言都会复用内存地址，这样可以节省内存空间。</p>
-<p>那这样的问题该怎么解决呢？</p>
-<p>重新赋个变量就好了！</p>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> results []*<span class="keyword">int</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	variables := []<span class="keyword">int</span>&#123;<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>&#125;</span><br><span class="line">	<span class="keyword">for</span> _, variable := <span class="keyword">range</span> variables &#123;</span><br><span class="line">		v := variable</span><br><span class="line">		results = <span class="built_in">append</span>(results, &amp;v)</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">for</span> _, res := <span class="keyword">range</span> results &#123;</span><br><span class="line">		fmt.Printf(<span class="string">"%d\n"</span>, *res)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>这样问题就解决啦！</p>
-<p>我们可以看一下官网对于fo range的解释：</p>
+        <h2 id="etcd介绍"><a href="#etcd介绍" class="headerlink" title="etcd介绍"></a>etcd介绍</h2><p>根据<a href="https://github.com/etcd-io/etcd" target="_blank" rel="noopener">etcd github</a>介绍：</p>
 <blockquote>
-<p>The iteration variables may be declared by the “range” clause using a form of <a href="https://golang.org/ref/spec#Short_variable_declarations" target="_blank" rel="noopener">short variable declaration</a> (<code>:=</code>). In this case their types are set to the types of the respective iteration values and their <a href="https://golang.org/ref/spec#Declarations_and_scope" target="_blank" rel="noopener">scope</a> is the block of the “for” statement; they are re-used in each iteration. If the iteration variables are declared outside the “for” statement, after execution their values will be those of the last iteration.</p>
+<p>etcd is a distributed reliable key-value store for the most critical data of a distributed system, with a focus on being:</p>
+<ul>
+<li><em>Simple</em>: well-defined, user-facing API (gRPC)</li>
+<li><em>Secure</em>: automatic TLS with optional client cert authentication</li>
+<li><em>Fast</em>: benchmarked 10,000 writes/sec</li>
+<li><em>Reliable</em>: properly distributed using Raft</li>
+</ul>
 </blockquote>
-<p><strong>Links：</strong></p>
-<p>官网介绍：<a href="https://golang.org/ref/spec#For_statements" target="_blank" rel="noopener">https://golang.org/ref/spec#For_statements</a></p>
+<p>etcd是使用Go语言开发的一个开源的、高可用的分布式key-value存储系统，可以用于配置共享和服务的注册和发现，负载均衡，分布式锁，配置管理等场景地应用。</p>
+<p>类似项目有zookeeper和consul。</p>
+<p>etcd具有以下特点：</p>
+<ul>
+<li>完全复制：集群中的每个节点都可以使用完整的存档</li>
+<li>高可用性：Etcd可用于避免硬件的单点故障或网络问题</li>
+<li>一致性：每次读取都会返回跨多主机的最新写入</li>
+<li>简单：包括一个定义良好、面向用户的API（gRPC）</li>
+<li>安全：实现了带有可选的客户端证书身份验证的自动化TLS</li>
+<li>快速：每秒10000次写入的基准速度</li>
+<li>可靠：使用Raft算法实现了强一致、高可用的服务存储目录</li>
+</ul>
+<blockquote>
+<p>etcd is written in Go and uses the <a href="https://raft.github.io/" target="_blank" rel="noopener">Raft</a> consensus algorithm to manage a highly-available replicated log.</p>
+</blockquote>
+<p>Raft一致算法后面文章再介绍，他有几个特点：1.选举 2.日志复制机制 3.异常处理（脑裂）</p>
+<h2 id="etcd应用场景"><a href="#etcd应用场景" class="headerlink" title="etcd应用场景"></a>etcd应用场景</h2><h3 id="服务发现"><a href="#服务发现" class="headerlink" title="服务发现"></a>服务发现</h3><p>服务发现要解决的也是分布式系统中最常见的问题之一，即在同一个分布式集群中的进程或服务，要如何才能找到对方并建立连接。本质上来说，服务发现就是想要了解集群中是否有进程在监听 udp 或 tcp 端口，并且通过名字就可以查找和连接。</p>
+<p>所有服务将元信息存储到以某个 prefix 开头的 key 中，然后消费者从这些 key 中获取服务信息并调用。消费者也可以 watch 这些 key 的变更，以便在服务增加和减少时及时获得通知。</p>
+<p><img src="/images/etcd_01.png" alt="etcd_01"></p>
+<p>Service Requestor 是服务的请求方，Service provider 是服务的提供方，Service registry 是服务注册， Service provider启动的时候需要去 Service registry 注册，Service Requestor 请求服务是一个异步的操作，请求服务并不知道 Service provider有多少服务，所以 Service Requestor 先去 Service registry 去 find 一下有多少服务可以使用，然后再去 bind Service provider。如果有个服务挂了，Service provider与Service registry 之间是有心跳的（例如一秒钟听一下），如果检测某个服务挂掉了，就会删掉它，请求方因为要去 Service registry 查询，所以不会因为服务挂了就去调用挂掉的服务。这个就是服务注册发现。etcd在里面充当 Service registry 角色。</p>
+<p>服务提供者是什么，简单点说就是一个 HTTP 服务器，提供了API服务，有一个IP端口作为服务地址。服务消费者是什么，它就是一个简单的进程，想要访问服务提供者提供的服务来干一些事情。一个 HTTP 服务器既可以是服务提供者对外提供服务，也可以是消费者需要别的服务提供者提供的服务，这就是服务依赖。</p>
+<p>服务发现有三个角色，服务提供者、服务消费者和服务中介(这里就是我们的etcd)。服务中介是联系服务提供者和服务消费者的桥梁。服务提供者将自己提供的服务地址注册到服务中介，服务消费者从服务中介那里查找自己想要的服务的地址，然后享受这个服务。服务中介提供多个服务，每个服务对应多个服务提供者。</p>
+<p><img src="/images/etcd_02.jpg" alt="etcd_02"></p>
+<p>服务中介就是一个字典，字典里有很多 key/value 键值对，key 是服务名称，value是服务提供者的地址列表。服务注册就是调用字典的Put方法塞东西，服务查找就是调用字典的Get方法拿东西。</p>
+<p>当服务提供者节点挂掉时，要求服务能够及时取消注册，比便及时通知消费者重新获取服务地址。</p>
+<p>当服务提供者新加入时，要求服务中介能及时告知服务消费者，你要不要尝试一下新的服务。</p>
+<h3 id="配置共享"><a href="#配置共享" class="headerlink" title="配置共享"></a>配置共享</h3><p>一个集群的配置都应该是相同的，将集群中所有服务器的配置信息放到 etcd 上进行集中管理，应用在启动的时候主动从 etcd 获取一次配置信息，同时，在 etcd 节点上注册一个 Watcher（watch etcd中的key是否变化，实现热加载，当配置信息被更改时可以通过 watch 机制从 etcd 及时获得通知） 并等待，以后每次配置有更新的时候，etcd 都会实时通知订阅者，以此达到获取最新配置信息的目的。</p>
+<h3 id="分布式锁"><a href="#分布式锁" class="headerlink" title="分布式锁"></a>分布式锁</h3><p>因为 etcd 使用 Raft 算法保持了数据的强一致性，某次操作存储到集群中的值必然是全局一致的，所以很容易实现分布式锁。锁服务有两种使用方式，一是保持独占，二是控制时序。</p>
+<ul>
+<li>保持独占即所有获取锁的用户最终只有一个可以得到。etcd 为此提供了一套实现分布式锁原子操作 CAS（CompareAndSwap）的 API。通过设置prevExist值，可以保证在多个节点同时去创建某个目录时，只有一个成功。而创建成功的用户就可以认为是获得了锁。</li>
+<li>控制时序，即所有想要获得锁的用户都会被安排执行，但是获得锁的顺序也是全局唯一的，同时决定了执行顺序。etcd 为此也提供了一套 API（自动创建有序键），对一个目录建值时指定为POST动作，这样 etcd 会自动在目录下生成一个当前最大的值为键，存储这个新的值（客户端编号）。同时还可以使用 API 按顺序列出所有当前目录下的键值。此时这些键的值就是客户端的时序，而这些键中存储的值可以是代表客户端的编号。</li>
+</ul>
+<p><img src="/images/etcd_03.png" alt="etcd_03"></p>
+<h2 id="为什么用etcd"><a href="#为什么用etcd" class="headerlink" title="为什么用etcd"></a>为什么用etcd</h2><p>etcd相对于zookeeper优点：</p>
+<ul>
+<li>简单。使用 Go 语言编写部署简单；支持HTTP/JSON API,使用简单；使用 Raft 算法保证强一致性让用户易于理解。</li>
+<li>etcd 默认数据一更新就进行持久化。</li>
+<li>etcd 支持 SSL 客户端安全认证。</li>
+</ul>
+<p>zookeeper的部署维护复杂，etcd 使用 Raft 协议，Zookeeper 使用 ZAB（类PAXOS协议），前者容易理解，方便工程实现；而 ZAB 强一致性算法复杂难懂，zookeeper的使用也比较复杂，需要安装客户端，官方只提供了java和c两种语言的接口。</p>
+<p>etcd 方便运维，Zookeeper 难以运维。由于zookeeper是java编写，而java本身偏向于重型应用，他会引入大量依赖。</p>
+<p>etcd 社区与开发活跃，Zookeeper 发展缓慢。</p>
+<p><img src="/images/etcd_04.jpg" alt="etcd_04"></p>
+<ul>
+<li>HTTP Server 用于处理用户发送的API请求，以及其他etcd节点的同步与心跳信息请求。V3用的是grpc</li>
+<li>Store 用户处理etcd支持的各类功能的事务，包括数据索引，节点状态变更，监控与反馈，事件处理与执行。是etcd对用户提供的大多数API功能的具体实现</li>
+<li>Raft Raft强一致性算法的具体实现，是etcd的核心</li>
+<li>WAL Write Ahead Log 预写式日志，是etcd的数据存储方式，除了在内存中存有所有数据的状态以及节点的索引以外，etcd通过WAL进行持久化存储。WAL中，所以数据提交前都会事先记录日志，Snapshot 是为了防止数据过多而进行的状态快照，Entry表示存储的具体日志内容。</li>
+</ul>
 
       
     </div>
@@ -386,12 +449,12 @@
   <!-- JS库 sweetalert 可修改路径 -->
   <script src="https://cdn.bootcss.com/jquery/2.0.0/jquery.min.js"></script>
   <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
-  <p><span>本文标题:</span><a href="/2019/11/19/go-range/">go range遍历循环变量复用地址问题</a></p>
+  <p><span>本文标题:</span><a href="/2020/03/21/etcd/">etcd</a></p>
   <p><span>文章作者:</span><a href="/" title="访问 Wxning 的个人博客">Wxning</a></p>
-  <p><span>发布时间:</span>2019年11月19日 - 19:11</p>
-  <p><span>最后更新:</span>2019年11月19日 - 20:11</p>
-  <p><span>原始链接:</span><a href="/2019/11/19/go-range/" title="go range遍历循环变量复用地址问题">http://yoursite.com/2019/11/19/go-range/</a>
-    <span class="copy-path" title="点击复制文章链接"><i class="fa fa-clipboard" data-clipboard-text="http://yoursite.com/2019/11/19/go-range/" aria-label="复制成功！"></i></span>
+  <p><span>发布时间:</span>2020年03月21日 - 21:03</p>
+  <p><span>最后更新:</span>2020年03月21日 - 21:03</p>
+  <p><span>原始链接:</span><a href="/2020/03/21/etcd/" title="etcd">http://yoursite.com/2020/03/21/etcd/</a>
+    <span class="copy-path" title="点击复制文章链接"><i class="fa fa-clipboard" data-clipboard-text="http://yoursite.com/2020/03/21/etcd/" aria-label="复制成功！"></i></span>
   </p>
   <p><span>许可协议:</span><i class="fa fa-creative-commons"></i> <a rel="license" href="https://creativecommons.org/licenses/by-nc-nd/4.0/" target="_blank" title="Attribution-NonCommercial-NoDerivatives 4.0 International (CC BY-NC-ND 4.0)">署名-非商业性使用-禁止演绎 4.0 国际</a> 转载请保留原文链接及作者。</p>
 </div>
@@ -423,7 +486,7 @@
       
         <div class="post-tags">
           
-            <a href="/tags/go/" rel="tag"># go</a>
+            <a href="/tags/etcd/" rel="tag"># etcd</a>
           
         </div>
       
@@ -436,8 +499,8 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2019/09/30/cleanCode/" rel="next" title="CleanCode">
-                <i class="fa fa-chevron-left"></i> CleanCode
+              <a href="/2020/03/18/gin/" rel="next" title="Gin框架">
+                <i class="fa fa-chevron-left"></i> Gin框架
               </a>
             
           </div>
@@ -445,10 +508,6 @@
           <span class="post-nav-divider"></span>
 
           <div class="post-nav-prev post-nav-item">
-            
-              <a href="/2020/03/06/go-package01/" rel="prev" title="go语言的Reader接口和Writer接口">
-                go语言的Reader接口和Writer接口 <i class="fa fa-chevron-right"></i>
-              </a>
             
           </div>
         </div>
@@ -597,7 +656,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#go-range"><span class="nav-number">1.</span> <span class="nav-text">go range</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#etcd介绍"><span class="nav-number">1.</span> <span class="nav-text">etcd介绍</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#etcd应用场景"><span class="nav-number">2.</span> <span class="nav-text">etcd应用场景</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#服务发现"><span class="nav-number">2.1.</span> <span class="nav-text">服务发现</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#配置共享"><span class="nav-number">2.2.</span> <span class="nav-text">配置共享</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#分布式锁"><span class="nav-number">2.3.</span> <span class="nav-text">分布式锁</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#为什么用etcd"><span class="nav-number">3.</span> <span class="nav-text">为什么用etcd</span></a></li></ol></div>
             
 
           </div>
