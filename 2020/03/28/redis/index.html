@@ -88,11 +88,18 @@
 <meta property="og:description" content="Redis介绍Redis 是完全开源免费的，遵守BSD协议，是一个高性能的key-value数据库。 NoSQL数据库的产生就是为了解决大规模数据集合，多重数据种类带来的挑战。 Redis 与其他 key - value 缓存产品有以下三个特点：  Redis支持数据的持久化，可以将内存中的数据保存在磁盘中，重启的时候可以再次加载进行使用。 Redis不仅仅支持简单的key-value类型的数据，">
 <meta property="og:locale" content="zh-Hans">
 <meta property="og:image" content="http://yoursite.com/images/redis-1.png">
+<meta property="og:image" content="http://yoursite.com/images/redis-6.png">
+<meta property="og:image" content="http://yoursite.com/images/redis-8.png">
+<meta property="og:image" content="http://yoursite.com/images/redis-9.png">
+<meta property="og:image" content="http://yoursite.com/images/redis-10.png">
+<meta property="og:image" content="http://yoursite.com/images/redis-11.png">
+<meta property="og:image" content="http://yoursite.com/images/redis-12.png">
 <meta property="og:image" content="http://yoursite.com/images/redis-2.png">
-<meta property="og:image" content="http://yoursite.com/images/redis-3">
+<meta property="og:image" content="http://yoursite.com/images/redis-3.png">
 <meta property="og:image" content="http://yoursite.com/images/redis-4.png">
 <meta property="og:image" content="http://yoursite.com/images/redis-5.png">
-<meta property="og:updated_time" content="2020-03-28T07:37:04.936Z">
+<meta property="og:image" content="http://yoursite.com/images/redis-7.png">
+<meta property="og:updated_time" content="2020-03-28T14:23:11.108Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="redis">
 <meta name="twitter:description" content="Redis介绍Redis 是完全开源免费的，遵守BSD协议，是一个高性能的key-value数据库。 NoSQL数据库的产生就是为了解决大规模数据集合，多重数据种类带来的挑战。 Redis 与其他 key - value 缓存产品有以下三个特点：  Redis支持数据的持久化，可以将内存中的数据保存在磁盘中，重启的时候可以再次加载进行使用。 Redis不仅仅支持简单的key-value类型的数据，">
@@ -390,10 +397,51 @@
 <li>原子 – Redis的所有操作都是原子性的，意思就是要么成功执行要么失败完全不执行。单个操作是原子性的。多个操作也支持事务，即原子性，通过MULTI和EXEC指令包起来。</li>
 <li>丰富的特性 – Redis还支持 publish/subscribe, 通知, key 过期等等特性。</li>
 </ul>
+<h2 id="redis数据类型"><a href="#redis数据类型" class="headerlink" title="redis数据类型"></a>redis数据类型</h2><table>
+<thead>
+<tr>
+<th>类型</th>
+<th>简介</th>
+<th>特性</th>
+<th>场景</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>String(字符串)</td>
+<td>二进制安全</td>
+<td>可以包含任何数据,比如jpg图片或者序列化的对象,一个键最大能存储512M</td>
+<td></td>
+</tr>
+<tr>
+<td>Hash(字典)</td>
+<td>键值对集合</td>
+<td>适合存储对象，并且可以像数据库中update一个属性一样只修改某一项属性值(Memcached中需要取出整个字符串反序列化成对象修改完再序列化存回去)</td>
+<td>存储，读取修改用户属性</td>
+</tr>
+<tr>
+<td>List(列表)</td>
+<td>链表(双向链表)</td>
+<td>增删快，提供了操作某一段元素的API</td>
+<td>1,最新消息排行等功能(比如朋友圈的时间线) 2,消息队列</td>
+</tr>
+<tr>
+<td>Set(集合)</td>
+<td>哈希表实现,元素不重复</td>
+<td>1、添加、删除,查找的复杂度都是O(1) 2、为集合提供了求交集、并集、差集等操作</td>
+<td>1、共同好友 2、利用唯一性,统计访问网站的所有独立ip 3、好友推荐时,根据tag求交集,大于某个阈值就可以推荐</td>
+</tr>
+<tr>
+<td>Sorted Set(有序集合)</td>
+<td>将Set中的元素增加一个权重参数score,元素按score有序排列</td>
+<td>数据插入集合时,已经进行天然排序</td>
+<td>1、排行榜 2、带权重的消息队列</td>
+</tr>
+</tbody></table>
 <p>##Redis持久化</p>
 <p>Redis是一个支持持久化的内存数据库，通过持久化机制把内存中的数据同步到硬盘文件来保证数据持久化。当Redis重启后通过把硬盘文件重新加载到内存，就能达到恢复数据的目的。</p>
-<h2 id="RDB"><a href="#RDB" class="headerlink" title="RDB"></a>RDB</h2><p>RDB是Redis默认的持久化方式。按照一定的时间周期策略把内存的数据以快照的形式保存到硬盘的二进制文件。即Snapshot快照存储，对应产生的数据文件为dump.rdb，通过配置文件中的save参数来定义快照的周期。（ 快照可以是其所表示的数据的一个副本，也可以是数据的一个复制品。）</p>
+<h2 id="RDB"><a href="#RDB" class="headerlink" title="RDB"></a>RDB</h2><p>RDB是Redis默认的持久化方式。按照一定的时间周期策略把内存的数据以快照的形式保存到硬盘的二进制文件。即Snapshot快照存储，对应产生的数据文件为<code>dump.rdb</code>，通过配置文件中的save参数来定义快照的周期。（ 快照可以是其所表示的数据的一个副本，也可以是数据的一个复制品）</p>
 <h3 id="原理"><a href="#原理" class="headerlink" title="原理"></a>原理</h3><p>redis会单独创建（fork）一个与当前进程一模一样的子进程进行持久化，这个子进程的所有数据（变量，环境变量，程序设计器）都和原进程一模一样。会先将数据写入到一个临时文件中，待持久化结束后，再用这个临时文件替换上次持久化好的文件，整个过程中主进程不进行任何io操作，这保证极高的性能。</p>
+<p>为什么要fork一个子进程：因为redis是单进程的，同一时刻只能做一件事，所以fork子进程去持久化</p>
 <h3 id="什么时候fork子进程（触发RDB持久化机制）"><a href="#什么时候fork子进程（触发RDB持久化机制）" class="headerlink" title="什么时候fork子进程（触发RDB持久化机制）"></a>什么时候fork子进程（触发RDB持久化机制）</h3><ol>
 <li><p>shutdown时，如果没有开启aof会触发</p>
 </li>
@@ -407,13 +455,19 @@
 <ol start="3">
 <li>执行命令save或者bgsave</li>
 </ol>
-<p>save只管保存，其他不管，全部阻塞。bgsave命令redis会在后台异步进行持久化</p>
-<h2 id="AOF"><a href="#AOF" class="headerlink" title="AOF"></a>AOF</h2><p>Redis会将每一个收到的写<code>命令</code>都通过Write函数追加到文件最后，类似于MySQL的binlog。当Redis重启是会通过重新执行文件中保存的写命令来在内存中重建整个数据库的内容。</p>
+<p>save只管保存，其他不管，全部阻塞，save是使用主进程去持久化，此时是不能够操作redis的。<code>bgsave</code>命令redis会在后台异步进行持久化</p>
+<h2 id="AOF"><a href="#AOF" class="headerlink" title="AOF"></a>AOF</h2><p>Redis会将每一个收到的写<code>命令</code>都通过Write函数追加到文件最后，类似于MySQL的binlog。当Redis重启是会通过重新执行文件中保存的写命令来在内存中重建整个数据库的内容。对应产生的数据库文件为<code>appendonly.aof</code></p>
 <p>上面redis配置文件里触发持久化最少也要60秒，但是如果小于60秒退出数据就会丢失。AOF就是为了解决这个问题。AOF是不会超过两秒，每秒钟保存一次数据。</p>
 <p>AOF保存的是<code>命令</code>字符串，还有协议。</p>
 <h3 id="AOF重写机制"><a href="#AOF重写机制" class="headerlink" title="AOF重写机制"></a>AOF重写机制</h3><p>当aof增长到一定大小的时候Redis能够调用bgrewriteaof对日志文件进行重写。</p>
 <p>例如：如果新建了数据，然后又删除了，这时这两条命令就不需要保存了</p>
 <p>RDB性能消耗低，丢失数据多，速度也快。AOF性能消耗高，丢失数据少</p>
+<p><img src="/images/redis-6.png" alt="redis-6"></p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><h3 id="redis提供了RDB持久化方案，为什么还要aof"><a href="#redis提供了RDB持久化方案，为什么还要aof" class="headerlink" title="redis提供了RDB持久化方案，为什么还要aof"></a>redis提供了RDB持久化方案，为什么还要aof</h3><p>优化数据丢失问题，rdb会丢失最后一次快照后的数据，aof丢失不会超过两秒的数据</p>
+<h3 id="如果AOF和RDB同时存在，听谁的"><a href="#如果AOF和RDB同时存在，听谁的" class="headerlink" title="如果AOF和RDB同时存在，听谁的"></a>如果AOF和RDB同时存在，听谁的</h3><p>AOF</p>
+<h3 id="RDB-和-AOF优劣势"><a href="#RDB-和-AOF优劣势" class="headerlink" title="RDB 和 AOF优劣势"></a>RDB 和 AOF优劣势</h3><p>AOF性能消耗高，丢失数据少，RDB性能消耗低，丢失数据多，速度也快</p>
+<h2 id="使用缓存一般思路"><a href="#使用缓存一般思路" class="headerlink" title="使用缓存一般思路"></a>使用缓存一般思路</h2><p>缓存的作用就是让直接请求数据库的数量少一些，数据库压力小一些</p>
+<p>首先去查缓存中有没有，缓存中有就直接返回，如果没有就去数据库中查，如果数据库中有，就加入到缓存中</p>
 <h2 id="缓存穿透"><a href="#缓存穿透" class="headerlink" title="缓存穿透"></a>缓存穿透</h2><p>使用不存在的key（在数据库没有，自然在缓存中也不会有）进行大量的高并发查询，导致缓存无法命中，每次请求都要穿透到后端数据库进行查询，数据库压力过大</p>
 <p>解决方案：</p>
 <ul>
@@ -425,7 +479,7 @@
 <h2 id="缓存击穿"><a href="#缓存击穿" class="headerlink" title="缓存击穿"></a>缓存击穿</h2><p>缓存中没有但数据库中有的数据（一般是缓存时间到期），这时由于并发用户特别多，同时读缓存没有读到数据，又同时去数据库中取数据，引发数据库压力过大</p>
 <p>解决方案：</p>
 <ul>
-<li>互斥锁，如果项目不会多部署使用jvm锁，如果项目多部署则使用分布式锁</li>
+<li>互斥锁，如果项目不会多部署使用jvm锁，如果项目多部署则使用分布式锁（加锁之后第一个请求就会被锁住，然后就会把这个数据加入缓存，这样后面的请求就会在缓存中拿到了，不必请求数据库了）</li>
 </ul>
 <h2 id="缓存雪崩"><a href="#缓存雪崩" class="headerlink" title="缓存雪崩"></a>缓存雪崩</h2><p>缓存服务器重启或大量缓存集中在某一时间内失效</p>
 <p>所有原本应该访问缓存的请求都去查询数据库了，而对数据库CPU和内存造成巨大压力</p>
@@ -435,6 +489,18 @@
 <li>对不同的数据使用不同的实效时间，甚至对相同的数据不同的请求也使用不同的失效时间</li>
 <li>大多数系统设计者考虑用加锁（ 最多的解决方案）或者队列的方式保证来保证不会有大量的线程对数据库一次性进行读写，从而避免失效时大量的并发请求落到底层存储系统上</li>
 </ul>
+<h2 id="缓存与数据库数据一致性"><a href="#缓存与数据库数据一致性" class="headerlink" title="缓存与数据库数据一致性"></a>缓存与数据库数据一致性</h2><p>如果要更新某条数据，该怎么更新？</p>
+<p>先更新数据库，再更新缓存：如果更新缓存失败了怎么就导致一致性问题</p>
+<p><img src="/images/redis-8.png" alt="redis-8"></p>
+<p>如果是两个线程同时去更新数据库，就会有下面这个问题：线程A更新字段数据为A，线程B更新字段数据为B，本应最终结果是B，但是由于B比A更早更新了缓存，这就导致缓存中的数据是A而数据库中是B</p>
+<p><img src="/images/redis-9.png" alt="redis-9"></p>
+<p>解决方案：先删除缓存，再修改数据库，如果数据库修改失败了，那么数据库中是旧数据，缓存中是空的，那么数据不会不一致。因为读的时候缓存没有，则读数据库中旧数据，然后更新到缓存中</p>
+<p>但是如果这个过程中有查询数据，那正好在缓存中查不到，就去数据库中查，然后把缓存更新了，这样缓存就没有被删除</p>
+<p><img src="/images/redis-10.png" alt="redis-10"></p>
+<p>解决方案一：延时双删，但是只能大概率解决，第5步需要做延时，要等查询完之后再把缓存删除</p>
+<p><img src="/images/redis-11.png" alt="redis-11"></p>
+<p>解决方案二：加队列，因为上图中3和5的顺序不能保证，只是加个延时并不一定能解决，所以加队列</p>
+<p><img src="/images/redis-12.png" alt="redis-12"></p>
 <h2 id="单线程的redis为什么这么快"><a href="#单线程的redis为什么这么快" class="headerlink" title="单线程的redis为什么这么快"></a>单线程的redis为什么这么快</h2><ol>
 <li>存内存操作：完全基于内存，绝大部分请求是纯粹的内存操作，非常快速。它的数据存在内存中，类似于<strong>HashMap</strong>，<strong>HashMap</strong>的优势就是查找和操作的时间复杂度都是O(1)；</li>
 <li>单线程操作：避免了频繁的上下文切换：采用单线程，避免了不必要的上下文切换和竞争条件，也不存在多进程或者多线程导致的切换而消耗 <strong>CPU</strong>，不用去考虑各种锁的问题，不存在加锁释放锁操作，没有因为可能出现死锁而导致的性能消耗；</li>
@@ -451,19 +517,22 @@
 <li>处理能力有限</li>
 <li>无法高可用</li>
 </ul>
-<h3 id="主从复制"><a href="#主从复制" class="headerlink" title="主从复制"></a>主从复制</h3><p><img src="/images/redis-3" alt="redis-3"></p>
+<h3 id="主从复制"><a href="#主从复制" class="headerlink" title="主从复制"></a>主从复制</h3><p><img src="/images/redis-3.png" alt="redis-3"></p>
 <p>Redis 的复制（replication）功能允许用户根据一个 Redis 服务器来创建任意多个该服务器的复制品，其中被复制的服务器为主服务器（master），而通过复制创建出来的服务器复制品则为从服务器（slave）。 只要主从服务器之间的网络连接正常，主从服务器两者会具有相同的数据，主服务器就会一直将发生在自己身上的数据更新同步 给从服务器，从而一直保证主从服务器的数据相同。</p>
 <h4 id="特点：-1"><a href="#特点：-1" class="headerlink" title="特点："></a>特点：</h4><ul>
 <li>master/slave 角色</li>
 <li>master/slave 数据相同</li>
 <li>降低 master 读压力，再转交从库</li>
+<li>读写分离，容灾备份</li>
+<li>主机专门写数据，从机专门读数据</li>
 </ul>
-<p>缺点：</p>
-<ul>
+<h4 id="缺点：-1"><a href="#缺点：-1" class="headerlink" title="缺点："></a>缺点：</h4><ul>
 <li>无法保证高可用</li>
 <li>没有解决 master 写的压力</li>
+<li>主机挂了不能自动切换从机，需要手动切换（哨兵解决）</li>
 </ul>
-<h3 id="哨兵模式"><a href="#哨兵模式" class="headerlink" title="哨兵模式"></a>哨兵模式</h3><p><img src="/images/redis-4.png" alt="redis-4"></p>
+<h3 id="哨兵模式"><a href="#哨兵模式" class="headerlink" title="哨兵模式"></a>哨兵模式</h3><p>哨兵模式的出现就是为了解决我们主从复制模式下需要认为操作的东西变为自动</p>
+<p><img src="/images/redis-4.png" alt="redis-4"></p>
 <p>Redis sentinel 是一个分布式系统中监控 redis 主从服务器，并在主服务器下线时自动进行故障转移。其中三个特性：</p>
 <ul>
 <li>监控（Monitoring）：  Sentinel 会不断地检查你的主服务器和从服务器是否运作正常。</li>
@@ -475,12 +544,17 @@
 <li>监控各个节点</li>
 <li>自动故障迁移</li>
 </ul>
-<h4 id="缺点：-1"><a href="#缺点：-1" class="headerlink" title="缺点："></a>缺点：</h4><ul>
+<h4 id="缺点：-2"><a href="#缺点：-2" class="headerlink" title="缺点："></a>缺点：</h4><ul>
 <li>主从模式，切换需要时间，丢数据</li>
 <li>没有解决 master 写的压力</li>
 </ul>
-<h3 id="redis-Cluster"><a href="#redis-Cluster" class="headerlink" title="redis Cluster"></a>redis Cluster</h3><p><img src="/images/redis-5.png" alt="redis-5"></p>
+<h3 id="redis-Cluster高可用集群"><a href="#redis-Cluster高可用集群" class="headerlink" title="redis Cluster高可用集群"></a>redis Cluster高可用集群</h3><p>哨兵模式下故障转移过程中整个redis服务是不可用的</p>
+<p>redis cluster是由多个主从节点群组成的分布式集群</p>
+<p><img src="/images/redis-5.png" alt="redis-5"></p>
 <p>Redis-Cluster采用无中心结构，每个节点保存数据和整个集群状态,每个节点都和其他所有节点连接。</p>
+<p><img src="/images/redis-7.png" alt="redis-7"></p>
+<p>对命令的key进行crc16（hash一致性算法）算法得到一串数字，再对16384取余，结果在哪个区间（槽位）就分配给哪个集群</p>
+<p>即使其中一个小集群挂了，仍然有三分之二的几率是可用的，等故障转移之后可用性全部恢复了，当然实际生产中还是要看集群的数量</p>
 <h4 id="特点：-3"><a href="#特点：-3" class="headerlink" title="特点："></a>特点：</h4><ul>
 <li>无中心架构（不存在哪个节点影响性能瓶颈），少了 proxy 层。</li>
 <li>数据按照 slot 存储分布在多个节点，节点间数据共享，可动态调整数据分布。</li>
@@ -488,7 +562,7 @@
 <li>高可用性，部分节点不可用时，集群仍可用。通过增加 Slave 做备份数据副本</li>
 <li>实现故障自动 failover，节点之间通过 gossip 协议交换状态信息，用投票机制完成 Slave到 Master 的角色提升。</li>
 </ul>
-<h4 id="缺点：-2"><a href="#缺点：-2" class="headerlink" title="缺点："></a>缺点：</h4><ul>
+<h4 id="缺点：-3"><a href="#缺点：-3" class="headerlink" title="缺点："></a>缺点：</h4><ul>
 <li>资源隔离性较差，容易出现相互影响的情况。</li>
 <li>数据通过异步复制,不保证数据的强一致性</li>
 </ul>
@@ -522,7 +596,7 @@
   <p><span>本文标题:</span><a href="/2020/03/28/redis/">redis</a></p>
   <p><span>文章作者:</span><a href="/" title="访问 Wxning 的个人博客">Wxning</a></p>
   <p><span>发布时间:</span>2020年03月28日 - 23:03</p>
-  <p><span>最后更新:</span>2020年03月28日 - 15:03</p>
+  <p><span>最后更新:</span>2020年03月28日 - 22:03</p>
   <p><span>原始链接:</span><a href="/2020/03/28/redis/" title="redis">http://yoursite.com/2020/03/28/redis/</a>
     <span class="copy-path" title="点击复制文章链接"><i class="fa fa-clipboard" data-clipboard-text="http://yoursite.com/2020/03/28/redis/" aria-label="复制成功！"></i></span>
   </p>
@@ -728,7 +802,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Redis介绍"><span class="nav-number">1.</span> <span class="nav-text">Redis介绍</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#RDB"><span class="nav-number">2.</span> <span class="nav-text">RDB</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#原理"><span class="nav-number">2.1.</span> <span class="nav-text">原理</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#什么时候fork子进程（触发RDB持久化机制）"><span class="nav-number">2.2.</span> <span class="nav-text">什么时候fork子进程（触发RDB持久化机制）</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#AOF"><span class="nav-number">3.</span> <span class="nav-text">AOF</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#AOF重写机制"><span class="nav-number">3.1.</span> <span class="nav-text">AOF重写机制</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#缓存穿透"><span class="nav-number">4.</span> <span class="nav-text">缓存穿透</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#缓存击穿"><span class="nav-number">5.</span> <span class="nav-text">缓存击穿</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#缓存雪崩"><span class="nav-number">6.</span> <span class="nav-text">缓存雪崩</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#单线程的redis为什么这么快"><span class="nav-number">7.</span> <span class="nav-text">单线程的redis为什么这么快</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Redis架构模式"><span class="nav-number">8.</span> <span class="nav-text">Redis架构模式</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#单机版"><span class="nav-number">8.1.</span> <span class="nav-text">单机版</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#特点："><span class="nav-number">8.1.1.</span> <span class="nav-text">特点：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#缺点："><span class="nav-number">8.1.2.</span> <span class="nav-text">缺点：</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#主从复制"><span class="nav-number">8.2.</span> <span class="nav-text">主从复制</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#特点：-1"><span class="nav-number">8.2.1.</span> <span class="nav-text">特点：</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#哨兵模式"><span class="nav-number">8.3.</span> <span class="nav-text">哨兵模式</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#特点：-2"><span class="nav-number">8.3.1.</span> <span class="nav-text">特点：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#缺点：-1"><span class="nav-number">8.3.2.</span> <span class="nav-text">缺点：</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#redis-Cluster"><span class="nav-number">8.4.</span> <span class="nav-text">redis Cluster</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#特点：-3"><span class="nav-number">8.4.1.</span> <span class="nav-text">特点：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#缺点：-2"><span class="nav-number">8.4.2.</span> <span class="nav-text">缺点：</span></a></li></ol></li></ol></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Redis介绍"><span class="nav-number">1.</span> <span class="nav-text">Redis介绍</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#redis数据类型"><span class="nav-number">2.</span> <span class="nav-text">redis数据类型</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#RDB"><span class="nav-number">3.</span> <span class="nav-text">RDB</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#原理"><span class="nav-number">3.1.</span> <span class="nav-text">原理</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#什么时候fork子进程（触发RDB持久化机制）"><span class="nav-number">3.2.</span> <span class="nav-text">什么时候fork子进程（触发RDB持久化机制）</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#AOF"><span class="nav-number">4.</span> <span class="nav-text">AOF</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#AOF重写机制"><span class="nav-number">4.1.</span> <span class="nav-text">AOF重写机制</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#总结"><span class="nav-number">5.</span> <span class="nav-text">总结</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#redis提供了RDB持久化方案，为什么还要aof"><span class="nav-number">5.1.</span> <span class="nav-text">redis提供了RDB持久化方案，为什么还要aof</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#如果AOF和RDB同时存在，听谁的"><span class="nav-number">5.2.</span> <span class="nav-text">如果AOF和RDB同时存在，听谁的</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#RDB-和-AOF优劣势"><span class="nav-number">5.3.</span> <span class="nav-text">RDB 和 AOF优劣势</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#使用缓存一般思路"><span class="nav-number">6.</span> <span class="nav-text">使用缓存一般思路</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#缓存穿透"><span class="nav-number">7.</span> <span class="nav-text">缓存穿透</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#缓存击穿"><span class="nav-number">8.</span> <span class="nav-text">缓存击穿</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#缓存雪崩"><span class="nav-number">9.</span> <span class="nav-text">缓存雪崩</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#缓存与数据库数据一致性"><span class="nav-number">10.</span> <span class="nav-text">缓存与数据库数据一致性</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#单线程的redis为什么这么快"><span class="nav-number">11.</span> <span class="nav-text">单线程的redis为什么这么快</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Redis架构模式"><span class="nav-number">12.</span> <span class="nav-text">Redis架构模式</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#单机版"><span class="nav-number">12.1.</span> <span class="nav-text">单机版</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#特点："><span class="nav-number">12.1.1.</span> <span class="nav-text">特点：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#缺点："><span class="nav-number">12.1.2.</span> <span class="nav-text">缺点：</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#主从复制"><span class="nav-number">12.2.</span> <span class="nav-text">主从复制</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#特点：-1"><span class="nav-number">12.2.1.</span> <span class="nav-text">特点：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#缺点：-1"><span class="nav-number">12.2.2.</span> <span class="nav-text">缺点：</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#哨兵模式"><span class="nav-number">12.3.</span> <span class="nav-text">哨兵模式</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#特点：-2"><span class="nav-number">12.3.1.</span> <span class="nav-text">特点：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#缺点：-2"><span class="nav-number">12.3.2.</span> <span class="nav-text">缺点：</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#redis-Cluster高可用集群"><span class="nav-number">12.4.</span> <span class="nav-text">redis Cluster高可用集群</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#特点：-3"><span class="nav-number">12.4.1.</span> <span class="nav-text">特点：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#缺点：-3"><span class="nav-number">12.4.2.</span> <span class="nav-text">缺点：</span></a></li></ol></li></ol></li></ol></div>
             
 
           </div>
