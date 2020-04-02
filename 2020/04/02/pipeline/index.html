@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Go,pipeline,">
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="pipeline有个数据源，把这个数据源送到一个节点，这个节点处理完再送到下一个节点，这样一级一级送下去，最后又一个Sink，Sink节点只进不出。 节点和节点之间怎么通信呢？ 传统语言是通过方法调用实现的。 Go语言是通过channel通信的 归并排序数据分为左右两半，分别归并排序，再把两个有序数据合并 外部排序pipeline首先有个原始数据，然后分块得读取这个原始数据，保证内存能够放得下，每">
+<meta name="keywords" content="Go,pipeline">
+<meta property="og:type" content="article">
+<meta property="og:title" content="go语言搭建pipeline">
+<meta property="og:url" content="http://yoursite.com/2020/04/02/pipeline/index.html">
+<meta property="og:site_name" content="Wxning">
+<meta property="og:description" content="pipeline有个数据源，把这个数据源送到一个节点，这个节点处理完再送到下一个节点，这样一级一级送下去，最后又一个Sink，Sink节点只进不出。 节点和节点之间怎么通信呢？ 传统语言是通过方法调用实现的。 Go语言是通过channel通信的 归并排序数据分为左右两半，分别归并排序，再把两个有序数据合并 外部排序pipeline首先有个原始数据，然后分块得读取这个原始数据，保证内存能够放得下，每">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="http://yoursite.com/images/pipeline-4.png">
+<meta property="og:image" content="http://yoursite.com/images/pipeline-6.png">
+<meta property="og:updated_time" content="2020-04-02T09:27:29.266Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="go语言搭建pipeline">
+<meta name="twitter:description" content="pipeline有个数据源，把这个数据源送到一个节点，这个节点处理完再送到下一个节点，这样一级一级送下去，最后又一个Sink，Sink节点只进不出。 节点和节点之间怎么通信呢？ 传统语言是通过方法调用实现的。 Go语言是通过channel通信的 归并排序数据分为左右两半，分别归并排序，再把两个有序数据合并 外部排序pipeline首先有个原始数据，然后分块得读取这个原始数据，保证内存能够放得下，每">
+<meta name="twitter:image" content="http://yoursite.com/images/pipeline-4.png">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2020/04/02/pipeline/">
+
+
+
+
+
+  <title>go语言搭建pipeline | Wxning</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+    <a href="https://github.com/wxning1107" class="github-corner" aria-label="View source on GitHub"><svg width="80" height="80" viewbox="0 0 250 250" style="fill:#151513; color:#fff; position: absolute; top: 0; border: 0; right: 0;" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"/><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"/><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"/></svg></a><style>.github-corner:hover .octo-arm{animation:octocat-wave 560ms ease-in-out}@keyframes octocat-wave{0%,100%{transform:rotate(0)}20%,60%{transform:rotate(-25deg)}40%,80%{transform:rotate(10deg)}}@media (max-width:500px){.github-corner:hover .octo-arm{animation:none}.github-corner .octo-arm{animation:octocat-wave 560ms ease-in-out}}</style>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Wxning</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br>
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br>
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-个人简历">
+          <a href="/个人简历/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br>
+            
+            个人简历
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/04/02/pipeline/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Wxning">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Wxning">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">go语言搭建pipeline</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-04-02T11:27:33+08:00">
+                2020-04-02
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+            <span class="post-meta-divider">|</span>
+            <span class="page-pv"><i class="fa fa-file-o"></i> 阅读数
+            <span class="busuanzi-value" id="busuanzi_value_page_pv"></span>次
+            </span>
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="pipeline"><a href="#pipeline" class="headerlink" title="pipeline"></a>pipeline</h2><p>有个数据源，把这个数据源送到一个节点，这个节点处理完再送到下一个节点，这样一级一级送下去，最后又一个Sink，Sink节点只进不出。</p>
+<p>节点和节点之间怎么通信呢？</p>
+<p>传统语言是通过方法调用实现的。</p>
+<p>Go语言是通过channel通信的</p>
+<h2 id="归并排序"><a href="#归并排序" class="headerlink" title="归并排序"></a>归并排序</h2><p>数据分为左右两半，分别归并排序，再把两个有序数据合并</p>
+<h2 id="外部排序pipeline"><a href="#外部排序pipeline" class="headerlink" title="外部排序pipeline"></a>外部排序pipeline</h2><p>首先有个原始数据，然后分块得读取这个原始数据，保证内存能够放得下，每一块各自进行内部排序，排好序后两两进行归并，每个归并节点放的都是排好序的大数据，然后再两两归并，最后写入文件中。</p>
+<p><img src="/images/pipeline-4.png" alt="pipeline-1"></p>
+<h2 id="实现"><a href="#实现" class="headerlink" title="实现"></a>实现</h2><h2 id="基础节点"><a href="#基础节点" class="headerlink" title="基础节点"></a>基础节点</h2><p>首先我们有一个数据源，它返回的是一个channel</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">ArraySource</span><span class="params">(a ...<span class="keyword">int</span>)</span> &lt;-<span class="title">chan</span> <span class="title">int</span></span> &#123;</span><br><span class="line">	out := <span class="built_in">make</span>(<span class="keyword">chan</span> <span class="keyword">int</span>)</span><br><span class="line">	<span class="keyword">go</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">		<span class="keyword">for</span> _, v := <span class="keyword">range</span> a &#123;</span><br><span class="line">			out &lt;- v</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="built_in">close</span>(out)</span><br><span class="line">	&#125;()</span><br><span class="line">	<span class="keyword">return</span> out</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>然后对这个数据源进行内部排序</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">InMenSort</span><span class="params">(in &lt;-<span class="keyword">chan</span> <span class="keyword">int</span>)</span> &lt;-<span class="title">chan</span> <span class="title">int</span></span> &#123;</span><br><span class="line">	out := <span class="built_in">make</span>(<span class="keyword">chan</span> <span class="keyword">int</span>)</span><br><span class="line">	<span class="keyword">go</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">		<span class="comment">// Read into memory</span></span><br><span class="line">		a := []<span class="keyword">int</span>&#123;&#125;</span><br><span class="line">		<span class="keyword">for</span> v := <span class="keyword">range</span> in &#123;</span><br><span class="line">			a = <span class="built_in">append</span>(a, v)</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="comment">// Sort</span></span><br><span class="line">		sort.Ints(a)</span><br><span class="line">		<span class="comment">//Output</span></span><br><span class="line">		<span class="keyword">for</span> _, v := <span class="keyword">range</span> a &#123;</span><br><span class="line">			out &lt;- v</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="built_in">close</span>(out)</span><br><span class="line">	&#125;()</span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> out</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>主函数直接拼接起来</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">	<span class="string">"fmt"</span></span><br><span class="line">	<span class="string">"pipeline/pipeline"</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	p := pipeline.InMenSort(pipeline.ArraySource(<span class="number">3</span>, <span class="number">2</span>, <span class="number">6</span>, <span class="number">7</span>, <span class="number">4</span>))</span><br><span class="line">	<span class="comment">// 用range发送方一定要close</span></span><br><span class="line">	<span class="keyword">for</span> v := <span class="keyword">range</span> p &#123;</span><br><span class="line">		fmt.Println(v)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这样我们就实现了一个基础的内部排序了！</p>
+<h2 id="归并节点"><a href="#归并节点" class="headerlink" title="归并节点"></a>归并节点</h2><p>讲两个内部排序归并</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">Merge</span><span class="params">(in1, in2 &lt;-<span class="keyword">chan</span> <span class="keyword">int</span>)</span> &lt;-<span class="title">chan</span> <span class="title">int</span></span> &#123;</span><br><span class="line">    out := <span class="built_in">make</span>(<span class="keyword">chan</span> <span class="keyword">int</span>)</span><br><span class="line">    <span class="keyword">go</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">      v1, ok1 := &lt;-in1</span><br><span class="line">      v2, ok2 := &lt;-in2</span><br><span class="line">      <span class="keyword">for</span> ok1 || ok2 &#123;</span><br><span class="line">        <span class="keyword">if</span> !ok2 || (ok1 &amp;&amp; v1 &lt;= v2) &#123;</span><br><span class="line">          out &lt;- v1</span><br><span class="line">          v1, ok1 = &lt;-in1</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">          out &lt;- v2</span><br><span class="line">          v2, ok2 = &lt;-in2</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="built_in">close</span>(out)</span><br><span class="line">    &#125;()</span><br><span class="line">    <span class="keyword">return</span> out</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>主函数merge两个内部排序节点</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">	<span class="string">"fmt"</span></span><br><span class="line">	<span class="string">"pipeline/pipeline"</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	p := pipeline.Merge(pipeline.InMenSort(pipeline.ArraySource(<span class="number">3</span>, <span class="number">2</span>, <span class="number">6</span>, <span class="number">7</span>, <span class="number">4</span>)),pipeline.InMenSort(pipeline.ArraySource(<span class="number">1</span>, <span class="number">2</span>, <span class="number">9</span>, <span class="number">5</span>, <span class="number">3</span>)))</span><br><span class="line">	<span class="comment">// 用range发送方一定要close</span></span><br><span class="line">	<span class="keyword">for</span> v := <span class="keyword">range</span> p &#123;</span><br><span class="line">		fmt.Println(v)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>现在我们已经实现了从array读取数据源，然后用两个内部排序节点排序，最后再通过merge将两个节点归并。</p>
+<p>我们的数据源是从array读取，这点不好，让我们来从文件中读取吧！</p>
+<h2 id="文件读写"><a href="#文件读写" class="headerlink" title="文件读写"></a>文件读写</h2><p>在外部排序中数据源要是一个文件</p>
+<p>读文件，这里统一用大端BigEndian读取数据</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">ReaderSource</span><span class="params">(reader io.Reader)</span> &lt;-<span class="title">chan</span> <span class="title">int</span></span> &#123;</span><br><span class="line">	out := <span class="built_in">make</span>(<span class="keyword">chan</span> <span class="keyword">int</span>)</span><br><span class="line">	<span class="keyword">go</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">		buffer := <span class="built_in">make</span>([]<span class="keyword">byte</span>, <span class="number">8</span>)</span><br><span class="line">		<span class="keyword">for</span> &#123;</span><br><span class="line">			n, err := reader.Read(buffer)</span><br><span class="line">			<span class="keyword">if</span> n &gt; <span class="number">0</span> &#123;</span><br><span class="line">				<span class="comment">// 把[]byte转化为int</span></span><br><span class="line">				v := <span class="keyword">int</span>(binary.BigEndian.Uint64(buffer))</span><br><span class="line">				out &lt;- v</span><br><span class="line">			&#125;</span><br><span class="line">			<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">				<span class="keyword">break</span></span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="built_in">close</span>(out)</span><br><span class="line">	&#125;()</span><br><span class="line">	<span class="keyword">return</span> out</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>写文件</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">WriterSink</span><span class="params">(writer io.Writer, in &lt;-<span class="keyword">chan</span> <span class="keyword">int</span>)</span></span> &#123;</span><br><span class="line">	<span class="keyword">for</span> v := <span class="keyword">range</span> in &#123;</span><br><span class="line">		buffer := <span class="built_in">make</span>([]<span class="keyword">byte</span>, <span class="number">8</span>)</span><br><span class="line">		binary.BigEndian.PutUint64(buffer, <span class="keyword">uint64</span>(v))</span><br><span class="line">		writer.Write(buffer)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>当然数据源应该是自动产生的，我们再实现一个随机产生数据源的方法</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">RandomSource</span><span class="params">(count <span class="keyword">int</span>)</span> &lt;-<span class="title">chan</span> <span class="title">int</span></span> &#123;</span><br><span class="line">	out := <span class="built_in">make</span>(<span class="keyword">chan</span> <span class="keyword">int</span>)</span><br><span class="line">	<span class="keyword">go</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">		<span class="keyword">for</span> i := <span class="number">0</span>; i &lt; count; i++ &#123;</span><br><span class="line">			out &lt;- rand.Int()</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;()</span><br><span class="line">	<span class="keyword">return</span> out</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>我们的main函数如下</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	<span class="keyword">const</span> filename = <span class="string">"large.in"</span></span><br><span class="line">	<span class="keyword">const</span> n = <span class="number">100000000</span></span><br><span class="line">	file, err := os.Create(filename)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="built_in">panic</span>(err)</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">defer</span> file.Close()</span><br><span class="line"></span><br><span class="line">	p := pipeline.RandomSource(n)</span><br><span class="line">	pipeline.WriterSink(file, p)</span><br><span class="line">	file, err = os.Open(filename)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="built_in">panic</span>(err)</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">defer</span> file.Close()</span><br><span class="line">	p = pipeline.ReaderSource(file)</span><br><span class="line">	count := <span class="number">0</span></span><br><span class="line">	<span class="keyword">for</span> v := <span class="keyword">range</span> p &#123;</span><br><span class="line">		fmt.Println(v)</span><br><span class="line">		count++</span><br><span class="line">		<span class="keyword">if</span> count &gt;= <span class="number">100</span> &#123;</span><br><span class="line">			<span class="keyword">break</span></span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这就实现了自动生成随机数，并写入文件</p>
+<p>但是上面这段代码是大数据，一共产生100兆个数，速度很慢，为什么这么慢呢？</p>
+<p>因为Reader和Writer没有buffer</p>
+<p>我们再给Reader和Writer加个buffer</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">    <span class="keyword">const</span> filename = <span class="string">"large.in"</span></span><br><span class="line">    <span class="keyword">const</span> n = <span class="number">100000000</span></span><br><span class="line">    file, err := os.Create(filename)</span><br><span class="line">    <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">      	<span class="built_in">panic</span>(err)</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">defer</span> file.Close()</span><br><span class="line"></span><br><span class="line">    p := pipeline.RandomSource(n)</span><br><span class="line"></span><br><span class="line">    writer := bufio.NewWriter(file)</span><br><span class="line">    pipeline.WriterSink(writer, p)</span><br><span class="line">    writer.Flush()</span><br><span class="line"></span><br><span class="line">    file, err = os.Open(filename)</span><br><span class="line">    <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">      	<span class="built_in">panic</span>(err)</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">defer</span> file.Close()</span><br><span class="line">    reader := bufio.NewReader(file)</span><br><span class="line">    p = pipeline.ReaderSource(reader)</span><br><span class="line">    count := <span class="number">0</span></span><br><span class="line">    <span class="keyword">for</span> v := <span class="keyword">range</span> p &#123;</span><br><span class="line">      fmt.Println(v)</span><br><span class="line">      count++</span><br><span class="line">      <span class="keyword">if</span> count &gt;= <span class="number">100</span> &#123;</span><br><span class="line">          <span class="keyword">break</span></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>buffer的writer要记得flush，不然得到的数据就不是800兆了。</p>
+<p>现在我们实现了更多的节点，有ReaderSource和WriterSink，我们又用随机数演示测试数据的生成，都用bufio包装了，所以速度很快</p>
+<h2 id="完整外部排序"><a href="#完整外部排序" class="headerlink" title="完整外部排序"></a>完整外部排序</h2><p>现在我们这个外部排序pipeline还有一些没有完成，一个是读取文件要分块读取，还有两两归并再归并还没有实现</p>
+<p>现在我们来实现这些功能吧！</p>
+<p>首先我们来实现多路的两两归并</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">MergeN</span><span class="params">(inputs ...&lt;-<span class="keyword">chan</span> <span class="keyword">int</span>)</span> &lt;-<span class="title">chan</span> <span class="title">int</span></span> &#123;</span><br><span class="line">    <span class="keyword">if</span> <span class="built_in">len</span>(inputs) == <span class="number">1</span> &#123;</span><br><span class="line">      <span class="keyword">return</span> inputs[<span class="number">0</span>]</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    m := <span class="built_in">len</span>(inputs) / <span class="number">2</span></span><br><span class="line">    <span class="comment">// merge inputs[0..m) and inputs[m..end)</span></span><br><span class="line">    <span class="keyword">return</span> Merge(MergeN(inputs[:m]...), MergeN(inputs[m:]...))</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>看起来很简单啊，只是用递归去实现了一下</p>
+<p>然后我们reader读文件要分块</p>
+<p>那我们来改造一下ReaderSource</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">ReaderSource</span><span class="params">(reader io.Reader, chunkSize <span class="keyword">int</span>)</span> &lt;-<span class="title">chan</span> <span class="title">int</span></span> &#123;</span><br><span class="line">	out := <span class="built_in">make</span>(<span class="keyword">chan</span> <span class="keyword">int</span>)</span><br><span class="line">	<span class="keyword">go</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">      buffer := <span class="built_in">make</span>([]<span class="keyword">byte</span>, <span class="number">8</span>)</span><br><span class="line">      bytesRead := <span class="number">0</span></span><br><span class="line">      <span class="keyword">for</span> &#123;</span><br><span class="line">          n, err := reader.Read(buffer)</span><br><span class="line">          bytesRead += n</span><br><span class="line">          <span class="keyword">if</span> n &gt; <span class="number">0</span> &#123;</span><br><span class="line">              <span class="comment">// 把[]byte转化为int</span></span><br><span class="line">              v := <span class="keyword">int</span>(binary.BigEndian.Uint64(buffer))</span><br><span class="line">              out &lt;- v</span><br><span class="line">          &#125;</span><br><span class="line">          <span class="keyword">if</span> err != <span class="literal">nil</span> || (chunkSize != <span class="number">-1</span> &amp;&amp; bytesRead &gt;= chunkSize) &#123;</span><br><span class="line">              <span class="keyword">break</span></span><br><span class="line">          &#125;</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="built_in">close</span>(out)</span><br><span class="line">	&#125;()</span><br><span class="line">	<span class="keyword">return</span> out</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这里我们设置chunkSize为-1表示全部读，否则就是不能超过chunkSize读取</p>
+<p>很简单吧！现在我们开始实现外部排序吧！</p>
+<p>首先我们来创建一个pipeline</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">createPipeline</span><span class="params">(filename <span class="keyword">string</span>, fileSize, chunkCount <span class="keyword">int</span>)</span> &lt;-<span class="title">chan</span> <span class="title">int</span></span> &#123;</span><br><span class="line">    chunkSize := fileSize / chunkCount</span><br><span class="line"></span><br><span class="line">    sortResults := []&lt;-<span class="keyword">chan</span> <span class="keyword">int</span>&#123;&#125;</span><br><span class="line">    <span class="keyword">for</span> i := <span class="number">0</span>; i &lt; chunkCount; i++ &#123;</span><br><span class="line">        file, err := os.Open(filename)</span><br><span class="line">        <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">          	<span class="built_in">panic</span>(err)</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">// file要从这一块开始读，所以file要移动一下</span></span><br><span class="line">        file.Seek(<span class="keyword">int64</span>(chunkSize * i), <span class="number">0</span>)</span><br><span class="line"></span><br><span class="line">        source := pipeline.ReaderSource(bufio.NewReader(file), chunkSize)</span><br><span class="line">        sortResults= <span class="built_in">append</span>(sortResults, pipeline.InMenSort(source))</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> pipeline.MergeN(sortResults...)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这里我们分块去读，每次读file都移动一下，然后排好序，把结果merge起来。</p>
+<p>接下来我们把排好序的数据写入文件</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">writeToFile</span><span class="params">(p &lt;-<span class="keyword">chan</span> <span class="keyword">int</span>, filename <span class="keyword">string</span>)</span></span> &#123;</span><br><span class="line">    file, err := os.Create(filename)</span><br><span class="line">    <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">      	<span class="built_in">panic</span>(err)</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">defer</span> file.Close()</span><br><span class="line"></span><br><span class="line">    writer := bufio.NewWriter(file)</span><br><span class="line">    <span class="keyword">defer</span> writer.Flush()</span><br><span class="line"></span><br><span class="line">    pipeline.WriterSink(writer, p)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>然后再打印出来</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">printFile</span><span class="params">(filename <span class="keyword">string</span>)</span></span> &#123;</span><br><span class="line">    file, err := os.Open(filename)</span><br><span class="line">    <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">      	<span class="built_in">panic</span>(err)</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">defer</span> file.Close()</span><br><span class="line"></span><br><span class="line">    p := pipeline.ReaderSource(file, <span class="number">-1</span>)</span><br><span class="line">    <span class="keyword">for</span> v := <span class="keyword">range</span> p &#123;</span><br><span class="line">      	fmt.Println(v)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>最后主函数这样写</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">    p := createPipeline(<span class="string">"small.in"</span>, <span class="number">512</span>, <span class="number">4</span>)</span><br><span class="line">    writeToFile(p, <span class="string">"small.out"</span>)</span><br><span class="line">    printFile(<span class="string">"small.out"</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>但是程序还是很慢，排序需要跑将近30秒，我们看慢在哪里，channel是无缓存的，这样就会阻塞等待，所以我们给channel加个1024的缓存。</p>
+<p>虽然排序是并行的排的，但是merge是O(n)的，每个数都要过一下。所以时间比非并行的要慢。</p>
+<p>我们来看一下输出结果：</p>
+<p><img src="/images/pipeline-6.png" alt="pipeline-6"></p>
+<p>很好！</p>
+<h2 id="网络版外部排序"><a href="#网络版外部排序" class="headerlink" title="网络版外部排序"></a>网络版外部排序</h2><p>InMemSort和WriterSink之间通过网络连接，ReaderSource和Merge之间通过网络连接</p>
+<p>首先我们把服务器搭起来</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">NetWorkSink</span><span class="params">(addr <span class="keyword">string</span>, in &lt;-<span class="keyword">chan</span> <span class="keyword">int</span>)</span></span> &#123;</span><br><span class="line">    listener, err := net.Listen(<span class="string">"tcp"</span>, addr)</span><br><span class="line">    <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">      	<span class="built_in">panic</span>(err)</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">go</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">      <span class="keyword">defer</span> listener.Close()</span><br><span class="line"></span><br><span class="line">      conn, err := listener.Accept()</span><br><span class="line">      <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">        	<span class="built_in">panic</span>(err)</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="keyword">defer</span> conn.Close()</span><br><span class="line"></span><br><span class="line">      writer := bufio.NewWriter(conn)</span><br><span class="line">      <span class="keyword">defer</span> writer.Flush()</span><br><span class="line"></span><br><span class="line">      WriterSink(writer, in)</span><br><span class="line">    &#125;()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>然后封装一下客户端</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">NetworkSource</span><span class="params">(addr <span class="keyword">string</span>)</span> &lt;-<span class="title">chan</span> <span class="title">int</span></span> &#123;</span><br><span class="line">    out := <span class="built_in">make</span>(<span class="keyword">chan</span> <span class="keyword">int</span>)</span><br><span class="line">    <span class="keyword">go</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">        conn, err := net.Dial(<span class="string">"tcp"</span>, addr)</span><br><span class="line">        <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">          	<span class="built_in">panic</span>(err)</span><br><span class="line">        &#125;</span><br><span class="line">        r := ReaderSource(bufio.NewReader(conn), <span class="number">-1</span>)</span><br><span class="line"></span><br><span class="line">        <span class="keyword">for</span> v := <span class="keyword">range</span> r &#123;</span><br><span class="line">          	out &lt;- v</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="built_in">close</span>(out)</span><br><span class="line">    &#125;()</span><br><span class="line">    <span class="keyword">return</span> out</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>然后我们再把createPipeline封装成network版</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">createNetworkPipeline</span><span class="params">(filename <span class="keyword">string</span>, fileSize, chunkCount <span class="keyword">int</span>)</span> &lt;-<span class="title">chan</span> <span class="title">int</span></span> &#123;</span><br><span class="line">    chunkSize := fileSize / chunkCount</span><br><span class="line">    pipeline.Init()</span><br><span class="line"></span><br><span class="line">    sortAddr := []<span class="keyword">string</span>&#123;&#125;</span><br><span class="line">    <span class="keyword">for</span> i := <span class="number">0</span>; i &lt; chunkCount; i++ &#123;</span><br><span class="line">        file, err := os.Open(filename)</span><br><span class="line">        <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">          	<span class="built_in">panic</span>(err)</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="comment">// file要从这一块开始读，所以file要移动一下</span></span><br><span class="line">      file.Seek(<span class="keyword">int64</span>(chunkSize * i), <span class="number">0</span>)</span><br><span class="line"></span><br><span class="line">      source := pipeline.ReaderSource(bufio.NewReader(file), chunkSize)</span><br><span class="line"></span><br><span class="line">      addr := <span class="string">":"</span> + strconv.Itoa(<span class="number">7000</span> + i)</span><br><span class="line">      pipeline.NetWorkSink(addr, pipeline.InMenSort(source))</span><br><span class="line">      sortAddr = <span class="built_in">append</span>(sortAddr, addr)</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    sortResults := []&lt;-<span class="keyword">chan</span> <span class="keyword">int</span>&#123;&#125;</span><br><span class="line">    <span class="keyword">for</span> _, addr := <span class="keyword">range</span> sortAddr &#123;</span><br><span class="line">      	sortResults = <span class="built_in">append</span>(sortResults, pipeline.NetworkSource(addr))</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> pipeline.MergeN(sortResults...)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这样就可以部署到服务器上了</p>
+<p>好了，用go语言搭建并行处理管道已经完成了！</p>
+
+      
+    </div>
+    
+    
+    
+
+    <div>
+      
+        <div>
+    
+        <div style="text-align:center;color: #ccc;font-size:14px;">-------------本文结束<i class="fa fa-paw"></i>感谢您的阅读-------------</div>
+    
+</div>
+
+      
+    </div>
+
+    <div>
+          
+            
+<div class="my_post_copyright">
+  <script src="//cdn.bootcss.com/clipboard.js/1.5.10/clipboard.min.js"></script>
+
+  <!-- JS库 sweetalert 可修改路径 -->
+  <script src="https://cdn.bootcss.com/jquery/2.0.0/jquery.min.js"></script>
+  <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+  <p><span>本文标题:</span><a href="/2020/04/02/pipeline/">go语言搭建pipeline</a></p>
+  <p><span>文章作者:</span><a href="/" title="访问 Wxning 的个人博客">Wxning</a></p>
+  <p><span>发布时间:</span>2020年04月02日 - 11:04</p>
+  <p><span>最后更新:</span>2020年04月02日 - 17:04</p>
+  <p><span>原始链接:</span><a href="/2020/04/02/pipeline/" title="go语言搭建pipeline">http://yoursite.com/2020/04/02/pipeline/</a>
+    <span class="copy-path" title="点击复制文章链接"><i class="fa fa-clipboard" data-clipboard-text="http://yoursite.com/2020/04/02/pipeline/" aria-label="复制成功！"></i></span>
+  </p>
+  <p><span>许可协议:</span><i class="fa fa-creative-commons"></i> <a rel="license" href="https://creativecommons.org/licenses/by-nc-nd/4.0/" target="_blank" title="Attribution-NonCommercial-NoDerivatives 4.0 International (CC BY-NC-ND 4.0)">署名-非商业性使用-禁止演绎 4.0 国际</a> 转载请保留原文链接及作者。</p>
+</div>
+<script>
+    var clipboard = new Clipboard('.fa-clipboard');
+    $(".fa-clipboard").click(function(){
+      clipboard.on('success', function(){
+        swal({
+          title: "",
+          text: '复制成功',
+          icon: "success",
+          showConfirmButton: true
+          });
+    });
+    });
+</script>
+
+
+          
+    </div>
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Go/" rel="tag"># Go</a>
+          
+            <a href="/tags/pipeline/" rel="tag"># pipeline</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2020/03/28/redis/" rel="next" title="redis">
+                <i class="fa fa-chevron-left"></i> redis
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+    <div class="comments" id="comments">
+      <div id="lv-container" data-id="city" data-uid="MTAyMC80NTE2Ny8yMTY4NA=="></div>
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="/images/avatar.gif" alt="Wxning">
+            
+              <p class="site-author-name" itemprop="name">Wxning</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/">
+              
+                  <span class="site-state-item-count">17</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">14</span>
+                  <span class="site-state-item-name">分类</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">13</span>
+                  <span class="site-state-item-name">标签</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+            <div class="links-of-author motion-element">
+                
+                  <span class="links-of-author-item">
+                    <a href="https://github.com/wxning1107" target="_blank" title="GitHub">
+                      
+                        <i class="fa fa-fw fa-github"></i>GitHub</a>
+                  </span>
+                
+            </div>
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#pipeline"><span class="nav-number">1.</span> <span class="nav-text">pipeline</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#归并排序"><span class="nav-number">2.</span> <span class="nav-text">归并排序</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#外部排序pipeline"><span class="nav-number">3.</span> <span class="nav-text">外部排序pipeline</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#实现"><span class="nav-number">4.</span> <span class="nav-text">实现</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#基础节点"><span class="nav-number">5.</span> <span class="nav-text">基础节点</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#归并节点"><span class="nav-number">6.</span> <span class="nav-text">归并节点</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#文件读写"><span class="nav-number">7.</span> <span class="nav-text">文件读写</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#完整外部排序"><span class="nav-number">8.</span> <span class="nav-text">完整外部排序</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#网络版外部排序"><span class="nav-number">9.</span> <span class="nav-text">网络版外部排序</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Wxning</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Mist</a> v5.1.4</div>
+
+
+
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+  
+    <span class="site-uv">
+      <i class="fa fa-user"></i> 访问人数
+      <span class="busuanzi-value" id="busuanzi_value_site_uv"></span>
+      人
+    </span>
+  
+
+  
+    <span class="site-pv">
+      <i class="fa fa-eye"></i> 总访问量
+      <span class="busuanzi-value" id="busuanzi_value_site_pv"></span>
+      次
+    </span>
+  
+</div>
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/canvas-nest/canvas-nest.min.js"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+    <script type="text/javascript">
+      (function(d, s) {
+        var j, e = d.getElementsByTagName(s)[0];
+        if (typeof LivereTower === 'function') { return; }
+        j = d.createElement(s);
+        j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+        j.async = true;
+        e.parentNode.insertBefore(j, e);
+      })(document, 'script');
+    </script>
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
