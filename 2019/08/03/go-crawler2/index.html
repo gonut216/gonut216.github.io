@@ -87,7 +87,7 @@
 <meta property="og:site_name" content="Wxning">
 <meta property="og:description" content="Introduction在上一篇文章中,我们用go语言实现了一个单任务版爬虫，但是单任务版爬虫我们可以看到它爬取速度非常慢，每个页面都要去请求并且等待它返回以后才可以去请求下一个页面，这些动作完全可以并发地执行的，今天我们就来用go语言独特的goroutine实现并发吧！ 并发版爬虫架构单任务版爬虫架构首先回顾一下单任务版爬虫的架构，首先Engine获得request并放到任务队列里，然后Engi">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:updated_time" content="2020-04-09T03:09:27.595Z">
+<meta property="og:updated_time" content="2020-04-09T07:43:45.071Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="go实现并发版爬虫">
 <meta name="twitter:description" content="Introduction在上一篇文章中,我们用go语言实现了一个单任务版爬虫，但是单任务版爬虫我们可以看到它爬取速度非常慢，每个页面都要去请求并且等待它返回以后才可以去请求下一个页面，这些动作完全可以并发地执行的，今天我们就来用go语言独特的goroutine实现并发吧！ 并发版爬虫架构单任务版爬虫架构首先回顾一下单任务版爬虫的架构，首先Engine获得request并放到任务队列里，然后Engi">
@@ -398,7 +398,44 @@
 <figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> rateLimiter = time.Tick(<span class="number">10</span> * time.Millisecond)</span><br><span class="line"></span><br><span class="line">&lt;- rateLimiter</span><br></pre></td></tr></table></figure>
 
 <p>那我们并发版爬虫就完成了！！！</p>
-<h3 id="links："><a href="#links：" class="headerlink" title="links："></a>links：</h3><p>源码：<a href="https://github.com/wxning1107/Crawler" target="_blank" rel="noopener">https://github.com/wxning1107/Crawler)</a></p>
+<h2 id="实现储存模块"><a href="#实现储存模块" class="headerlink" title="实现储存模块"></a>实现储存模块</h2><p>首先我们要考虑有什么去存储爬取的数据呢？ElasticSearch是一个很好的选择：</p>
+<ul>
+<li>全文搜索引擎</li>
+<li>快速的存储，搜索和分析海量数据</li>
+</ul>
+<p>首先ElasticSearch对我们这个项目能做什么呢？</p>
+<ul>
+<li>存储我们爬取的数据</li>
+<li>不需要建表，配置字段</li>
+<li>json格式的<code>文档</code></li>
+<li>全文搜索</li>
+</ul>
+<p>ElasticSearch需要依赖java8，我们安装ElasticSearch还需要安装java8，这里我们用Docker去安装启动ElasticSearch</p>
+<p>Docker是什么呢，这里简单介绍一下：</p>
+<ul>
+<li>容器引擎</li>
+<li>打包并发布应用程序，包里面包括系统，环境，配置，依赖</li>
+<li>沙箱机制</li>
+</ul>
+<p>好，接下来我们就实现存数据吧</p>
+<p>我们先下载ElasticSearch的<a href="https://github.com/olivere/elastic" target="_blank" rel="noopener">client</a>，我们用oliver写的的go elastic client</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">go</span> get https:<span class="comment">//github.com/olivere/elastic</span></span><br></pre></td></tr></table></figure>
+
+<p>然后回到代码，我们给ConcurrentEngine加一个字段itemChan</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> ConcurrentEngine <span class="keyword">struct</span> &#123;</span><br><span class="line">	Scheduler   Scheduler</span><br><span class="line">	WorkerCount <span class="keyword">int</span></span><br><span class="line">	ItemChan <span class="keyword">chan</span> <span class="keyword">interface</span>&#123;&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>我们来实现一下itemSaver</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">ItemSaver</span><span class="params">(index <span class="keyword">string</span>)</span> <span class="params">(<span class="keyword">chan</span> engine.Item, error)</span></span> &#123;</span><br><span class="line">	<span class="comment">// Must turn off sniff in docker</span></span><br><span class="line">	client, err := elastic.NewClient(elastic.SetSniff(<span class="literal">false</span>))</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">nil</span>, err</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	out := <span class="built_in">make</span>(<span class="keyword">chan</span> engine.Item)</span><br><span class="line">	<span class="keyword">go</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">		itemCount := <span class="number">0</span></span><br><span class="line">		<span class="keyword">for</span> &#123;</span><br><span class="line">			item := &lt;-out</span><br><span class="line">			log.Printf(<span class="string">"Item saver: got item "</span>+</span><br><span class="line">				<span class="string">"%d: %v"</span>, itemCount, item)</span><br><span class="line">			itemCount++</span><br><span class="line">			err := save(client, item, index)</span><br><span class="line">			<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">				log.Printf(<span class="string">"Item saver: error saving item %v: %v"</span>, item, err)</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;()</span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> out, <span class="literal">nil</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>itemSaver主要是把我们爬取的数据从channel中取出来，然后调用save方法存到ElasticSearch中</p>
+<p>这里我们把ElasticSearch的client建出来，如果每次都在save中建client会很浪费，我们建一次就好了</p>
+<p>那我们再来看看save方法</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">save</span><span class="params">(client *elastic.Client, item engine.Item, index <span class="keyword">string</span>)</span> <span class="title">error</span></span> &#123;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> item.Type == <span class="string">""</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> errors.New(<span class="string">"must supply type"</span>)</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="comment">// index save data, index is database,type is table</span></span><br><span class="line">	indexService := client.Index().</span><br><span class="line">		Index(index).</span><br><span class="line">		Type(item.Type).</span><br><span class="line">		BodyJson(item)</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> item.Id != <span class="string">""</span> &#123;</span><br><span class="line">		indexService.Id(item.Id)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	_, err := indexService.Do(context.Background())</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> err</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>save方法使用elastic search client存数据，在ElasticSearch中我们用index表示数据库，type表示表，id让系统自动生成。</p>
+<p>这样我们就实现了把数据保存到ElasticSearch中来！</p>
+<h3 id="links："><a href="#links：" class="headerlink" title="links："></a>links：</h3><p>源码：<a href="https://github.com/wxning1107/Crawler" target="_blank" rel="noopener">https://github.com/wxning1107/Crawler</a></p>
+<p>Go ElasticSearch Client：<a href="https://github.com/olivere/elastic" target="_blank" rel="noopener">https://github.com/olivere/elastic</a></p>
 
       
     </div>
@@ -429,7 +466,7 @@
   <p><span>本文标题:</span><a href="/2019/08/03/go-crawler2/">go实现并发版爬虫</a></p>
   <p><span>文章作者:</span><a href="/" title="访问 Wxning 的个人博客">Wxning</a></p>
   <p><span>发布时间:</span>2019年08月03日 - 22:08</p>
-  <p><span>最后更新:</span>2020年04月09日 - 11:04</p>
+  <p><span>最后更新:</span>2020年04月09日 - 15:04</p>
   <p><span>原始链接:</span><a href="/2019/08/03/go-crawler2/" title="go实现并发版爬虫">http://yoursite.com/2019/08/03/go-crawler2/</a>
     <span class="copy-path" title="点击复制文章链接"><i class="fa fa-clipboard" data-clipboard-text="http://yoursite.com/2019/08/03/go-crawler2/" aria-label="复制成功！"></i></span>
   </p>
@@ -639,7 +676,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Introduction"><span class="nav-number">1.</span> <span class="nav-text">Introduction</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#并发版爬虫架构"><span class="nav-number">2.</span> <span class="nav-text">并发版爬虫架构</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#单任务版爬虫架构"><span class="nav-number">2.1.</span> <span class="nav-text">单任务版爬虫架构</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#并发版爬虫架构-1"><span class="nav-number">2.2.</span> <span class="nav-text">并发版爬虫架构</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#engine模块"><span class="nav-number">3.</span> <span class="nav-text">engine模块</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Scheduler模块"><span class="nav-number">4.</span> <span class="nav-text">Scheduler模块</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#links："><span class="nav-number">4.1.</span> <span class="nav-text">links：</span></a></li></ol></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Introduction"><span class="nav-number">1.</span> <span class="nav-text">Introduction</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#并发版爬虫架构"><span class="nav-number">2.</span> <span class="nav-text">并发版爬虫架构</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#单任务版爬虫架构"><span class="nav-number">2.1.</span> <span class="nav-text">单任务版爬虫架构</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#并发版爬虫架构-1"><span class="nav-number">2.2.</span> <span class="nav-text">并发版爬虫架构</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#engine模块"><span class="nav-number">3.</span> <span class="nav-text">engine模块</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Scheduler模块"><span class="nav-number">4.</span> <span class="nav-text">Scheduler模块</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#实现储存模块"><span class="nav-number">5.</span> <span class="nav-text">实现储存模块</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#links："><span class="nav-number">5.1.</span> <span class="nav-text">links：</span></a></li></ol></li></ol></div>
             
 
           </div>
