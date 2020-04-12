@@ -79,25 +79,23 @@
 
 
 
-<meta name="description" content="map简介说起map就要先说hash表，hash table是一个无序的key/value的集合，通过指定的key可以在常数时间复杂度内检索，更新，删除对应的value。在go语言中，一个map就是一个哈希表的引用，在这个散列表中，主要结构有两个，一个叫hmap：a header for a go map,hmap存储着元素个数，flags，扩容相关字段，buckets数组指针等。  另一个叫bu">
+<meta name="description" content="go语言的schedulerGo 1.1的一个最大的特性是由Dmitry Vyukov贡献的新的调度器。新的调度器给并发Go程序提高了巨大的性能。 Go试图使用一种M:N的调度器来结合前两种模型，扬长避短。它调度任意数量的协程运行于任意数量的系统线程中。即保证了上下文切换的速度，又利用了多核。这种模型的主要缺点是增加了调度器的复杂度。 Go调度器使用了下面三个实体：   三角形代表一个系统线程。这">
 <meta name="keywords" content="go">
 <meta property="og:type" content="article">
-<meta property="og:title" content="go语言map线程安全问题">
-<meta property="og:url" content="http://yoursite.com/2019/09/26/go-map/index.html">
+<meta property="og:title" content="Go调度器">
+<meta property="og:url" content="http://yoursite.com/2020/04/12/GMP/index.html">
 <meta property="og:site_name" content="Wxning">
-<meta property="og:description" content="map简介说起map就要先说hash表，hash table是一个无序的key/value的集合，通过指定的key可以在常数时间复杂度内检索，更新，删除对应的value。在go语言中，一个map就是一个哈希表的引用，在这个散列表中，主要结构有两个，一个叫hmap：a header for a go map,hmap存储着元素个数，flags，扩容相关字段，buckets数组指针等。  另一个叫bu">
+<meta property="og:description" content="go语言的schedulerGo 1.1的一个最大的特性是由Dmitry Vyukov贡献的新的调度器。新的调度器给并发Go程序提高了巨大的性能。 Go试图使用一种M:N的调度器来结合前两种模型，扬长避短。它调度任意数量的协程运行于任意数量的系统线程中。即保证了上下文切换的速度，又利用了多核。这种模型的主要缺点是增加了调度器的复杂度。 Go调度器使用了下面三个实体：   三角形代表一个系统线程。这">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:image" content="http://yoursite.com/images/map1.jpg">
-<meta property="og:image" content="http://yoursite.com/images/map2.jpg">
-<meta property="og:image" content="http://yoursite.com/images/map3.jpg">
-<meta property="og:image" content="http://yoursite.com/images/map4.jpg">
-<meta property="og:image" content="http://yoursite.com/images/map5.jpg">
-<meta property="og:image" content="http://yoursite.com/images/map6.jpg">
-<meta property="og:updated_time" content="2020-04-09T07:54:44.839Z">
+<meta property="og:image" content="http://yoursite.com/images/gmp-01.jpg">
+<meta property="og:image" content="http://yoursite.com/images/gmp-02.jpg">
+<meta property="og:image" content="http://yoursite.com/images/gmp-03.jpg">
+<meta property="og:image" content="http://yoursite.com/images/gmp-04.jpg">
+<meta property="og:updated_time" content="2020-04-12T07:48:57.254Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="go语言map线程安全问题">
-<meta name="twitter:description" content="map简介说起map就要先说hash表，hash table是一个无序的key/value的集合，通过指定的key可以在常数时间复杂度内检索，更新，删除对应的value。在go语言中，一个map就是一个哈希表的引用，在这个散列表中，主要结构有两个，一个叫hmap：a header for a go map,hmap存储着元素个数，flags，扩容相关字段，buckets数组指针等。  另一个叫bu">
-<meta name="twitter:image" content="http://yoursite.com/images/map1.jpg">
+<meta name="twitter:title" content="Go调度器">
+<meta name="twitter:description" content="go语言的schedulerGo 1.1的一个最大的特性是由Dmitry Vyukov贡献的新的调度器。新的调度器给并发Go程序提高了巨大的性能。 Go试图使用一种M:N的调度器来结合前两种模型，扬长避短。它调度任意数量的协程运行于任意数量的系统线程中。即保证了上下文切换的速度，又利用了多核。这种模型的主要缺点是增加了调度器的复杂度。 Go调度器使用了下面三个实体：   三角形代表一个系统线程。这">
+<meta name="twitter:image" content="http://yoursite.com/images/gmp-01.jpg">
 
 
 
@@ -127,13 +125,13 @@
 
 
 
-  <link rel="canonical" href="http://yoursite.com/2019/09/26/go-map/">
+  <link rel="canonical" href="http://yoursite.com/2020/04/12/GMP/">
 
 
 
 
 
-  <title>go语言map线程安全问题 | Wxning</title>
+  <title>Go调度器 | Wxning</title>
   
 
 
@@ -271,7 +269,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/09/26/go-map/">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/04/12/GMP/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="Wxning">
@@ -288,7 +286,7 @@
 
         
         
-          <h1 class="post-title" itemprop="name headline">go语言map线程安全问题</h1>
+          <h1 class="post-title" itemprop="name headline">Go调度器</h1>
         
 
         <div class="post-meta">
@@ -300,8 +298,8 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-09-26T10:23:10+08:00">
-                2019-09-26
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-04-12T20:11:43+08:00">
+                2020-04-12
               </time>
             
 
@@ -310,39 +308,6 @@
             
           </span>
 
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/map/" itemprop="url" rel="index">
-                    <span itemprop="name">map</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/map/线程安全map/" itemprop="url" rel="index">
-                    <span itemprop="name">线程安全map</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
           
 
           
@@ -376,42 +341,30 @@
       
 
       
-        <h2 id="map简介"><a href="#map简介" class="headerlink" title="map简介"></a>map简介</h2><p>说起map就要先说hash表，hash table是一个无序的key/value的集合，通过指定的key可以在常数时间复杂度内检索，更新，删除对应的value。在go语言中，一个map就是一个哈希表的引用，在这个散列表中，主要结构有两个，一个叫hmap：a header for a go map,hmap存储着元素个数，flags，扩容相关字段，buckets数组指针等。</p>
-<p><img src="/images/map1.jpg" alt></p>
-<p>另一个叫bucket，顾名思义是负责存储的，存储的结构是bucket数组，bucket是一个表，以字节数组的形式存储着map中的key和value，其中还有一个字段负责记录当前bucket索引的结构叫做tophash，另外有个指向扩容bucket的指针。一个hmap可以包含多个bucket</p>
-<p><img src="/images/map2.jpg" alt></p>
-<h2 id="线程不安全"><a href="#线程不安全" class="headerlink" title="线程不安全"></a>线程不安全</h2><p>golang的map和众多其他语言一样也是线程不安全的，在多协程对map操作时就会引发线程安全问题，对于这个老生常谈的问题，通常解决办法是加锁，go官方也对map线程安全问题给出说明：</p>
-<p><img src="/images/map3.jpg" alt></p>
-<p>对map加锁是用包sync的RWMutex，本文不再阐述加锁方法，本文的重点是在1.9版本后引入sync包下的并发安全的map，让我们来看一下吧！</p>
-<p><img src="/images/map4.jpg" alt></p>
-<h4 id="map主要字段"><a href="#map主要字段" class="headerlink" title="map主要字段"></a>map主要字段</h4><ol>
-<li><p>mu</p>
-<p>mu是一个Mutex，是一个互斥锁，主要作用是锁定dirty map。</p>
-</li>
-<li><p>dirty</p>
-<p>dirty是一个map，包含着map的内容并且需要mu去锁定，在read map中它也包含不可删除的入口以确保dirty map能快速转化为read map。</p>
-</li>
-<li><p>read</p>
-<p>优先读map，安全的</p>
-</li>
-<li><p>misses</p>
-<p>misses主要记录read读取不到数据加锁时读取read map和dirty map的次数，当nisses等于dirty的长度时，会将dirty复制到read</p>
-</li>
-</ol>
-<h4 id="readOnly"><a href="#readOnly" class="headerlink" title="readOnly"></a>readOnly</h4><p>readOnly是一个不可改变的struct，并且原子得存储在map.read字段</p>
-<p><img src="/images/map5.jpg" alt></p>
-<h4 id="entry"><a href="#entry" class="headerlink" title="entry"></a>entry</h4><p>entry是在map中与特定key对应的插槽</p>
-<p><img src="/images/map6.jpg" alt></p>
-<h2 id="sync-Map工作原理"><a href="#sync-Map工作原理" class="headerlink" title="sync.Map工作原理"></a>sync.Map工作原理</h2><p>使用空间换时间的策略，通过冗余read和dirty实现加锁对性能的影响，通过引入两个map将读写分离到不同map，其中read map提供并发读和已存元素的原子写，而dirty map则负责读写，这样read map就可以在不加锁的情况下进行并发读取，当read map中没有读渠道值时，再加锁进行后续读取，并累加未命中数，当未命中数大于等于dirty map的长度，将dirty map上升为read map，从之前的结构体定义可以发现，虽然引入了两个map，但是底层存储的是指针，指向的是同一个值。</p>
-<h4 id="流程"><a href="#流程" class="headerlink" title="流程"></a>流程</h4><p>开始时sync.Map写入数据，dirty map会接受到写请求，此时read map是没有数据的，读取数据的时候从read map中读取，此时read map并没有数据，misses记录从read map读取失败的次数，当misses&gt;=len(dirty map)时，将dirty map直接升级为read map，这里直接对dirty map进行地址拷贝并且dirty map会被清空，misses被置为0。如果需要修改数据，sync.Map会直接修改read map的元素，如果需要添加元素操作就需要dirty map了，如果misses达到阙值后dirty map直接升级为read map并且dirty map为空map，则dirty map需要从read map复制数据，如果是删除操作，分为几种情况：1.read map存在该元素且read的amended==false，直接将read中 元素置为nil。2. 元素刚刚写入dirty map且未升级为read map，直接调用golang内置函数delete删除dirty map元素。3. read map和dirty map同时存在该元素，则将read map中的元素置为nil，因为read map和dirty map使用的均为元素地址，所以均被置为nil。</p>
-<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><ol>
-<li>空间换时间，通过冗余的两个数据结构read和dirty实现加锁对性能的影响。</li>
-<li>使用只读数据read避免读写冲突。</li>
-<li>动态调整，miss次数多了之后，将dirty数据提升为read</li>
-<li>double-checking双重检测</li>
-<li>延迟删除，删除一个键值只是打标记，只有在提升为dirty的时候才彻底清理掉数据。</li>
-<li>优先从read读取，更新，删除，因为对read的读取不需要加锁。</li>
-</ol>
+        <h2 id="go语言的scheduler"><a href="#go语言的scheduler" class="headerlink" title="go语言的scheduler"></a>go语言的scheduler</h2><p>Go 1.1的一个最大的特性是由<a href="http://morsmachine.dk/" target="_blank" rel="noopener">Dmitry Vyukov</a>贡献的新的调度器。新的调度器给并发Go程序提高了巨大的性能。</p>
+<p>Go试图使用一种<code>M:N</code>的调度器来结合前两种模型，扬长避短。它调度任意数量的协程运行于任意数量的系统线程中。即保证了上下文切换的速度，又利用了多核。这种模型的主要缺点是增加了调度器的复杂度。</p>
+<p>Go调度器使用了下面三个实体：</p>
+<p><img src="/images/gmp-01.jpg" alt="gmp-01"></p>
+<ul>
+<li>三角形代表一个<code>系统线程</code>。这是被操作系统管理用来执行代码的线程，工作起来就像标准POSIX线程一样。在runtime代码中，被称为<code>M</code>，即machine的简称。</li>
+<li>圆圈代表一个<code>协程</code>。它包含了栈，指令指针和其它关于调度协程的重要信息。比如任何可能导致阻塞的channel。它被称为<code>G</code>。</li>
+<li>正方形代表一个用于调度的<code>上下文</code>。你可以把它看成一个本地化版本的调度器，用于在一个线程中执行Go代码。它是让我们可以从N:1模型转变成M:N模型的重要部分。在runtime代码中，被称为<code>P</code>，即processor的简称。</li>
+</ul>
+<p><img src="/images/gmp-02.jpg" alt="gmp-02"></p>
+<p>如图所示，我们有2个线程（<strong>M</strong>），每个线程持有一个上下文（<strong>P</strong>），每个线程执行一个协程（<strong>G</strong>）。为了执行协程，一个线程必须持有一个上下文。</p>
+<p>上下文的数量在程序启动时通过环境变量GOMAXPROCS指定，上下文数量固定以为着在任意时刻只有GOMAXPROCS数量的Go代码在运行。利用这点我们可以调整对Go调用的数量，比如在4核机器上运行4个线程。</p>
+<p>灰色部分的协程处于非运行状态，但是已经准备就绪，可以被调度。它们被安置于被称为runqueues的队列中。当使用go关键字开启一个协程时，这个协程被添加至队列的末尾。当上下文执行完一个协程后，到达一个调度的点，它会从队列中取出一个协程。设置好栈和指令指针并开始执行这个协程。</p>
+<h2 id="goroutine发生阻塞"><a href="#goroutine发生阻塞" class="headerlink" title="goroutine发生阻塞"></a>goroutine发生阻塞</h2><p>为什么我们需要<code>P</code>呢，我们不能把任务队列直接挂载到线程上而去除掉<code>P</code>吗？答案是不行。原因是当运行着的线程由于某些原因需要阻塞时，我们需要通过<code>P把任务队列挂载到其它线程中</code>。</p>
+<p>什么时候需要阻塞呢？举个例子，当我们调用系统调用的时候。因为一个线程不能一边执行代码一边阻塞在系统调用上，我们需要移交<strong>P</strong>使得它可以继续被调度。</p>
+<p><img src="/images/gmp-03.jpg" alt="gmp-03"></p>
+<p>上图演示了一个线程放弃它的<code>P</code>，使得其它线程可以运行这个<code>P</code>。调度器会确保有足够的线程运行所有的<code>P</code>。图中的M1用来处理这个系统调用，它可能是被新创建的，也有可能从空闲线程池中取出。这个线程用来保持调用系统调用的这个被阻塞的协程，因为理论上来说，这个线程依然在执行，只不过是阻塞在了系统调用上。</p>
+<p>当系统调用返回，这个线程必须尝试获取一个上下文以用来执行这个正在返回的协程。常规操作是从其他线程偷取一个上下文。如果偷取失败，会把这个协程放入全局运行队列。再把线程放入空闲线程池中并睡眠。</p>
+<p>当某个上下文本地运行队列为空时，会从全局运行队列取任务。所有的上下文都会周期性从全局队列获取协程任务。以防止全局队列中的协程饿死，永远得不到执行。</p>
+<p>这种处理系统调用的方式就是为什么Go程序是<code>多线程</code>执行的原因，即使GOMAXPROCS是1。运行时使用协程调用系统调用，将线程隐藏在其后。</p>
+<h2 id="偷取任务"><a href="#偷取任务" class="headerlink" title="偷取任务"></a>偷取任务</h2><p>另一种导致这种稳定状态发生改变的原因是一个上下文执行完了调度给它的所有协程。这种情况发生的原因是所有上下文的运行队列上的任务不均衡。此时系统中还有其他等待执行的任务。为了保持Go代码继续执行，一个上下文可以从全局运行队列取协程，但是如果全局运行队列没有协程了，这个上下文只能从其他地方取任务。</p>
+<p><img src="/images/gmp-04.jpg" alt="gmp-04"></p>
+<p>这个<code>其他地方</code>就是其他上下文。当一个上下文没任务了，它会尝试从另一个上下文的运行队列中偷取<code>一半</code>的任务。这保证了每个上下文都总是有任务在执行，这也就保证了所有的线程都在尽可能的工作。</p>
+<h2 id="参考资料："><a href="#参考资料：" class="headerlink" title="参考资料："></a>参考资料：</h2><p><a href="http://morsmachine.dk/go-scheduler" target="_blank" rel="noopener">http://morsmachine.dk/go-scheduler</a></p>
 
       
     </div>
@@ -439,12 +392,12 @@
   <!-- JS库 sweetalert 可修改路径 -->
   <script src="https://cdn.bootcss.com/jquery/2.0.0/jquery.min.js"></script>
   <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
-  <p><span>本文标题:</span><a href="/2019/09/26/go-map/">go语言map线程安全问题</a></p>
+  <p><span>本文标题:</span><a href="/2020/04/12/GMP/">Go调度器</a></p>
   <p><span>文章作者:</span><a href="/" title="访问 Wxning 的个人博客">Wxning</a></p>
-  <p><span>发布时间:</span>2019年09月26日 - 10:09</p>
-  <p><span>最后更新:</span>2020年04月09日 - 15:04</p>
-  <p><span>原始链接:</span><a href="/2019/09/26/go-map/" title="go语言map线程安全问题">http://yoursite.com/2019/09/26/go-map/</a>
-    <span class="copy-path" title="点击复制文章链接"><i class="fa fa-clipboard" data-clipboard-text="http://yoursite.com/2019/09/26/go-map/" aria-label="复制成功！"></i></span>
+  <p><span>发布时间:</span>2020年04月12日 - 20:04</p>
+  <p><span>最后更新:</span>2020年04月12日 - 15:04</p>
+  <p><span>原始链接:</span><a href="/2020/04/12/GMP/" title="Go调度器">http://yoursite.com/2020/04/12/GMP/</a>
+    <span class="copy-path" title="点击复制文章链接"><i class="fa fa-clipboard" data-clipboard-text="http://yoursite.com/2020/04/12/GMP/" aria-label="复制成功！"></i></span>
   </p>
   <p><span>许可协议:</span><i class="fa fa-creative-commons"></i> <a rel="license" href="https://creativecommons.org/licenses/by-nc-nd/4.0/" target="_blank" title="Attribution-NonCommercial-NoDerivatives 4.0 International (CC BY-NC-ND 4.0)">署名-非商业性使用-禁止演绎 4.0 国际</a> 转载请保留原文链接及作者。</p>
 </div>
@@ -489,8 +442,8 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2019/08/03/go-crawler2/" rel="next" title="go实现并发版爬虫">
-                <i class="fa fa-chevron-left"></i> go实现并发版爬虫
+              <a href="/2020/04/09/goMap/" rel="next" title="go语言map底层实现">
+                <i class="fa fa-chevron-left"></i> go语言map底层实现
               </a>
             
           </div>
@@ -498,10 +451,6 @@
           <span class="post-nav-divider"></span>
 
           <div class="post-nav-prev post-nav-item">
-            
-              <a href="/2019/09/30/cleanCode/" rel="prev" title="CleanCode">
-                CleanCode <i class="fa fa-chevron-right"></i>
-              </a>
             
           </div>
         </div>
@@ -650,7 +599,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#map简介"><span class="nav-number">1.</span> <span class="nav-text">map简介</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#线程不安全"><span class="nav-number">2.</span> <span class="nav-text">线程不安全</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#map主要字段"><span class="nav-number">2.0.1.</span> <span class="nav-text">map主要字段</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#readOnly"><span class="nav-number">2.0.2.</span> <span class="nav-text">readOnly</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#entry"><span class="nav-number">2.0.3.</span> <span class="nav-text">entry</span></a></li></ol></li></ol><li class="nav-item nav-level-2"><a class="nav-link" href="#sync-Map工作原理"><span class="nav-number">3.</span> <span class="nav-text">sync.Map工作原理</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#流程"><span class="nav-number">3.0.1.</span> <span class="nav-text">流程</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#总结"><span class="nav-number">4.</span> <span class="nav-text">总结</span></a></li></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#go语言的scheduler"><span class="nav-number">1.</span> <span class="nav-text">go语言的scheduler</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#goroutine发生阻塞"><span class="nav-number">2.</span> <span class="nav-text">goroutine发生阻塞</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#偷取任务"><span class="nav-number">3.</span> <span class="nav-text">偷取任务</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考资料："><span class="nav-number">4.</span> <span class="nav-text">参考资料：</span></a></li></ol></div>
             
 
           </div>
