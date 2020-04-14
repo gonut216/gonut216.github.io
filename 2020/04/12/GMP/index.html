@@ -91,7 +91,7 @@
 <meta property="og:image" content="http://yoursite.com/images/gmp-02.jpg">
 <meta property="og:image" content="http://yoursite.com/images/gmp-03.jpg">
 <meta property="og:image" content="http://yoursite.com/images/gmp-04.jpg">
-<meta property="og:updated_time" content="2020-04-12T07:48:57.254Z">
+<meta property="og:updated_time" content="2020-04-14T04:57:19.880Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Go调度器">
 <meta name="twitter:description" content="go语言的schedulerGo 1.1的一个最大的特性是由Dmitry Vyukov贡献的新的调度器。新的调度器给并发Go程序提高了巨大的性能。 Go试图使用一种M:N的调度器来结合前两种模型，扬长避短。它调度任意数量的协程运行于任意数量的系统线程中。即保证了上下文切换的速度，又利用了多核。这种模型的主要缺点是增加了调度器的复杂度。 Go调度器使用了下面三个实体：   三角形代表一个系统线程。这">
@@ -354,16 +354,25 @@
 <p>如图所示，我们有2个线程（<strong>M</strong>），每个线程持有一个上下文（<strong>P</strong>），每个线程执行一个协程（<strong>G</strong>）。为了执行协程，一个线程必须持有一个上下文。</p>
 <p>上下文的数量在程序启动时通过环境变量GOMAXPROCS指定，上下文数量固定以为着在任意时刻只有GOMAXPROCS数量的Go代码在运行。利用这点我们可以调整对Go调用的数量，比如在4核机器上运行4个线程。</p>
 <p>灰色部分的协程处于非运行状态，但是已经准备就绪，可以被调度。它们被安置于被称为runqueues的队列中。当使用go关键字开启一个协程时，这个协程被添加至队列的末尾。当上下文执行完一个协程后，到达一个调度的点，它会从队列中取出一个协程。设置好栈和指令指针并开始执行这个协程。</p>
-<h2 id="goroutine发生阻塞"><a href="#goroutine发生阻塞" class="headerlink" title="goroutine发生阻塞"></a>goroutine发生阻塞</h2><p>为什么我们需要<code>P</code>呢，我们不能把任务队列直接挂载到线程上而去除掉<code>P</code>吗？答案是不行。原因是当运行着的线程由于某些原因需要阻塞时，我们需要通过<code>P把任务队列挂载到其它线程中</code>。</p>
+<h2 id="goroutine发生阻塞"><a href="#goroutine发生阻塞" class="headerlink" title="goroutine发生阻塞"></a>goroutine发生阻塞</h2><p>为什么我们需要<code>P</code>呢，我们不能把任务队列直接挂载到线程上而去除掉<code>P</code>吗？</p>
+<p>答案是不行。原因是当运行着的线程由于某些原因需要阻塞时，我们需要通过<code>P把任务队列挂载到其它线程中</code>。</p>
 <p>什么时候需要阻塞呢？举个例子，当我们调用系统调用的时候。因为一个线程不能一边执行代码一边阻塞在系统调用上，我们需要移交<strong>P</strong>使得它可以继续被调度。</p>
 <p><img src="/images/gmp-03.jpg" alt="gmp-03"></p>
 <p>上图演示了一个线程放弃它的<code>P</code>，使得其它线程可以运行这个<code>P</code>。调度器会确保有足够的线程运行所有的<code>P</code>。图中的M1用来处理这个系统调用，它可能是被新创建的，也有可能从空闲线程池中取出。这个线程用来保持调用系统调用的这个被阻塞的协程，因为理论上来说，这个线程依然在执行，只不过是阻塞在了系统调用上。</p>
-<p>当系统调用返回，这个线程必须尝试获取一个上下文以用来执行这个正在返回的协程。常规操作是从其他线程偷取一个上下文。如果偷取失败，会把这个协程放入全局运行队列。再把线程放入空闲线程池中并睡眠。</p>
+<p>当系统调用返回，这个线程必须尝试获取一个上下文以用来执行这个正在返回的协程。常规操作是从其他线程偷取一个上下文。如果偷取失败，会把这个协程放入全局运行队列（global runqueue）。再把线程放入空闲线程池中并睡眠。</p>
 <p>当某个上下文本地运行队列为空时，会从全局运行队列取任务。所有的上下文都会周期性从全局队列获取协程任务。以防止全局队列中的协程饿死，永远得不到执行。</p>
 <p>这种处理系统调用的方式就是为什么Go程序是<code>多线程</code>执行的原因，即使GOMAXPROCS是1。运行时使用协程调用系统调用，将线程隐藏在其后。</p>
 <h2 id="偷取任务"><a href="#偷取任务" class="headerlink" title="偷取任务"></a>偷取任务</h2><p>另一种导致这种稳定状态发生改变的原因是一个上下文执行完了调度给它的所有协程。这种情况发生的原因是所有上下文的运行队列上的任务不均衡。此时系统中还有其他等待执行的任务。为了保持Go代码继续执行，一个上下文可以从全局运行队列取协程，但是如果全局运行队列没有协程了，这个上下文只能从其他地方取任务。</p>
 <p><img src="/images/gmp-04.jpg" alt="gmp-04"></p>
 <p>这个<code>其他地方</code>就是其他上下文。当一个上下文没任务了，它会尝试从另一个上下文的运行队列中偷取<code>一半</code>的任务。这保证了每个上下文都总是有任务在执行，这也就保证了所有的线程都在尽可能的工作。</p>
+<h2 id="CSP并发模型"><a href="#CSP并发模型" class="headerlink" title="CSP并发模型"></a>CSP并发模型</h2><p>CSP讲究的是<code>以通信的方式来共享内存</code>。</p>
+<p>引用go作者Rob Pike说过的一句话：</p>
+<blockquote>
+<p><strong>Do not communicate by sharing memory; instead, share memory by communicating.</strong></p>
+</blockquote>
+<p>普通的线程并发模型，就是像Java、C++、或者Python，他们线程间通信都是通过共享内存的方式来进行的。非常典型的方式就是，在访问共享数据（例如数组、Map、或者某个结构体或对象）的时候，通过锁来访问，因此，在很多时候，衍生出一种方便操作的数据结构，叫做“线程安全的数据结构”。例如Java提供的包”java.util.concurrent”中的数据结构。Go中也实现了传统的线程并发模型。</p>
+<p>Go的CSP并发模型，是通过<code>goroutine</code>和<code>channel</code>来实现的。</p>
+<p>无论语言层面何种并发模型，到了操作系统层面，一定是以线程的形态存在的。而操作系统根据资源访问权限的不同，体系架构可分为用户空间和内核空间；内核空间主要操作访问CPU资源、I/O资源、内存资源等硬件资源，为上层应用程序提供最基本的基础资源，用户空间呢就是上层应用程序的固定活动空间，用户空间不可以直接访问资源，必须通过“系统调用”、“库函数”或“Shell脚本”来调用内核空间提供的资源。</p>
 <h2 id="参考资料："><a href="#参考资料：" class="headerlink" title="参考资料："></a>参考资料：</h2><p><a href="http://morsmachine.dk/go-scheduler" target="_blank" rel="noopener">http://morsmachine.dk/go-scheduler</a></p>
 
       
@@ -395,7 +404,7 @@
   <p><span>本文标题:</span><a href="/2020/04/12/GMP/">Go调度器</a></p>
   <p><span>文章作者:</span><a href="/" title="访问 Wxning 的个人博客">Wxning</a></p>
   <p><span>发布时间:</span>2020年04月12日 - 20:04</p>
-  <p><span>最后更新:</span>2020年04月12日 - 15:04</p>
+  <p><span>最后更新:</span>2020年04月14日 - 12:04</p>
   <p><span>原始链接:</span><a href="/2020/04/12/GMP/" title="Go调度器">http://yoursite.com/2020/04/12/GMP/</a>
     <span class="copy-path" title="点击复制文章链接"><i class="fa fa-clipboard" data-clipboard-text="http://yoursite.com/2020/04/12/GMP/" aria-label="复制成功！"></i></span>
   </p>
@@ -599,7 +608,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#go语言的scheduler"><span class="nav-number">1.</span> <span class="nav-text">go语言的scheduler</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#goroutine发生阻塞"><span class="nav-number">2.</span> <span class="nav-text">goroutine发生阻塞</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#偷取任务"><span class="nav-number">3.</span> <span class="nav-text">偷取任务</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考资料："><span class="nav-number">4.</span> <span class="nav-text">参考资料：</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#go语言的scheduler"><span class="nav-number">1.</span> <span class="nav-text">go语言的scheduler</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#goroutine发生阻塞"><span class="nav-number">2.</span> <span class="nav-text">goroutine发生阻塞</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#偷取任务"><span class="nav-number">3.</span> <span class="nav-text">偷取任务</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#CSP并发模型"><span class="nav-number">4.</span> <span class="nav-text">CSP并发模型</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考资料："><span class="nav-number">5.</span> <span class="nav-text">参考资料：</span></a></li></ol></div>
             
 
           </div>
