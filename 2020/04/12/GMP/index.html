@@ -79,22 +79,22 @@
 
 
 
-<meta name="description" content="go语言的schedulerGo 1.1的一个最大的特性是由Dmitry Vyukov贡献的新的调度器。新的调度器给并发Go程序提高了巨大的性能。 Go试图使用一种M:N的调度器来结合前两种模型，扬长避短。它调度任意数量的协程运行于任意数量的系统线程中。即保证了上下文切换的速度，又利用了多核。这种模型的主要缺点是增加了调度器的复杂度。 Go调度器使用了下面三个实体：   三角形代表一个系统线程。这">
+<meta name="description" content="go语言的schedulerGo 1.1的一个最大的特性是由Dmitry Vyukov贡献的新的调度器。新的调度器给并发Go程序提高了巨大的性能。 有三种场景的线程模型。第一种是N:1，即多个用户态线程运行在一个系统线程中。优点是上下文切换快，缺点是不能利用多核。另一种是1:1，一个用户态线程对应一个系统线程。这种利用了机器的多核，但是上下文切换会很慢，因为上下文切换需要陷入操作系统内核态。 Go">
 <meta name="keywords" content="go">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Go调度器">
 <meta property="og:url" content="http://yoursite.com/2020/04/12/GMP/index.html">
 <meta property="og:site_name" content="Wxning">
-<meta property="og:description" content="go语言的schedulerGo 1.1的一个最大的特性是由Dmitry Vyukov贡献的新的调度器。新的调度器给并发Go程序提高了巨大的性能。 Go试图使用一种M:N的调度器来结合前两种模型，扬长避短。它调度任意数量的协程运行于任意数量的系统线程中。即保证了上下文切换的速度，又利用了多核。这种模型的主要缺点是增加了调度器的复杂度。 Go调度器使用了下面三个实体：   三角形代表一个系统线程。这">
+<meta property="og:description" content="go语言的schedulerGo 1.1的一个最大的特性是由Dmitry Vyukov贡献的新的调度器。新的调度器给并发Go程序提高了巨大的性能。 有三种场景的线程模型。第一种是N:1，即多个用户态线程运行在一个系统线程中。优点是上下文切换快，缺点是不能利用多核。另一种是1:1，一个用户态线程对应一个系统线程。这种利用了机器的多核，但是上下文切换会很慢，因为上下文切换需要陷入操作系统内核态。 Go">
 <meta property="og:locale" content="zh-Hans">
 <meta property="og:image" content="http://yoursite.com/images/gmp-01.jpg">
 <meta property="og:image" content="http://yoursite.com/images/gmp-02.jpg">
 <meta property="og:image" content="http://yoursite.com/images/gmp-03.jpg">
 <meta property="og:image" content="http://yoursite.com/images/gmp-04.jpg">
-<meta property="og:updated_time" content="2020-04-14T04:57:19.880Z">
+<meta property="og:updated_time" content="2020-04-14T05:57:57.630Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Go调度器">
-<meta name="twitter:description" content="go语言的schedulerGo 1.1的一个最大的特性是由Dmitry Vyukov贡献的新的调度器。新的调度器给并发Go程序提高了巨大的性能。 Go试图使用一种M:N的调度器来结合前两种模型，扬长避短。它调度任意数量的协程运行于任意数量的系统线程中。即保证了上下文切换的速度，又利用了多核。这种模型的主要缺点是增加了调度器的复杂度。 Go调度器使用了下面三个实体：   三角形代表一个系统线程。这">
+<meta name="twitter:description" content="go语言的schedulerGo 1.1的一个最大的特性是由Dmitry Vyukov贡献的新的调度器。新的调度器给并发Go程序提高了巨大的性能。 有三种场景的线程模型。第一种是N:1，即多个用户态线程运行在一个系统线程中。优点是上下文切换快，缺点是不能利用多核。另一种是1:1，一个用户态线程对应一个系统线程。这种利用了机器的多核，但是上下文切换会很慢，因为上下文切换需要陷入操作系统内核态。 Go">
 <meta name="twitter:image" content="http://yoursite.com/images/gmp-01.jpg">
 
 
@@ -342,7 +342,8 @@
 
       
         <h2 id="go语言的scheduler"><a href="#go语言的scheduler" class="headerlink" title="go语言的scheduler"></a>go语言的scheduler</h2><p>Go 1.1的一个最大的特性是由<a href="http://morsmachine.dk/" target="_blank" rel="noopener">Dmitry Vyukov</a>贡献的新的调度器。新的调度器给并发Go程序提高了巨大的性能。</p>
-<p>Go试图使用一种<code>M:N</code>的调度器来结合前两种模型，扬长避短。它调度任意数量的协程运行于任意数量的系统线程中。即保证了上下文切换的速度，又利用了多核。这种模型的主要缺点是增加了调度器的复杂度。</p>
+<p>有三种场景的线程模型。第一种是N:1，即多个用户态线程运行在一个系统线程中。优点是上下文切换快，缺点是不能利用多核。另一种是1:1，一个用户态线程对应一个系统线程。这种利用了机器的多核，但是上下文切换会很慢，因为上下文切换需要陷入操作系统内核态。</p>
+<p>Go使用一种<code>M:N</code>的调度器来结合前两种模型，扬长避短。它调度任意数量的协程运行于任意数量的系统线程中。即保证了上下文切换的速度，又利用了多核。这种模型的主要缺点是增加了调度器的复杂度。</p>
 <p>Go调度器使用了下面三个实体：</p>
 <p><img src="/images/gmp-01.jpg" alt="gmp-01"></p>
 <ul>
@@ -404,7 +405,7 @@
   <p><span>本文标题:</span><a href="/2020/04/12/GMP/">Go调度器</a></p>
   <p><span>文章作者:</span><a href="/" title="访问 Wxning 的个人博客">Wxning</a></p>
   <p><span>发布时间:</span>2020年04月12日 - 20:04</p>
-  <p><span>最后更新:</span>2020年04月14日 - 12:04</p>
+  <p><span>最后更新:</span>2020年04月14日 - 13:04</p>
   <p><span>原始链接:</span><a href="/2020/04/12/GMP/" title="Go调度器">http://yoursite.com/2020/04/12/GMP/</a>
     <span class="copy-path" title="点击复制文章链接"><i class="fa fa-clipboard" data-clipboard-text="http://yoursite.com/2020/04/12/GMP/" aria-label="复制成功！"></i></span>
   </p>
