@@ -68,7 +68,7 @@
 
 
 
-  <meta name="keywords" content="go,">
+  <meta name="keywords" content="go,pool,">
 
 
 
@@ -79,25 +79,18 @@
 
 
 
-<meta name="description" content="map简介说起map就要先说hash表，hash table是一个无序的key/value的集合，通过指定的key可以在常数时间复杂度内检索，更新，删除对应的value。在go语言中，一个map就是一个哈希表的引用，在这个散列表中，主要结构有两个，一个叫hmap：a header for a go map,hmap存储着元素个数，flags，扩容相关字段，buckets数组指针等。  另一个叫bu">
-<meta name="keywords" content="go">
+<meta name="description" content="为什么用 sync.Pool工作中经常遇到GC压力过大的问题，比如项目中大量重复的创建对象，这种情况通常用sync.Pool来缓存对象减轻GC压力。 sync.Pool可以作为保存临时取还对象的一个池子，对于很多需要重复分配，回收内存的地方，会导致GC压力过大，sync.Pool是一个很好的解决这个问题的选择，sync.Pool可以将暂时不用的对象缓存起来，等下次需要的时候直接使用，不用再次经过内">
+<meta name="keywords" content="go,pool">
 <meta property="og:type" content="article">
-<meta property="og:title" content="go语言map线程安全问题">
-<meta property="og:url" content="http://yoursite.com/2019/09/26/go-map/index.html">
+<meta property="og:title" content="go语言之sync.Pool">
+<meta property="og:url" content="http://yoursite.com/2020/04/20/syncPool/index.html">
 <meta property="og:site_name" content="Wxning">
-<meta property="og:description" content="map简介说起map就要先说hash表，hash table是一个无序的key/value的集合，通过指定的key可以在常数时间复杂度内检索，更新，删除对应的value。在go语言中，一个map就是一个哈希表的引用，在这个散列表中，主要结构有两个，一个叫hmap：a header for a go map,hmap存储着元素个数，flags，扩容相关字段，buckets数组指针等。  另一个叫bu">
+<meta property="og:description" content="为什么用 sync.Pool工作中经常遇到GC压力过大的问题，比如项目中大量重复的创建对象，这种情况通常用sync.Pool来缓存对象减轻GC压力。 sync.Pool可以作为保存临时取还对象的一个池子，对于很多需要重复分配，回收内存的地方，会导致GC压力过大，sync.Pool是一个很好的解决这个问题的选择，sync.Pool可以将暂时不用的对象缓存起来，等下次需要的时候直接使用，不用再次经过内">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:image" content="http://yoursite.com/images/map1.jpg">
-<meta property="og:image" content="http://yoursite.com/images/map2.jpg">
-<meta property="og:image" content="http://yoursite.com/images/map3.jpg">
-<meta property="og:image" content="http://yoursite.com/images/map4.jpg">
-<meta property="og:image" content="http://yoursite.com/images/map5.jpg">
-<meta property="og:image" content="http://yoursite.com/images/map6.jpg">
-<meta property="og:updated_time" content="2020-04-09T07:54:44.839Z">
+<meta property="og:updated_time" content="2020-04-20T06:35:21.601Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="go语言map线程安全问题">
-<meta name="twitter:description" content="map简介说起map就要先说hash表，hash table是一个无序的key/value的集合，通过指定的key可以在常数时间复杂度内检索，更新，删除对应的value。在go语言中，一个map就是一个哈希表的引用，在这个散列表中，主要结构有两个，一个叫hmap：a header for a go map,hmap存储着元素个数，flags，扩容相关字段，buckets数组指针等。  另一个叫bu">
-<meta name="twitter:image" content="http://yoursite.com/images/map1.jpg">
+<meta name="twitter:title" content="go语言之sync.Pool">
+<meta name="twitter:description" content="为什么用 sync.Pool工作中经常遇到GC压力过大的问题，比如项目中大量重复的创建对象，这种情况通常用sync.Pool来缓存对象减轻GC压力。 sync.Pool可以作为保存临时取还对象的一个池子，对于很多需要重复分配，回收内存的地方，会导致GC压力过大，sync.Pool是一个很好的解决这个问题的选择，sync.Pool可以将暂时不用的对象缓存起来，等下次需要的时候直接使用，不用再次经过内">
 
 
 
@@ -127,13 +120,13 @@
 
 
 
-  <link rel="canonical" href="http://yoursite.com/2019/09/26/go-map/">
+  <link rel="canonical" href="http://yoursite.com/2020/04/20/syncPool/">
 
 
 
 
 
-  <title>go语言map线程安全问题 | Wxning</title>
+  <title>go语言之sync.Pool | Wxning</title>
   
 
 
@@ -271,7 +264,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/09/26/go-map/">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/04/20/syncPool/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="Wxning">
@@ -288,7 +281,7 @@
 
         
         
-          <h1 class="post-title" itemprop="name headline">go语言map线程安全问题</h1>
+          <h1 class="post-title" itemprop="name headline">go语言之sync.Pool</h1>
         
 
         <div class="post-meta">
@@ -300,8 +293,8 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-09-26T10:23:10+08:00">
-                2019-09-26
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-04-20T09:31:25+08:00">
+                2020-04-20
               </time>
             
 
@@ -323,8 +316,8 @@
               
               
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/map/" itemprop="url" rel="index">
-                    <span itemprop="name">map</span>
+                  <a href="/categories/go语言包/" itemprop="url" rel="index">
+                    <span itemprop="name">go语言包</span>
                   </a>
                 </span>
 
@@ -334,8 +327,8 @@
                 
               
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/map/线程安全map/" itemprop="url" rel="index">
-                    <span itemprop="name">线程安全map</span>
+                  <a href="/categories/go语言包/sync/" itemprop="url" rel="index">
+                    <span itemprop="name">sync</span>
                   </a>
                 </span>
 
@@ -376,41 +369,40 @@
       
 
       
-        <h2 id="map简介"><a href="#map简介" class="headerlink" title="map简介"></a>map简介</h2><p>说起map就要先说hash表，hash table是一个无序的key/value的集合，通过指定的key可以在常数时间复杂度内检索，更新，删除对应的value。在go语言中，一个map就是一个哈希表的引用，在这个散列表中，主要结构有两个，一个叫hmap：a header for a go map,hmap存储着元素个数，flags，扩容相关字段，buckets数组指针等。</p>
-<p><img src="/images/map1.jpg" alt></p>
-<p>另一个叫bucket，顾名思义是负责存储的，存储的结构是bucket数组，bucket是一个表，以字节数组的形式存储着map中的key和value，其中还有一个字段负责记录当前bucket索引的结构叫做tophash，另外有个指向扩容bucket的指针。一个hmap可以包含多个bucket</p>
-<p><img src="/images/map2.jpg" alt></p>
-<h2 id="线程不安全"><a href="#线程不安全" class="headerlink" title="线程不安全"></a>线程不安全</h2><p>golang的map和众多其他语言一样也是线程不安全的，在多协程对map操作时就会引发线程安全问题，对于这个老生常谈的问题，通常解决办法是加锁，go官方也对map线程安全问题给出说明：</p>
-<p><img src="/images/map3.jpg" alt></p>
-<p>对map加锁是用包sync的RWMutex，本文不再阐述加锁方法，本文的重点是在1.9版本后引入sync包下的并发安全的map，让我们来看一下吧！</p>
-<p><img src="/images/map4.jpg" alt></p>
-<h4 id="map主要字段"><a href="#map主要字段" class="headerlink" title="map主要字段"></a>map主要字段</h4><ol>
-<li><p>mu</p>
-<p>mu是一个Mutex，是一个互斥锁，主要作用是锁定dirty map。</p>
-</li>
-<li><p>dirty</p>
-<p>dirty是一个map，包含着map的内容并且需要mu去锁定，在read map中它也包含不可删除的入口以确保dirty map能快速转化为read map。</p>
-</li>
-<li><p>read</p>
-<p>优先读map，安全的</p>
-</li>
-<li><p>misses</p>
-<p>misses主要记录read读取不到数据加锁时读取read map和dirty map的次数，当nisses等于dirty的长度时，会将dirty复制到read</p>
-</li>
-</ol>
-<h4 id="readOnly"><a href="#readOnly" class="headerlink" title="readOnly"></a>readOnly</h4><p>readOnly是一个不可改变的struct，并且原子得存储在map.read字段</p>
-<p><img src="/images/map5.jpg" alt></p>
-<h4 id="entry"><a href="#entry" class="headerlink" title="entry"></a>entry</h4><p>entry是在map中与特定key对应的插槽</p>
-<p><img src="/images/map6.jpg" alt></p>
-<h2 id="sync-Map工作原理"><a href="#sync-Map工作原理" class="headerlink" title="sync.Map工作原理"></a>sync.Map工作原理</h2><p>使用空间换时间的策略，通过冗余read和dirty实现加锁对性能的影响，通过引入两个map将读写分离到不同map，其中read map提供并发读和已存元素的原子写，而dirty map则负责读写，这样read map就可以在不加锁的情况下进行并发读取，当read map中没有读渠道值时，再加锁进行后续读取，并累加未命中数，当未命中数大于等于dirty map的长度，将dirty map上升为read map，从之前的结构体定义可以发现，虽然引入了两个map，但是底层存储的是指针，指向的是同一个值。</p>
-<h4 id="流程"><a href="#流程" class="headerlink" title="流程"></a>流程</h4><p>开始时sync.Map写入数据，dirty map会接受到写请求，此时read map是没有数据的，读取数据的时候从read map中读取，此时read map并没有数据，misses记录从read map读取失败的次数，当misses&gt;=len(dirty map)时，将dirty map直接升级为read map，这里直接对dirty map进行地址拷贝并且dirty map会被清空，misses被置为0。如果需要修改数据，sync.Map会直接修改read map的元素，如果需要添加元素操作就需要dirty map了，如果misses达到阙值后dirty map直接升级为read map并且dirty map为空map，则dirty map需要从read map复制数据，如果是删除操作，分为几种情况：1.read map存在该元素且read的amended==false，直接将read中 元素置为nil。2. 元素刚刚写入dirty map且未升级为read map，直接调用golang内置函数delete删除dirty map元素。3. read map和dirty map同时存在该元素，则将read map中的元素置为nil，因为read map和dirty map使用的均为元素地址，所以均被置为nil。</p>
+        <h2 id="为什么用-sync-Pool"><a href="#为什么用-sync-Pool" class="headerlink" title="为什么用 sync.Pool"></a>为什么用 sync.Pool</h2><p>工作中经常遇到GC压力过大的问题，比如项目中大量重复的创建对象，这种情况通常用<code>sync.Pool</code>来缓存对象减轻GC压力。</p>
+<p>sync.Pool可以作为保存临时取还对象的一个池子，对于很多需要重复分配，回收内存的地方，会导致GC压力过大，sync.Pool是一个很好的解决这个问题的选择，sync.Pool可以将暂时不用的对象缓存起来，等下次需要的时候直接使用，不用再次经过内存分配，sync.Pool复用对象的内存来减轻GC压力。</p>
+<p>当多个goroutine都需要创建同一个对象的时候，如果goroutine数量过多，会导致对象的创建数据剧增，从而使得GC压力过大。这时候就需要一个对象池，每个goroutine不必自己单独创建对象，而是从对象池中获取对象</p>
+<h2 id="sync-Pool-怎么用"><a href="#sync-Pool-怎么用" class="headerlink" title="sync.Pool 怎么用"></a>sync.Pool 怎么用</h2><p>sync.Pool是协程安全的，当pool里没有没有缓存对象时，使用前设置好对象的new函数创建一个，之后在程序任何地方，任何时候都可以通过 <code>Get（）</code>和<code>Put（）</code>方法取还对象</p>
+<p>我们来看下面这个例子：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> Person <span class="keyword">struct</span> &#123;</span><br><span class="line">   name <span class="keyword">string</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> Ppool = sync.Pool&#123;</span><br><span class="line">   New: <span class="function"><span class="keyword">func</span><span class="params">()</span> <span class="title">interface</span></span>&#123;&#125; &#123;</span><br><span class="line">      fmt.Println(<span class="string">"Creating a new Person"</span>)</span><br><span class="line">      <span class="keyword">return</span> <span class="built_in">new</span>(Person)</span><br><span class="line">   &#125;,</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line"></span><br><span class="line">   p := Ppool.Get().(*Person)</span><br><span class="line">   fmt.Printf(<span class="string">"首次从 pool 里获取：%#v\n"</span>, p)</span><br><span class="line"></span><br><span class="line">   p.name = <span class="string">"wxning"</span></span><br><span class="line">   Ppool.Put(p)</span><br><span class="line"></span><br><span class="line">   nowP := Ppool.Get().(*Person)</span><br><span class="line">   fmt.Printf(<span class="string">"第二次从 pool 里获取：%#v\n"</span>, nowP)</span><br><span class="line"></span><br><span class="line">   secondP := Ppool.Get().(*Person)</span><br><span class="line">   fmt.Printf(<span class="string">"第三次从 pool 里获取：%#v\n"</span>, secondP)</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>输出结果：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">Creating a <span class="built_in">new</span> Person</span><br><span class="line">首次从 pool 里获取：&amp;main.Person&#123;name:<span class="string">""</span>&#125;</span><br><span class="line">第二次从 pool 里获取：&amp;main.Person&#123;name:<span class="string">"wxning"</span>&#125;</span><br><span class="line">Creating a <span class="built_in">new</span> Person</span><br><span class="line">第三次从 pool 里获取：&amp;main.Person&#123;name:<span class="string">""</span>&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这里我们先初始化pool，设置好new函数，当调用Get方法时，如果池子中缓存了对象，则直接返回缓存的对象，<code>如果池子中没有存货，则调用New函数创建一个新的对象</code>。</p>
+<p>所以这里可以看到首次和第三次Get时打印了Creating a new Person。</p>
+<blockquote>
+<p>这里要注意：Get方法取出来的对象和上次Put方法放进去的对象是同一个，Pool没有做任何清空操作，但我们不应当对此有任何假设，因为在实际的并发使用场景中，无法保证这种顺序，最好的做法是在 Put 前，将对象清空。</p>
+</blockquote>
+<h2 id="fmt-Printf-源码"><a href="#fmt-Printf-源码" class="headerlink" title="fmt.Printf 源码"></a>fmt.Printf 源码</h2><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">Printf</span><span class="params">(format <span class="keyword">string</span>, a ...<span class="keyword">interface</span>&#123;&#125;)</span> <span class="params">(n <span class="keyword">int</span>, err error)</span></span> &#123;</span><br><span class="line">   <span class="keyword">return</span> Fprintf(os.Stdout, format, a...)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>再来看 Fprintf 方法：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">Fprintf</span><span class="params">(w io.Writer, format <span class="keyword">string</span>, a ...<span class="keyword">interface</span>&#123;&#125;)</span> <span class="params">(n <span class="keyword">int</span>, err error)</span></span> &#123;</span><br><span class="line">   p := newPrinter()</span><br><span class="line">   p.doPrintf(format, a)</span><br><span class="line">   n, err = w.Write(p.buf)</span><br><span class="line">   p.free()</span><br><span class="line">   <span class="keyword">return</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这里的 <code>newPrinter</code> 用的就是 Pool：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> ppFree = sync.Pool&#123;</span><br><span class="line">	 New: <span class="function"><span class="keyword">func</span><span class="params">()</span> <span class="title">interface</span></span>&#123;&#125; &#123; <span class="keyword">return</span> <span class="built_in">new</span>(pp) &#125;,</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// newPrinter allocates a new pp struct or grabs a cached one.</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">newPrinter</span><span class="params">()</span> *<span class="title">pp</span></span> &#123;</span><br><span class="line">   p := ppFree.Get().(*pp)</span><br><span class="line">   p.panicking = <span class="literal">false</span></span><br><span class="line">   p.erroring = <span class="literal">false</span></span><br><span class="line">   p.wrapErrs = <span class="literal">false</span></span><br><span class="line">   p.fmt.init(&amp;p.buf)</span><br><span class="line">   <span class="keyword">return</span> p</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>在<code>Fprintf</code>拿到pp指针后，会做一些format操作，并且将p.buf写入w，最后调用<code>free</code>函数，将pp指针归还Pool中：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(p *pp)</span> <span class="title">free</span><span class="params">()</span></span> &#123;</span><br><span class="line">   <span class="comment">// Proper usage of a sync.Pool requires each entry to have approximately</span></span><br><span class="line">   <span class="comment">// the same memory cost. To obtain this property when the stored type</span></span><br><span class="line">   <span class="comment">// contains a variably-sized buffer, we add a hard limit on the maximum buffer</span></span><br><span class="line">   <span class="comment">// to place back in the pool.</span></span><br><span class="line">   <span class="comment">//</span></span><br><span class="line">   <span class="comment">// See https://golang.org/issue/23199</span></span><br><span class="line">   <span class="keyword">if</span> <span class="built_in">cap</span>(p.buf) &gt; <span class="number">64</span>&lt;&lt;<span class="number">10</span> &#123;</span><br><span class="line">      <span class="keyword">return</span></span><br><span class="line">   &#125;</span><br><span class="line"></span><br><span class="line">   p.buf = p.buf[:<span class="number">0</span>]</span><br><span class="line">   p.arg = <span class="literal">nil</span></span><br><span class="line">   p.value = reflect.Value&#123;&#125;</span><br><span class="line">   p.wrappedErr = <span class="literal">nil</span></span><br><span class="line">   ppFree.Put(p)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>归还到 Pool 前将对象的一些字段清零，这样，通过 Get 拿到缓存的对象时，就可以安全地使用了。</p>
 <h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><ol>
-<li>空间换时间，通过冗余的两个数据结构read和dirty实现加锁对性能的影响。</li>
-<li>使用只读数据read避免读写冲突。</li>
-<li>动态调整，miss次数多了之后，将dirty数据提升为read</li>
-<li>double-checking双重检测</li>
-<li>延迟删除，删除一个键值只是打标记，只有在提升为dirty的时候才彻底清理掉数据。</li>
-<li>优先从read读取，更新，删除，因为对read的读取不需要加锁。</li>
+<li>关键思想是对象的复用，避免重复创建、销毁。将暂时不用的对象缓存起来，待下次需要的时候直接使用，不用再次经过内存分配，复用对象的内存，减轻 GC 的压力。</li>
+<li><code>sync.Pool</code> 是协程安全的，使用起来非常方便。设置好 New 函数后，调用 Get 获取，调用 Put 归还对象。</li>
+<li>不要对 Get 得到的对象有任何假设，更好的做法是归还对象时，将对象“清空”。</li>
+<li>Pool 里对象的生命周期受 GC 影响，不适合于做连接池，因为连接池需要自己管理对象的生命周期。</li>
+<li>Pool 不可以指定⼤⼩，⼤⼩只受制于 GC 临界值。</li>
+<li><code>sync.Pool</code> 的最底层使用切片加链表来实现双端队列，并将缓存的对象存储在切片中。</li>
 </ol>
 
       
@@ -439,12 +431,12 @@
   <!-- JS库 sweetalert 可修改路径 -->
   <script src="https://cdn.bootcss.com/jquery/2.0.0/jquery.min.js"></script>
   <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
-  <p><span>本文标题:</span><a href="/2019/09/26/go-map/">go语言map线程安全问题</a></p>
+  <p><span>本文标题:</span><a href="/2020/04/20/syncPool/">go语言之sync.Pool</a></p>
   <p><span>文章作者:</span><a href="/" title="访问 Wxning 的个人博客">Wxning</a></p>
-  <p><span>发布时间:</span>2019年09月26日 - 10:09</p>
-  <p><span>最后更新:</span>2020年04月09日 - 15:04</p>
-  <p><span>原始链接:</span><a href="/2019/09/26/go-map/" title="go语言map线程安全问题">http://yoursite.com/2019/09/26/go-map/</a>
-    <span class="copy-path" title="点击复制文章链接"><i class="fa fa-clipboard" data-clipboard-text="http://yoursite.com/2019/09/26/go-map/" aria-label="复制成功！"></i></span>
+  <p><span>发布时间:</span>2020年04月20日 - 09:04</p>
+  <p><span>最后更新:</span>2020年04月20日 - 14:04</p>
+  <p><span>原始链接:</span><a href="/2020/04/20/syncPool/" title="go语言之sync.Pool">http://yoursite.com/2020/04/20/syncPool/</a>
+    <span class="copy-path" title="点击复制文章链接"><i class="fa fa-clipboard" data-clipboard-text="http://yoursite.com/2020/04/20/syncPool/" aria-label="复制成功！"></i></span>
   </p>
   <p><span>许可协议:</span><i class="fa fa-creative-commons"></i> <a rel="license" href="https://creativecommons.org/licenses/by-nc-nd/4.0/" target="_blank" title="Attribution-NonCommercial-NoDerivatives 4.0 International (CC BY-NC-ND 4.0)">署名-非商业性使用-禁止演绎 4.0 国际</a> 转载请保留原文链接及作者。</p>
 </div>
@@ -478,6 +470,8 @@
           
             <a href="/tags/go/" rel="tag"># go</a>
           
+            <a href="/tags/pool/" rel="tag"># pool</a>
+          
         </div>
       
 
@@ -489,8 +483,8 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2019/08/03/go-crawler2/" rel="next" title="go实现并发版爬虫">
-                <i class="fa fa-chevron-left"></i> go实现并发版爬虫
+              <a href="/2020/04/16/go-GC/" rel="next" title="go垃圾回收机制">
+                <i class="fa fa-chevron-left"></i> go垃圾回收机制
               </a>
             
           </div>
@@ -498,10 +492,6 @@
           <span class="post-nav-divider"></span>
 
           <div class="post-nav-prev post-nav-item">
-            
-              <a href="/2019/09/30/cleanCode/" rel="prev" title="CleanCode">
-                CleanCode <i class="fa fa-chevron-right"></i>
-              </a>
             
           </div>
         </div>
@@ -650,7 +640,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#map简介"><span class="nav-number">1.</span> <span class="nav-text">map简介</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#线程不安全"><span class="nav-number">2.</span> <span class="nav-text">线程不安全</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#map主要字段"><span class="nav-number">2.0.1.</span> <span class="nav-text">map主要字段</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#readOnly"><span class="nav-number">2.0.2.</span> <span class="nav-text">readOnly</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#entry"><span class="nav-number">2.0.3.</span> <span class="nav-text">entry</span></a></li></ol></li></ol><li class="nav-item nav-level-2"><a class="nav-link" href="#sync-Map工作原理"><span class="nav-number">3.</span> <span class="nav-text">sync.Map工作原理</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#流程"><span class="nav-number">3.0.1.</span> <span class="nav-text">流程</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#总结"><span class="nav-number">4.</span> <span class="nav-text">总结</span></a></li></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#为什么用-sync-Pool"><span class="nav-number">1.</span> <span class="nav-text">为什么用 sync.Pool</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#sync-Pool-怎么用"><span class="nav-number">2.</span> <span class="nav-text">sync.Pool 怎么用</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#fmt-Printf-源码"><span class="nav-number">3.</span> <span class="nav-text">fmt.Printf 源码</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#总结"><span class="nav-number">4.</span> <span class="nav-text">总结</span></a></li></ol></div>
             
 
           </div>
