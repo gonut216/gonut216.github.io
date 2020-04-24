@@ -68,7 +68,7 @@
 
 
 
-  <meta name="keywords" content="CleanCode,">
+  <meta name="keywords" content="Java,算法,">
 
 
 
@@ -79,18 +79,18 @@
 
 
 
-<meta name="description" content="Later Equals Never去年5月份我学习了我的第一门编程语言Go，早在14年时我在大学的时候学过C语言，那时候我并没有对编程产生兴趣，大学毕业后我逐渐认识到编程的重要性，可以说我真正学很久并且应用于实战的第一门语言是Go，在那之前我并不了解面向对象编程语言，并不知道面向对象编程思想，甚至连类和对象以及封装，继承，多态认识都是模糊，Go语言准确来说是面向接口编程，它并没有类，对象这样的说">
-<meta name="keywords" content="CleanCode">
+<meta name="description" content="最近工作很是悠闲，一个人安静的思考时间更多了，转眼大学已经毕业将近三年，回想起我的大学生活，真的多了些许遗憾，一个人在图书馆编程的时光有多美好啊… 聊起技术，工作中已经很少遇到有关算法的知识，可在面试中经常会遇到算法题，其中有一道老题却是大家选择纷纷避开的，那就是二分查找。 因为它很好写，却很难写对。 二分查找是什么呢？这个不只程序员，其他很多非技术人员也会。比如我想一个1到100以内的数，你来猜">
+<meta name="keywords" content="Java,算法">
 <meta property="og:type" content="article">
-<meta property="og:title" content="CleanCode">
-<meta property="og:url" content="http://yoursite.com/2019/09/30/cleanCode/index.html">
+<meta property="og:title" content="二分查找--那个隐藏了10年的Java Bug">
+<meta property="og:url" content="http://yoursite.com/2020/04/24/binarySearch/index.html">
 <meta property="og:site_name" content="Wxning">
-<meta property="og:description" content="Later Equals Never去年5月份我学习了我的第一门编程语言Go，早在14年时我在大学的时候学过C语言，那时候我并没有对编程产生兴趣，大学毕业后我逐渐认识到编程的重要性，可以说我真正学很久并且应用于实战的第一门语言是Go，在那之前我并不了解面向对象编程语言，并不知道面向对象编程思想，甚至连类和对象以及封装，继承，多态认识都是模糊，Go语言准确来说是面向接口编程，它并没有类，对象这样的说">
+<meta property="og:description" content="最近工作很是悠闲，一个人安静的思考时间更多了，转眼大学已经毕业将近三年，回想起我的大学生活，真的多了些许遗憾，一个人在图书馆编程的时光有多美好啊… 聊起技术，工作中已经很少遇到有关算法的知识，可在面试中经常会遇到算法题，其中有一道老题却是大家选择纷纷避开的，那就是二分查找。 因为它很好写，却很难写对。 二分查找是什么呢？这个不只程序员，其他很多非技术人员也会。比如我想一个1到100以内的数，你来猜">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:updated_time" content="2019-09-30T03:31:21.601Z">
+<meta property="og:updated_time" content="2020-04-24T07:53:23.442Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="CleanCode">
-<meta name="twitter:description" content="Later Equals Never去年5月份我学习了我的第一门编程语言Go，早在14年时我在大学的时候学过C语言，那时候我并没有对编程产生兴趣，大学毕业后我逐渐认识到编程的重要性，可以说我真正学很久并且应用于实战的第一门语言是Go，在那之前我并不了解面向对象编程语言，并不知道面向对象编程思想，甚至连类和对象以及封装，继承，多态认识都是模糊，Go语言准确来说是面向接口编程，它并没有类，对象这样的说">
+<meta name="twitter:title" content="二分查找--那个隐藏了10年的Java Bug">
+<meta name="twitter:description" content="最近工作很是悠闲，一个人安静的思考时间更多了，转眼大学已经毕业将近三年，回想起我的大学生活，真的多了些许遗憾，一个人在图书馆编程的时光有多美好啊… 聊起技术，工作中已经很少遇到有关算法的知识，可在面试中经常会遇到算法题，其中有一道老题却是大家选择纷纷避开的，那就是二分查找。 因为它很好写，却很难写对。 二分查找是什么呢？这个不只程序员，其他很多非技术人员也会。比如我想一个1到100以内的数，你来猜">
 
 
 
@@ -120,13 +120,13 @@
 
 
 
-  <link rel="canonical" href="http://yoursite.com/2019/09/30/cleanCode/">
+  <link rel="canonical" href="http://yoursite.com/2020/04/24/binarySearch/">
 
 
 
 
 
-  <title>CleanCode | Wxning</title>
+  <title>二分查找--那个隐藏了10年的Java Bug | Wxning</title>
   
 
 
@@ -264,7 +264,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/09/30/cleanCode/">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/04/24/binarySearch/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="Wxning">
@@ -281,7 +281,7 @@
 
         
         
-          <h1 class="post-title" itemprop="name headline">CleanCode</h1>
+          <h1 class="post-title" itemprop="name headline">二分查找--那个隐藏了10年的Java Bug</h1>
         
 
         <div class="post-meta">
@@ -293,8 +293,8 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-09-30T09:43:14+08:00">
-                2019-09-30
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-04-24T15:16:47+08:00">
+                2020-04-24
               </time>
             
 
@@ -303,6 +303,39 @@
             
           </span>
 
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/算法/" itemprop="url" rel="index">
+                    <span itemprop="name">算法</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/算法/二分查找/" itemprop="url" rel="index">
+                    <span itemprop="name">二分查找</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
           
 
           
@@ -336,15 +369,22 @@
       
 
       
-        <h2 id="Later-Equals-Never"><a href="#Later-Equals-Never" class="headerlink" title="Later Equals Never"></a>Later Equals Never</h2><p>去年5月份我学习了我的第一门编程语言Go，早在14年时我在大学的时候学过C语言，那时候我并没有对编程产生兴趣，大学毕业后我逐渐认识到编程的重要性，可以说我真正学很久并且应用于实战的第一门语言是Go，在那之前我并不了解面向对象编程语言，并不知道面向对象编程思想，甚至连类和对象以及封装，继承，多态认识都是模糊，Go语言准确来说是面向接口编程，它并没有类，对象这样的说法，更没有继承和多态，继承和多态的功能Go使用接口来实现的。</p>
-<p>我总结了Go语言在编程范式上的三个特点：</p>
-<ul>
-<li>面向接口</li>
-<li>函数式编程</li>
-<li>并发编程</li>
-</ul>
-<p>由于Go是我的第一门编程语言，从来没有接触过Java，Python这样的面向对象编程语言，所以我并没有感受到Go语言设计的伟大之处，最近我学习了Python，终于理解了Go设计师Bob Pike所说的你是否同意Go语言取决于你是认可Less is more or less is less。</p>
-<h2 id="Less-Is-More"><a href="#Less-Is-More" class="headerlink" title="Less Is More"></a>Less Is More</h2><p>C++发明者Bjarne StrouStrup曾经说过：我喜欢优雅和高效的代码，代码逻辑应直截了当，叫缺陷难以隐藏。尽量减少依赖关系，使之便于维护，依据某种分层战略完善错误处理代码。性能调至最优，省的引诱别人做没规矩的优化，搞出一堆混乱来。整洁的代码只做好一件事。</p>
+        <p>最近工作很是悠闲，一个人安静的思考时间更多了，转眼大学已经毕业将近三年，回想起我的大学生活，真的多了些许遗憾，一个人在图书馆编程的时光有多<code>美好</code>啊…</p>
+<p>聊起技术，工作中已经很少遇到有关算法的知识，可在面试中经常会遇到算法题，其中有一道老题却是大家选择纷纷避开的，那就是<code>二分查找</code>。</p>
+<p>因为它很好写，却很难写对。</p>
+<p>二分查找是什么呢？这个不只程序员，其他很多非技术人员也会。比如我想一个1到100以内的数，你来猜，我告诉你每次猜的是大了还是小了，你会先猜50，然后25， 然后。。。用不了几个回合就猜出来了。在计算机里，则是一个有序数组，不断通过二分的方法缩小关键字所在区间的范围。</p>
+<p>其实在早年的很多书籍中，关于二分查找的代码都是错误的，这里面有一个隐藏很久的<code>bug</code>。</p>
+<p>这都不算啥，更能让人感觉幸灾乐祸的是，Java库里面的二分查找，有一个埋藏了10年之久的bug。这个bug呢，在 <code>java.util.Arrays.binarySearch</code> 里面，虽然这个bug的修复也已经是10年前的事了。那么我们来看下当年的错误代码吧。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">int</span> <span class="title">binarySearch</span><span class="params">(<span class="keyword">int</span>[] a, <span class="keyword">int</span> key)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">int</span> low = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">int</span> high = a.length - <span class="number">1</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">while</span> (low &lt;= high) &#123;</span><br><span class="line">        <span class="keyword">int</span> mid = (low + high) / <span class="number">2</span>;</span><br><span class="line">        <span class="keyword">int</span> midVal = a[mid];</span><br><span class="line">      </span><br><span class="line">        <span class="keyword">if</span> (midVal &lt; key) &#123;</span><br><span class="line">            low = mid + <span class="number">1</span>;</span><br><span class="line">        &#125; <span class="keyword">else</span> <span class="keyword">if</span> (midVal &gt; key) &#123;</span><br><span class="line">            high = mid - <span class="number">1</span>;</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="keyword">return</span> mid;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> -(low + <span class="number">1</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>大家可能很难看出这里面的bug，毕竟隐藏了那么多年，不太容易发现。</p>
+<p>问题就在于 <code>mid = (low + high) / 2</code></p>
+<p>这里 <code>low + high</code>可能会发生溢出的。只有我们数组开的足够大，就可能发生溢出。</p>
+<p>正确的做法是：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mid = (low + high) &gt;&gt;&gt; <span class="number">1</span></span><br></pre></td></tr></table></figure>
+
+<p>这里是三个 <code>&gt;</code>，表示无符号右移，忽略符号位，空位用0补齐。</p>
+<p>软件工程师，就是把现实生活用理论进行建模，然后再用现实来实现这样的理论。写出好的代码不容易，写出既让用户满意又好的代码，那更不容易。也许有时候，成就感就来自于此吧</p>
 
       
     </div>
@@ -372,12 +412,12 @@
   <!-- JS库 sweetalert 可修改路径 -->
   <script src="https://cdn.bootcss.com/jquery/2.0.0/jquery.min.js"></script>
   <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
-  <p><span>本文标题:</span><a href="/2019/09/30/cleanCode/">CleanCode</a></p>
+  <p><span>本文标题:</span><a href="/2020/04/24/binarySearch/">二分查找--那个隐藏了10年的Java Bug</a></p>
   <p><span>文章作者:</span><a href="/" title="访问 Wxning 的个人博客">Wxning</a></p>
-  <p><span>发布时间:</span>2019年09月30日 - 09:09</p>
-  <p><span>最后更新:</span>2019年09月30日 - 11:09</p>
-  <p><span>原始链接:</span><a href="/2019/09/30/cleanCode/" title="CleanCode">http://yoursite.com/2019/09/30/cleanCode/</a>
-    <span class="copy-path" title="点击复制文章链接"><i class="fa fa-clipboard" data-clipboard-text="http://yoursite.com/2019/09/30/cleanCode/" aria-label="复制成功！"></i></span>
+  <p><span>发布时间:</span>2020年04月24日 - 15:04</p>
+  <p><span>最后更新:</span>2020年04月24日 - 15:04</p>
+  <p><span>原始链接:</span><a href="/2020/04/24/binarySearch/" title="二分查找--那个隐藏了10年的Java Bug">http://yoursite.com/2020/04/24/binarySearch/</a>
+    <span class="copy-path" title="点击复制文章链接"><i class="fa fa-clipboard" data-clipboard-text="http://yoursite.com/2020/04/24/binarySearch/" aria-label="复制成功！"></i></span>
   </p>
   <p><span>许可协议:</span><i class="fa fa-creative-commons"></i> <a rel="license" href="https://creativecommons.org/licenses/by-nc-nd/4.0/" target="_blank" title="Attribution-NonCommercial-NoDerivatives 4.0 International (CC BY-NC-ND 4.0)">署名-非商业性使用-禁止演绎 4.0 国际</a> 转载请保留原文链接及作者。</p>
 </div>
@@ -409,7 +449,9 @@
       
         <div class="post-tags">
           
-            <a href="/tags/CleanCode/" rel="tag"># CleanCode</a>
+            <a href="/tags/Java/" rel="tag"># Java</a>
+          
+            <a href="/tags/算法/" rel="tag"># 算法</a>
           
         </div>
       
@@ -422,8 +464,8 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2019/09/26/go-map/" rel="next" title="go语言map线程安全问题">
-                <i class="fa fa-chevron-left"></i> go语言map线程安全问题
+              <a href="/2020/04/20/syncPool/" rel="next" title="go语言之sync.Pool">
+                <i class="fa fa-chevron-left"></i> go语言之sync.Pool
               </a>
             
           </div>
@@ -431,10 +473,6 @@
           <span class="post-nav-divider"></span>
 
           <div class="post-nav-prev post-nav-item">
-            
-              <a href="/2019/11/19/go-range/" rel="prev" title="go range遍历循环变量复用地址问题">
-                go range遍历循环变量复用地址问题 <i class="fa fa-chevron-right"></i>
-              </a>
             
           </div>
         </div>
@@ -491,17 +529,8 @@
       
 
       
-        <ul class="sidebar-nav motion-element">
-          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
-            文章目录
-          </li>
-          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
-            站点概览
-          </li>
-        </ul>
-      
 
-      <section class="site-overview-wrap sidebar-panel">
+      <section class="site-overview-wrap sidebar-panel sidebar-panel-active">
         <div class="site-overview">
           <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
             
@@ -573,22 +602,6 @@
         </div>
       </section>
 
-      
-      <!--noindex-->
-        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
-          <div class="post-toc">
-
-            
-              
-            
-
-            
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Later-Equals-Never"><span class="nav-number">1.</span> <span class="nav-text">Later Equals Never</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Less-Is-More"><span class="nav-number">2.</span> <span class="nav-text">Less Is More</span></a></li></ol></div>
-            
-
-          </div>
-        </section>
-      <!--/noindex-->
       
 
       
