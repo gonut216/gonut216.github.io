@@ -79,18 +79,22 @@
 
 
 
-<meta name="description" content="写在前面并发编程模型从内存角度讲，并行计算只有两种：共享内存，消息通信。消息通信也叫做拷贝内存，它们的目的都是为了解决多线程数据一致性问题。基于共享内存的并发模型通常提供互斥锁同步原语。Tony Hoare在1997年基于消息通信使用channel原语提出CSP并发模型，这也是Go语言channel的实现基础，同时Go也提供了基于共享内存的sync包和atomic包。">
+<meta name="description" content="写在前面这篇文章将持续更新。 并发编程模型从内存角度讲，并行计算只有两种：共享内存，消息通信。消息通信也叫做拷贝内存，它们的目的都是为了解决多线程数据一致性问题。基于共享内存的并发模型通常提供互斥锁同步原语。Tony Hoare在1997年基于消息通信使用channel原语提出CSP并发模型，这也是Go语言channel的实现基础，同时Go也提供了基于共享内存的sync包和atomic包。 hch">
 <meta name="keywords" content="go,channel">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Go语言之channel源码分析">
 <meta property="og:url" content="http://yoursite.com/2020/04/28/channel/index.html">
 <meta property="og:site_name" content="Wxning">
-<meta property="og:description" content="写在前面并发编程模型从内存角度讲，并行计算只有两种：共享内存，消息通信。消息通信也叫做拷贝内存，它们的目的都是为了解决多线程数据一致性问题。基于共享内存的并发模型通常提供互斥锁同步原语。Tony Hoare在1997年基于消息通信使用channel原语提出CSP并发模型，这也是Go语言channel的实现基础，同时Go也提供了基于共享内存的sync包和atomic包。">
+<meta property="og:description" content="写在前面这篇文章将持续更新。 并发编程模型从内存角度讲，并行计算只有两种：共享内存，消息通信。消息通信也叫做拷贝内存，它们的目的都是为了解决多线程数据一致性问题。基于共享内存的并发模型通常提供互斥锁同步原语。Tony Hoare在1997年基于消息通信使用channel原语提出CSP并发模型，这也是Go语言channel的实现基础，同时Go也提供了基于共享内存的sync包和atomic包。 hch">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:updated_time" content="2020-04-28T01:40:59.022Z">
+<meta property="og:image" content="http://yoursite.com/Users/mac/Downloads/hexo_blog/source/images/chan1.jpeg">
+<meta property="og:image" content="http://yoursite.com/Users/mac/Downloads/hexo_blog/source/images/chan2.png">
+<meta property="og:image" content="http://yoursite.com/Users/mac/Downloads/hexo_blog/source/images/chan3.png">
+<meta property="og:updated_time" content="2020-04-28T02:32:45.355Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Go语言之channel源码分析">
-<meta name="twitter:description" content="写在前面并发编程模型从内存角度讲，并行计算只有两种：共享内存，消息通信。消息通信也叫做拷贝内存，它们的目的都是为了解决多线程数据一致性问题。基于共享内存的并发模型通常提供互斥锁同步原语。Tony Hoare在1997年基于消息通信使用channel原语提出CSP并发模型，这也是Go语言channel的实现基础，同时Go也提供了基于共享内存的sync包和atomic包。">
+<meta name="twitter:description" content="写在前面这篇文章将持续更新。 并发编程模型从内存角度讲，并行计算只有两种：共享内存，消息通信。消息通信也叫做拷贝内存，它们的目的都是为了解决多线程数据一致性问题。基于共享内存的并发模型通常提供互斥锁同步原语。Tony Hoare在1997年基于消息通信使用channel原语提出CSP并发模型，这也是Go语言channel的实现基础，同时Go也提供了基于共享内存的sync包和atomic包。 hch">
+<meta name="twitter:image" content="http://yoursite.com/Users/mac/Downloads/hexo_blog/source/images/chan1.jpeg">
 
 
 
@@ -369,7 +373,22 @@
       
 
       
-        <h2 id="写在前面"><a href="#写在前面" class="headerlink" title="写在前面"></a>写在前面</h2><h2 id="并发编程模型"><a href="#并发编程模型" class="headerlink" title="并发编程模型"></a>并发编程模型</h2><p>从内存角度讲，并行计算只有两种：<code>共享内存</code>，<code>消息通信</code>。消息通信也叫做拷贝内存，它们的目的都是为了解决多线程数据一致性问题。基于共享内存的并发模型通常提供互斥锁同步原语。Tony Hoare在1997年基于消息通信使用channel原语提出<code>CSP</code>并发模型，这也是Go语言channel的实现基础，同时Go也提供了基于共享内存的sync包和atomic包。</p>
+        <h2 id="写在前面"><a href="#写在前面" class="headerlink" title="写在前面"></a>写在前面</h2><p>这篇文章将持续更新。</p>
+<h2 id="并发编程模型"><a href="#并发编程模型" class="headerlink" title="并发编程模型"></a>并发编程模型</h2><p>从内存角度讲，并行计算只有两种：<code>共享内存</code>，<code>消息通信</code>。消息通信也叫做拷贝内存，它们的目的都是为了解决多线程数据一致性问题。基于共享内存的并发模型通常提供互斥锁同步原语。Tony Hoare在1997年基于消息通信使用channel原语提出<code>CSP</code>并发模型，这也是Go语言channel的实现基础，同时Go也提供了基于共享内存的sync包和atomic包。</p>
+<h2 id="hchan-结构"><a href="#hchan-结构" class="headerlink" title="hchan 结构"></a>hchan 结构</h2><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> hchan <span class="keyword">struct</span> &#123;</span><br><span class="line">	qcount   <span class="keyword">uint</span>           <span class="comment">// 队列中所以数据数</span></span><br><span class="line">	dataqsiz <span class="keyword">uint</span>           <span class="comment">// 环形队列大小</span></span><br><span class="line">	buf      unsafe.Pointer <span class="comment">// 指向大小为 dataqsiz 个元素的数组</span></span><br><span class="line">	elemsize <span class="keyword">uint16</span> <span class="comment">// 元素大小</span></span><br><span class="line">	closed   <span class="keyword">uint32</span> <span class="comment">// 是否关闭</span></span><br><span class="line">	elemtype *_type <span class="comment">// 元素类型</span></span><br><span class="line">	sendx    <span class="keyword">uint</span>   <span class="comment">// 发送索引</span></span><br><span class="line">	recvx    <span class="keyword">uint</span>   <span class="comment">// 接收索引</span></span><br><span class="line">	recvq    waitq  <span class="comment">// recv 等待列表，即 &lt;-chan</span></span><br><span class="line">	sendq    waitq  <span class="comment">// send 等待列表，即 ch&lt;-</span></span><br><span class="line"></span><br><span class="line">	<span class="comment">// lock 保护了 hchan 所有字段, 以及在此channel上阻塞的 sudog 一些字段</span></span><br><span class="line">	<span class="comment">// 当持有此锁时不应该改变其他G的状态（in particular, do not ready a G），因为它会在栈收缩时死锁</span></span><br><span class="line">	lock mutex</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>waitq结构：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> waitq <span class="keyword">struct</span> &#123;</span><br><span class="line">	first *sudog</span><br><span class="line">	last  *sudog</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>sudog结构如下：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> sudog <span class="keyword">struct</span> &#123;</span><br><span class="line">  <span class="comment">// 下面这个字段由sudog阻塞的 hchan.lock 进行保护</span></span><br><span class="line">   g *g</span><br><span class="line"></span><br><span class="line">   <span class="comment">// isSelect 表示G正在参与一个 select </span></span><br><span class="line">   <span class="comment">// 因此 g.selectDone必须以 CAS 的方式来避免唤醒的时候的 data race</span></span><br><span class="line">   isSelect <span class="keyword">bool</span></span><br><span class="line">   next     *sudog</span><br><span class="line">   prev     *sudog</span><br><span class="line">   elem     unsafe.Pointer <span class="comment">// 数据元素 (may point to stack)</span></span><br><span class="line"></span><br><span class="line">   <span class="comment">// 下面字段永远不会被并发访问，对于channel，waitlink只会被 g 访问</span></span><br><span class="line">   <span class="comment">// 对于 semaphores, 所以字段只会在持有 semaRoot lock 时被访问</span></span><br><span class="line">   acquiretime <span class="keyword">int64</span></span><br><span class="line">   releasetime <span class="keyword">int64</span></span><br><span class="line">   ticket      <span class="keyword">uint32</span></span><br><span class="line">   parent      *sudog <span class="comment">// semaRoot 二叉树</span></span><br><span class="line">   waitlink    *sudog <span class="comment">// g.waiting list or semaRoot</span></span><br><span class="line">   waittail    *sudog <span class="comment">// semaRoot</span></span><br><span class="line">   c           *hchan <span class="comment">// channel</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>下面这张图是一个可视化的hchan结构</p>
+<p><img src="/Users/mac/Downloads/hexo_blog/source/images/chan1.jpeg" alt></p>
+<p>创建 buffered channel 结构如下</p>
+<p><img src="/Users/mac/Downloads/hexo_blog/source/images/chan2.png" alt="image-20200428102924352"></p>
+<p>创建 unbuffered channel 结构如下</p>
+<p><img src="/Users/mac/Downloads/hexo_blog/source/images/chan3.png" alt="image-20200428103012663"></p>
 
       
     </div>
@@ -400,7 +419,7 @@
   <p><span>本文标题:</span><a href="/2020/04/28/channel/">Go语言之channel源码分析</a></p>
   <p><span>文章作者:</span><a href="/" title="访问 Wxning 的个人博客">Wxning</a></p>
   <p><span>发布时间:</span>2020年04月28日 - 09:04</p>
-  <p><span>最后更新:</span>2020年04月28日 - 09:04</p>
+  <p><span>最后更新:</span>2020年04月28日 - 10:04</p>
   <p><span>原始链接:</span><a href="/2020/04/28/channel/" title="Go语言之channel源码分析">http://yoursite.com/2020/04/28/channel/</a>
     <span class="copy-path" title="点击复制文章链接"><i class="fa fa-clipboard" data-clipboard-text="http://yoursite.com/2020/04/28/channel/" aria-label="复制成功！"></i></span>
   </p>
@@ -606,7 +625,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#写在前面"><span class="nav-number">1.</span> <span class="nav-text">写在前面</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#并发编程模型"><span class="nav-number">2.</span> <span class="nav-text">并发编程模型</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#写在前面"><span class="nav-number">1.</span> <span class="nav-text">写在前面</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#并发编程模型"><span class="nav-number">2.</span> <span class="nav-text">并发编程模型</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#hchan-结构"><span class="nav-number">3.</span> <span class="nav-text">hchan 结构</span></a></li></ol></div>
             
 
           </div>
