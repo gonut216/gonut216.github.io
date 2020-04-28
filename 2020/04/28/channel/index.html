@@ -87,14 +87,14 @@
 <meta property="og:site_name" content="Wxning">
 <meta property="og:description" content="写在前面这篇文章将持续更新。 并发编程模型从内存角度讲，并行计算只有两种：共享内存，消息通信。消息通信也叫做拷贝内存，它们的目的都是为了解决多线程数据一致性问题。基于共享内存的并发模型通常提供互斥锁同步原语。Tony Hoare在1997年基于消息通信使用channel原语提出CSP并发模型，这也是Go语言channel的实现基础，同时Go也提供了基于共享内存的sync包和atomic包。 hch">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:image" content="http://yoursite.com/Users/mac/Downloads/hexo_blog/source/images/chan1.jpeg">
-<meta property="og:image" content="http://yoursite.com/Users/mac/Downloads/hexo_blog/source/images/chan2.png">
-<meta property="og:image" content="http://yoursite.com/Users/mac/Downloads/hexo_blog/source/images/chan3.png">
-<meta property="og:updated_time" content="2020-04-28T02:32:45.355Z">
+<meta property="og:image" content="http://yoursite.com/images/chan1.jpeg">
+<meta property="og:image" content="http://yoursite.com/images/chan2.png">
+<meta property="og:image" content="http://yoursite.com/images/chan3.png">
+<meta property="og:updated_time" content="2020-04-28T02:34:21.192Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Go语言之channel源码分析">
 <meta name="twitter:description" content="写在前面这篇文章将持续更新。 并发编程模型从内存角度讲，并行计算只有两种：共享内存，消息通信。消息通信也叫做拷贝内存，它们的目的都是为了解决多线程数据一致性问题。基于共享内存的并发模型通常提供互斥锁同步原语。Tony Hoare在1997年基于消息通信使用channel原语提出CSP并发模型，这也是Go语言channel的实现基础，同时Go也提供了基于共享内存的sync包和atomic包。 hch">
-<meta name="twitter:image" content="http://yoursite.com/Users/mac/Downloads/hexo_blog/source/images/chan1.jpeg">
+<meta name="twitter:image" content="http://yoursite.com/images/chan1.jpeg">
 
 
 
@@ -384,11 +384,11 @@
 <figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> sudog <span class="keyword">struct</span> &#123;</span><br><span class="line">  <span class="comment">// 下面这个字段由sudog阻塞的 hchan.lock 进行保护</span></span><br><span class="line">   g *g</span><br><span class="line"></span><br><span class="line">   <span class="comment">// isSelect 表示G正在参与一个 select </span></span><br><span class="line">   <span class="comment">// 因此 g.selectDone必须以 CAS 的方式来避免唤醒的时候的 data race</span></span><br><span class="line">   isSelect <span class="keyword">bool</span></span><br><span class="line">   next     *sudog</span><br><span class="line">   prev     *sudog</span><br><span class="line">   elem     unsafe.Pointer <span class="comment">// 数据元素 (may point to stack)</span></span><br><span class="line"></span><br><span class="line">   <span class="comment">// 下面字段永远不会被并发访问，对于channel，waitlink只会被 g 访问</span></span><br><span class="line">   <span class="comment">// 对于 semaphores, 所以字段只会在持有 semaRoot lock 时被访问</span></span><br><span class="line">   acquiretime <span class="keyword">int64</span></span><br><span class="line">   releasetime <span class="keyword">int64</span></span><br><span class="line">   ticket      <span class="keyword">uint32</span></span><br><span class="line">   parent      *sudog <span class="comment">// semaRoot 二叉树</span></span><br><span class="line">   waitlink    *sudog <span class="comment">// g.waiting list or semaRoot</span></span><br><span class="line">   waittail    *sudog <span class="comment">// semaRoot</span></span><br><span class="line">   c           *hchan <span class="comment">// channel</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
 <p>下面这张图是一个可视化的hchan结构</p>
-<p><img src="/Users/mac/Downloads/hexo_blog/source/images/chan1.jpeg" alt></p>
+<p><img src="/images/chan1.jpeg" alt="image-hchan"></p>
 <p>创建 buffered channel 结构如下</p>
-<p><img src="/Users/mac/Downloads/hexo_blog/source/images/chan2.png" alt="image-20200428102924352"></p>
+<p><img src="/images/chan2.png" alt="image-bufferedChannel"></p>
 <p>创建 unbuffered channel 结构如下</p>
-<p><img src="/Users/mac/Downloads/hexo_blog/source/images/chan3.png" alt="image-20200428103012663"></p>
+<p><img src="/images/chan3.png" alt="image-unbufferedChannel"></p>
 
       
     </div>
