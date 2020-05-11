@@ -79,19 +79,19 @@
 
 
 
-<meta name="description" content="contextGo 1.7 标准库引入 context，中文译作“上下文”，准确说它是 goroutine 的上下文，包含 goroutine 的运行状态、环境、现场等信息。 context 主要用来在 goroutine 之间传递上下文信息，包括：取消信号、超时时间、截止时间、k-v 等。 context.Context 类型的值可以协调多个 groutine 中的代码执行“取消”操作，并且可以">
+<meta name="description" content="contextGo 1.7 标准库引入 context，中文译作“上下文”，准确说它是 goroutine 的上下文，包含 goroutine 的运行状态、环境、现场等信息。 context 主要用来在 goroutine 之间传递上下文信息，包括：取消信号、超时时间、截止时间、k-v 等。总结就是两个功能：  通知子协程退出（正常退出，超时退出） 传递必要参数  context.Context">
 <meta name="keywords" content="go,go语言包">
 <meta property="og:type" content="article">
 <meta property="og:title" content="go语言context">
 <meta property="og:url" content="http://yoursite.com/2020/03/22/context/index.html">
 <meta property="og:site_name" content="Wxning">
-<meta property="og:description" content="contextGo 1.7 标准库引入 context，中文译作“上下文”，准确说它是 goroutine 的上下文，包含 goroutine 的运行状态、环境、现场等信息。 context 主要用来在 goroutine 之间传递上下文信息，包括：取消信号、超时时间、截止时间、k-v 等。 context.Context 类型的值可以协调多个 groutine 中的代码执行“取消”操作，并且可以">
+<meta property="og:description" content="contextGo 1.7 标准库引入 context，中文译作“上下文”，准确说它是 goroutine 的上下文，包含 goroutine 的运行状态、环境、现场等信息。 context 主要用来在 goroutine 之间传递上下文信息，包括：取消信号、超时时间、截止时间、k-v 等。总结就是两个功能：  通知子协程退出（正常退出，超时退出） 传递必要参数  context.Context">
 <meta property="og:locale" content="zh-Hans">
 <meta property="og:image" content="http://yoursite.com/images/context-02.png">
-<meta property="og:updated_time" content="2020-04-09T11:37:10.255Z">
+<meta property="og:updated_time" content="2020-05-11T09:18:49.206Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="go语言context">
-<meta name="twitter:description" content="contextGo 1.7 标准库引入 context，中文译作“上下文”，准确说它是 goroutine 的上下文，包含 goroutine 的运行状态、环境、现场等信息。 context 主要用来在 goroutine 之间传递上下文信息，包括：取消信号、超时时间、截止时间、k-v 等。 context.Context 类型的值可以协调多个 groutine 中的代码执行“取消”操作，并且可以">
+<meta name="twitter:description" content="contextGo 1.7 标准库引入 context，中文译作“上下文”，准确说它是 goroutine 的上下文，包含 goroutine 的运行状态、环境、现场等信息。 context 主要用来在 goroutine 之间传递上下文信息，包括：取消信号、超时时间、截止时间、k-v 等。总结就是两个功能：  通知子协程退出（正常退出，超时退出） 传递必要参数  context.Context">
 <meta name="twitter:image" content="http://yoursite.com/images/context-02.png">
 
 
@@ -372,9 +372,17 @@
 
       
         <h2 id="context"><a href="#context" class="headerlink" title="context"></a>context</h2><p>Go 1.7 标准库引入 context，中文译作“上下文”，准确说它是 goroutine 的上下文，包含 goroutine 的运行状态、环境、现场等信息。</p>
-<p>context 主要用来在 goroutine 之间传递上下文信息，包括：取消信号、超时时间、截止时间、k-v 等。</p>
+<p>context 主要用来在 goroutine 之间传递上下文信息，包括：取消信号、超时时间、截止时间、k-v 等。总结就是两个功能：</p>
+<ul>
+<li>通知子协程退出（正常退出，超时退出）</li>
+<li>传递必要参数</li>
+</ul>
 <p>context.Context 类型的值可以协调多个 groutine 中的代码执行“取消”操作，并且可以存储键值对。最重要的是它是并发安全的。</p>
-<h3 id="为什么要有context"><a href="#为什么要有context" class="headerlink" title="为什么要有context"></a>为什么要有context</h3><p>在 Go http 包的Server中，每一个请求在都有一个对应的 goroutine 去处理。请求处理函数通常会启动额外的 goroutine 用来访问后端服务，比如数据库和 RPC 服务。用来处理一个请求的 goroutine 通常需要访问一些与请求特定的数据，比如终端用户的身份认证信息、验证相关的token、请求的截止时间。 当一个请求被取消或超时时，所有用来处理该请求的 goroutine 都应该迅速退出，然后系统才能释放这些 goroutine 占用的资源。</p>
+<h3 id="为什么要有context"><a href="#为什么要有context" class="headerlink" title="为什么要有context"></a>为什么要有context</h3><p>在Go语言里通常使用WaitGroup和channel进行并发控制，但是WaitGroup并不能主动通知子协程退出，只能等待子协程自己退出。用<code>select + channel</code>可以做到：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> stop <span class="keyword">chan</span> <span class="keyword">bool</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">reqTask</span><span class="params">(name <span class="keyword">string</span>)</span></span> &#123;</span><br><span class="line">	<span class="keyword">for</span> &#123;</span><br><span class="line">		<span class="keyword">select</span> &#123;</span><br><span class="line">		<span class="keyword">case</span> &lt;-stop:</span><br><span class="line">			fmt.Println(<span class="string">"stop"</span>, name)</span><br><span class="line">			<span class="keyword">return</span></span><br><span class="line">		<span class="keyword">default</span>:</span><br><span class="line">			fmt.Println(name, <span class="string">"send request"</span>)</span><br><span class="line">			time.Sleep(<span class="number">1</span> * time.Second)</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	stop = <span class="built_in">make</span>(<span class="keyword">chan</span> <span class="keyword">bool</span>)</span><br><span class="line">	<span class="keyword">go</span> reqTask(<span class="string">"worker1"</span>)</span><br><span class="line">	time.Sleep(<span class="number">3</span> * time.Second)</span><br><span class="line">	stop &lt;- <span class="literal">true</span></span><br><span class="line">	time.Sleep(<span class="number">3</span> * time.Second)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>更复杂的场景如何做并发控制呢？比如子协程中开启了新的子协程，或者需要同时控制多个子协程。这种场景下，<code>select+chan</code>的方式就显得力不从心了。</p>
+<p>在 Go http 包的Server中，每一个请求在都有一个对应的 goroutine 去处理。请求处理函数通常会启动额外的 goroutine 用来访问后端服务，比如数据库和 RPC 服务。用来处理一个请求的 goroutine 通常需要访问一些与请求特定的数据，比如终端用户的身份认证信息、验证相关的token、请求的截止时间。 当一个请求被取消或超时时，所有用来处理该请求的 goroutine 都应该迅速退出，然后系统才能释放这些 goroutine 占用的资源。</p>
 <p><img src="/images/context-02.png" alt="context-02"></p>
 <p>context 包就是为了解决上面所说的这些问题而开发的：在 一组 goroutine 之间传递共享的值、取消信号、deadline…</p>
 <p>用简练一些的话来说，在Go 里，我们不能直接杀死协程，协程的关闭一般会用 <code>channel+select</code> 方式来控制。但是在某些场景下，例如处理一个请求衍生了很多协程，这些协程之间是相互关联的：需要共享一些全局变量、有共同的 deadline 等，而且可以同时被关闭。再用 <code>channel+select</code> 就会比较麻烦，这时就可以通过 context 来实现。</p>
@@ -524,7 +532,7 @@
   <p><span>本文标题:</span><a href="/2020/03/22/context/">go语言context</a></p>
   <p><span>文章作者:</span><a href="/" title="访问 Wxning 的个人博客">Wxning</a></p>
   <p><span>发布时间:</span>2020年03月22日 - 11:03</p>
-  <p><span>最后更新:</span>2020年04月09日 - 19:04</p>
+  <p><span>最后更新:</span>2020年05月11日 - 17:05</p>
   <p><span>原始链接:</span><a href="/2020/03/22/context/" title="go语言context">http://yoursite.com/2020/03/22/context/</a>
     <span class="copy-path" title="点击复制文章链接"><i class="fa fa-clipboard" data-clipboard-text="http://yoursite.com/2020/03/22/context/" aria-label="复制成功！"></i></span>
   </p>
