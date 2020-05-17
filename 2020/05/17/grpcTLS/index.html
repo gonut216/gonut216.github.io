@@ -87,7 +87,7 @@
 <meta property="og:site_name" content="Wxning">
 <meta property="og:description" content="TLS 证书认证gRPC建立在HTTP/2协议之上，对TLS提供了很好的支持。我们前面文章中gRPC的服务都没有提供证书支持，因此客户端在链接服务器中通过grpc.WithInsecure()选项跳过了对服务器证书的验证。没有启用证书的gRPC服务在和客户端进行的是明文通讯，信息面临被任何第三方监听的风险。为了保障gRPC通信不被第三方监听篡改或伪造，我们可以对服务器启动TLS加密特性。 可以用以">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:updated_time" content="2020-05-17T08:49:55.516Z">
+<meta property="og:updated_time" content="2020-05-17T12:11:45.818Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="安全的grpc通信">
 <meta name="twitter:description" content="TLS 证书认证gRPC建立在HTTP/2协议之上，对TLS提供了很好的支持。我们前面文章中gRPC的服务都没有提供证书支持，因此客户端在链接服务器中通过grpc.WithInsecure()选项跳过了对服务器证书的验证。没有启用证书的gRPC服务在和客户端进行的是明文通讯，信息面临被任何第三方监听的风险。为了保障gRPC通信不被第三方监听篡改或伪造，我们可以对服务器启动TLS加密特性。 可以用以">
@@ -388,7 +388,53 @@
 
 <p>详细地认证工作主要在Authentication.Auth方法中完成。首先通过metadata.FromIncomingContext从ctx上下文中获取元信息，然后取出相应的认证信息进行认证。如果认证失败，则返回一个codes.Unauthenticated类型地错误。</p>
 <p>token这种方式需要为每一个方法都加上Auth判断，这样代码过于冗余，我们可以通过截取器来统一处理Auth的工作。</p>
-<h2 id="Interceptor截取器"><a href="#Interceptor截取器" class="headerlink" title="Interceptor截取器"></a>Interceptor截取器</h2>
+<h2 id="Interceptor截取器"><a href="#Interceptor截取器" class="headerlink" title="Interceptor截取器"></a>Interceptor截取器</h2><p>gRPC中的<code>grpc.UnaryInterceptor</code>和<code>grpc.StreamInterceptor</code>分别对普通方法和流方法提供了截取器的支持。</p>
+<p>要实现普通方法的截取器，需要为grpc.UnaryInterceptor的参数实现一个函数：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> UnaryServerInterceptor <span class="function"><span class="keyword">func</span><span class="params">(ctx context.Context, </span></span></span><br><span class="line"><span class="function"><span class="params">                                 req <span class="keyword">interface</span>&#123;&#125;, </span></span></span><br><span class="line"><span class="function"><span class="params">                                 info *UnaryServerInfo, </span></span></span><br><span class="line"><span class="function"><span class="params">                                 handler UnaryHandler)</span> <span class="params">(resp <span class="keyword">interface</span>&#123;&#125;, err error)</span></span></span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>ctx context.Context：请求上下文</li>
+<li>req interface{}：RPC 方法的请求参数</li>
+<li>info *UnaryServerInfo：RPC 方法的所有信息</li>
+<li>handler UnaryHandler：RPC 方法本身</li>
+</ul>
+<p>我们来把上面的token认证放到截取器里面来看看怎么用吧</p>
+<p>首先去构造上面这个函数：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">tokenInterceptor</span><span class="params">(ctx context.Context, </span></span></span><br><span class="line"><span class="function"><span class="params">                      req <span class="keyword">interface</span>&#123;&#125;, </span></span></span><br><span class="line"><span class="function"><span class="params">                      info *grpc.UnaryServerInfo, </span></span></span><br><span class="line"><span class="function"><span class="params">                      handler grpc.UnaryHandler)</span> <span class="params">(resp <span class="keyword">interface</span>&#123;&#125;, err error)</span></span> &#123;</span><br><span class="line">   log.Println(<span class="string">"tokenInterceptor:"</span>, info)</span><br><span class="line"></span><br><span class="line">   md, ok := metadata.FromIncomingContext(ctx)</span><br><span class="line">   <span class="keyword">if</span> !ok &#123;</span><br><span class="line">      <span class="keyword">return</span> <span class="literal">nil</span>, fmt.Errorf(<span class="string">"missing credentials"</span>)</span><br><span class="line">   &#125;</span><br><span class="line"></span><br><span class="line">   <span class="keyword">var</span> (</span><br><span class="line">      appId  <span class="keyword">string</span></span><br><span class="line">      appKey <span class="keyword">string</span></span><br><span class="line">   )</span><br><span class="line"></span><br><span class="line">   <span class="keyword">if</span> val, ok := md[<span class="string">"user"</span>]; ok &#123;</span><br><span class="line">      appId = val[<span class="number">0</span>]</span><br><span class="line">   &#125;</span><br><span class="line">   <span class="keyword">if</span> val, ok := md[<span class="string">"password"</span>]; ok &#123;</span><br><span class="line">      appKey = val[<span class="number">0</span>]</span><br><span class="line">   &#125;</span><br><span class="line"></span><br><span class="line">   <span class="keyword">if</span> appId != <span class="string">"wxning"</span> || appKey != <span class="string">"gopher"</span> &#123;</span><br><span class="line"></span><br><span class="line">      <span class="keyword">return</span> <span class="literal">nil</span>, status.Errorf(codes.Unauthenticated, </span><br><span class="line">                                <span class="string">"invalid token: appId=%s, appKey=%s"</span>, appId, appKey)</span><br><span class="line">   &#125;</span><br><span class="line"></span><br><span class="line">   <span class="keyword">defer</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">      <span class="keyword">if</span> r := <span class="built_in">recover</span>(); r != <span class="literal">nil</span> &#123;</span><br><span class="line">         err = fmt.Errorf(<span class="string">"panic: %v"</span>, r)</span><br><span class="line">      &#125;</span><br><span class="line">   &#125;()</span><br><span class="line"></span><br><span class="line">   <span class="keyword">return</span> handler(ctx, req)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>函数的ctx和req参数就是每个普通的RPC方法的前两个参数。第三个info参数表示当前是对应的那个gRPC方法，第四个handler参数对应当前的gRPC方法函数。</p>
+<p>要使用filter截取器函数，只需要在启动gRPC服务时作为参数输入即可：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">grpcServer := grpc.NewServer(grpc.UnaryInterceptor(tokenInterceptor))</span><br></pre></td></tr></table></figure>
+
+<p>这样服务器在收到每个gRPC方法调用之前，都会先执行截取器函数tokenInterceptor，然后再调用对方的方法（handler(ctx, req)）。</p>
+<p>如果截取器函数返回了错误，那么该次gRPC方法调用将被视作失败处理。因此，我们可以在截取器中对输入的参数做一些简单的验证工作。同样，也可以对handler返回的结果做一些验证工作。截取器也非常适合前面对Token认证工作。</p>
+<p>截取器增加了对gRPC方法异常的捕获使用recover，不过gRPC框架中只能为每个服务设置一个截取器，因此所有的截取工作只能在一个函数中完成。开源的grpc-ecosystem项目中的go-grpc-middleware包已经基于gRPC对截取器实现了链式截取器的支持。</p>
+<p>以下是go-grpc-middleware包中链式截取器的简单用法：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> <span class="string">"github.com/grpc-ecosystem/go-grpc-middleware"</span></span><br><span class="line"></span><br><span class="line">myServer := grpc.NewServer(</span><br><span class="line">    grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(</span><br><span class="line">        filter1, filter2, ...</span><br><span class="line">    )),</span><br><span class="line">    grpc.StreamInterceptor(grpc_middleware.ChainStreamServer(</span><br><span class="line">        filter1, filter2, ...</span><br><span class="line">    )),</span><br><span class="line">)</span><br></pre></td></tr></table></figure>
+
+<h2 id="gRPC与Web服务共存"><a href="#gRPC与Web服务共存" class="headerlink" title="gRPC与Web服务共存"></a>gRPC与Web服务共存</h2><p>接口需要提供给其他业务组访问，但是 RPC 协议不同就无法内调了，我们可不可以走 HTTP 接口呢？比如微信（公众号、小程序）等第三方回调接口只支持 HTTP 接口，怎么办呢？</p>
+<p>gRPC构建在<code>HTTP/2</code>协议之上，因此我们可以将gRPC服务和普通的Web服务架设在同一个端口之上。</p>
+<p>首先我们来启动一个HTTPS服务：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">    mux := http.NewServeMux()</span><br><span class="line">    mux.HandleFunc(<span class="string">"/"</span>, <span class="function"><span class="keyword">func</span><span class="params">(w http.ResponseWriter, req *http.Request)</span></span> &#123;</span><br><span class="line">        fmt.Fprintln(w, <span class="string">"hello"</span>)</span><br><span class="line">    &#125;)</span><br><span class="line"></span><br><span class="line">    http.ListenAndServeTLS(port, <span class="string">"server.crt"</span>, <span class="string">"server.key"</span>,</span><br><span class="line">        http.HandlerFunc(<span class="function"><span class="keyword">func</span><span class="params">(w http.ResponseWriter, r *http.Request)</span></span> &#123;</span><br><span class="line">            mux.ServeHTTP(w, r)</span><br><span class="line">            <span class="keyword">return</span></span><br><span class="line">        &#125;),</span><br><span class="line">    )</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>那如何启用带证书的gRPC服务呢？上面讲过了：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">    creds, err := credentials.NewServerTLSFromFile(<span class="string">"server.crt"</span>, <span class="string">"server.key"</span>)</span><br><span class="line">    <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">        log.Fatal(err)</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    grpcServer := grpc.NewServer(grpc.Creds(creds))</span><br><span class="line"></span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>因为gRPC服务已经实现了ServeHTTP方法，可以直接作为Web路由处理对象。如果将gRPC和Web服务放在一起，会导致gRPC和Web路径的冲突，在处理时我们需要区分两类服务。</p>
+<p>我们的检测逻辑是这样的：</p>
+<ol>
+<li>检测请求协议是否为 HTTP/2</li>
+<li>判断 Content-Type 是否为 application/grpc（gRPC 的默认标识位）</li>
+<li>根据协议的不同转发到不同的服务处理</li>
+</ol>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">http.ListenAndServeTLS(port, serverCrt, serverKey, </span><br><span class="line">                       http.HandlerFunc(<span class="function"><span class="keyword">func</span><span class="params">(writer http.ResponseWriter, request *http.Request)</span></span> &#123;</span><br><span class="line">   <span class="keyword">if</span> request.ProtoMajor == <span class="number">2</span> &amp;&amp; strings.Contains(request.Header.Get(<span class="string">"Content-Type"</span>), <span class="string">"application/grpc"</span>) &#123;</span><br><span class="line">      grpcServer.ServeHTTP(writer, request)</span><br><span class="line">   &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">      mux.ServeHTTP(writer, request)</span><br><span class="line">   &#125;</span><br><span class="line">	&#125;)</span><br><span class="line">)</span><br></pre></td></tr></table></figure>
+
+<p>首先gRPC是建立在HTTP/2版本之上，如果HTTP不是HTTP/2协议则必然无法提供gRPC支持。同时，每个gRPC调用请求的Content-Type类型会被标注为”application/grpc”类型。</p>
+<p>这样我们就可以在gRPC端口上同时提供Web服务了！</p>
+<h2 id="代码地址："><a href="#代码地址：" class="headerlink" title="代码地址："></a>代码地址：</h2><p><a href="https://github.com/wxning1107/grpcSource" target="_blank" rel="noopener">https://github.com/wxning1107/grpcSource</a></p>
+<h2 id="参考资料："><a href="#参考资料：" class="headerlink" title="参考资料："></a>参考资料：</h2><p><a href="https://books.studygolang.com/advanced-go-programming-book" target="_blank" rel="noopener">Go语言高级编程-柴树杉</a></p>
+<p><a href="https://grpc.io/docs" target="_blank" rel="noopener">grpc doc</a></p>
+
       
     </div>
     
@@ -418,7 +464,7 @@
   <p><span>本文标题:</span><a href="/2020/05/17/grpcTLS/">安全的grpc通信</a></p>
   <p><span>文章作者:</span><a href="/" title="访问 Wxning 的个人博客">Wxning</a></p>
   <p><span>发布时间:</span>2020年05月17日 - 15:05</p>
-  <p><span>最后更新:</span>2020年05月17日 - 16:05</p>
+  <p><span>最后更新:</span>2020年05月17日 - 20:05</p>
   <p><span>原始链接:</span><a href="/2020/05/17/grpcTLS/" title="安全的grpc通信">http://yoursite.com/2020/05/17/grpcTLS/</a>
     <span class="copy-path" title="点击复制文章链接"><i class="fa fa-clipboard" data-clipboard-text="http://yoursite.com/2020/05/17/grpcTLS/" aria-label="复制成功！"></i></span>
   </p>
@@ -568,7 +614,7 @@
               
               <div class="site-state-item site-state-categories">
                 <a href="/categories/index.html">
-                  <span class="site-state-item-count">28</span>
+                  <span class="site-state-item-count">30</span>
                   <span class="site-state-item-name">分类</span>
                 </a>
               </div>
@@ -622,7 +668,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#TLS-证书认证"><span class="nav-number">1.</span> <span class="nav-text">TLS 证书认证</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#CA-双向认证"><span class="nav-number">2.</span> <span class="nav-text">CA 双向认证</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Token-认证"><span class="nav-number">3.</span> <span class="nav-text">Token 认证</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Interceptor截取器"><span class="nav-number">4.</span> <span class="nav-text">Interceptor截取器</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#TLS-证书认证"><span class="nav-number">1.</span> <span class="nav-text">TLS 证书认证</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#CA-双向认证"><span class="nav-number">2.</span> <span class="nav-text">CA 双向认证</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Token-认证"><span class="nav-number">3.</span> <span class="nav-text">Token 认证</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Interceptor截取器"><span class="nav-number">4.</span> <span class="nav-text">Interceptor截取器</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#gRPC与Web服务共存"><span class="nav-number">5.</span> <span class="nav-text">gRPC与Web服务共存</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#代码地址："><span class="nav-number">6.</span> <span class="nav-text">代码地址：</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考资料："><span class="nav-number">7.</span> <span class="nav-text">参考资料：</span></a></li></ol></div>
             
 
           </div>
