@@ -89,7 +89,7 @@
 <meta property="og:locale" content="zh-Hans">
 <meta property="og:image" content="http://yoursite.com/images/grpc2.png">
 <meta property="og:image" content="http://yoursite.com/images/grpc1.png">
-<meta property="og:updated_time" content="2020-05-13T11:15:37.081Z">
+<meta property="og:updated_time" content="2020-05-16T14:27:21.898Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="gRPC的魅力">
 <meta name="twitter:description" content="gRPC是什么？gRPC是Google公司基于Protobuf开发的跨语言的开源RPC框架。gRPC基于HTTP/2协议设计，可以基于一个HTTP/2链接提供多个服务，对于移动设备更加友好。 在 gRPC 里客户端应用可以像调用本地对象一样直接调用另一台不同的机器上服务端应用的方法，使得能够更容易地创建分布式应用和服务。与许多 RPC 系统类似，gRPC 也是基于以下理念：定义一个服务，指定其能够">
@@ -364,6 +364,12 @@
         <h2 id="gRPC是什么？"><a href="#gRPC是什么？" class="headerlink" title="gRPC是什么？"></a>gRPC是什么？</h2><p><code>gRPC</code>是Google公司基于<code>Protobuf</code>开发的跨语言的开源RPC框架。gRPC基于HTTP/2协议设计，可以基于一个HTTP/2链接提供多个服务，对于移动设备更加友好。</p>
 <p>在 gRPC 里<em>客户端</em>应用可以像调用本地对象一样直接调用另一台不同的机器上<em>服务端</em>应用的方法，使得能够更容易地创建分布式应用和服务。与许多 RPC 系统类似，gRPC 也是基于以下理念：定义一个<em>服务</em>，指定其能够被远程调用的方法（包含参数和返回类型）。在服务端实现这个接口，并运行一个 gRPC 服务器来处理客户端调用。在客户端拥有一个<em>存根</em>能够像服务端一样的方法。</p>
 <p><img src="/images/grpc2.png" alt="grpc1"></p>
+<p>调用过程如下：</p>
+<p>1、客户端（gRPC Sub）调用 A 方法，发起 RPC 调用</p>
+<p>2、对请求信息使用 Protobuf 进行对象序列化压缩（IDL）</p>
+<p>3、服务端（gRPC Server）接收到请求后，解码请求体，进行业务逻辑处理并返回</p>
+<p>4、对响应结果使用 Protobuf 进行对象序列化压缩（IDL）</p>
+<p>5、客户端接受到服务端响应，解码请求体。回调被调用的 A 方法，唤醒正在等待响应（阻塞）的客户端调用并返回响应结果</p>
 <p>Go语言grpc的技术栈如下：</p>
 <p><img src="/images/grpc1.png" alt="grpc1"></p>
 <p>最底层为TCP或Unix Socket协议，在此之上是HTTP/2协议的实现，然后在HTTP/2协议之上又构建了针对Go语言的gRPC核心库。应用程序通过gRPC插件生产的<code>Stub</code>代码和gRPC核心库通信，也可以直接和gRPC核心库通信。</p>
@@ -384,7 +390,7 @@
 <p>## </p>
 <h2 id="生成服务端客户端接口"><a href="#生成服务端客户端接口" class="headerlink" title="生成服务端客户端接口"></a>生成服务端客户端接口</h2><p>如果从 Protobuf 的角度看，gRPC 只不过是一个针对 service 接口生成代码的生成器。</p>
 <p>我们先来实现一个简单的服务，新建一个<code>.proto</code>文件hello.proto，定义HelloService接口：</p>
-<figure class="highlight protobuf"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">syntax = <span class="string">"proto3"</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">package</span> hellogrpc;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">message</span> <span class="title">String</span> </span>&#123;</span><br><span class="line">    <span class="built_in">string</span> value = <span class="number">1</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">service</span> <span class="title">HelloService</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">rpc</span> Hello (String) <span class="keyword">returns</span> (String)</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight protobuf"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">syntax = &quot;proto3&quot;;</span><br><span class="line"></span><br><span class="line">package hellogrpc;</span><br><span class="line"></span><br><span class="line">message String &#123;</span><br><span class="line">    string value = 1;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">service HelloService &#123;</span><br><span class="line">    rpc Hello (String) returns (String);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
 <p>我们需要从 .proto 的服务定义中生成 gRPC 客户端和服务器端的接口,使用<code>protoc-gen-go</code>内置的gRPC插件来生成gRPC代码：</p>
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">protoc --go_out=plugins=grpc:. hello.proto</span><br></pre></td></tr></table></figure>
@@ -424,7 +430,7 @@
 <p>这样，我们就完成了简单的grpc调用了</p>
 <h2 id="gRPC流"><a href="#gRPC流" class="headerlink" title="gRPC流"></a>gRPC流</h2><p>RPC是远程函数调用，因此每次调用的函数参数和返回值不能太大，否则将严重影响每次调用的响应时间。因此传统的RPC方法调用对于上传和下载较大数据量场景并不适合。同时传统RPC模式也不适用于对时间不确定的订阅和发布模式。为此，gRPC框架针对服务器端和客户端分别提供了流特性。</p>
 <p>就像上面我们介绍的那样，流分为<code>客户端流</code>，<code>服务器流</code>和<code>双向流</code>。服务端或客户端的单向流是双向流的特例，我们在HelloService增加一个支持双向流的Channel方法：</p>
-<figure class="highlight protobuf"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">service</span> <span class="title">HelloService</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">rpc</span> Hello (String) <span class="keyword">returns</span> (String)</span>;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">rpc</span> Channel (stream String) <span class="keyword">returns</span> (stream String)</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight protobuf"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">service HelloService &#123;</span><br><span class="line">    rpc Hello (String) returns (String);</span><br><span class="line"></span><br><span class="line">    rpc Channel (stream String) returns (stream String);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
 <p>关键字stream指定启用流特性，参数部分是接收客户端参数的流，返回值是返回给客户端的流。</p>
 <p>重新生成<code>hello.pb.go</code>文件可以看到接口中新增加的Channel方法的定义：</p>
@@ -456,7 +462,7 @@
 
 <p>其中<code>pubsub.NewPublisher</code>构造一个发布对象，<code>p.SubscribeTopic()</code>可以通过函数筛选感兴趣的主题进行订阅。</p>
 <p>现在尝试基于gRPC和pubsub包，提供一个跨网络的发布和订阅系统。首先通过Protobuf定义一个发布订阅服务接口：</p>
-<figure class="highlight protobuf"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">service</span> <span class="title">PubSubService</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">rpc</span> Publish (String) <span class="keyword">returns</span> (String)</span>;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">rpc</span> Subscribe (String) <span class="keyword">returns</span> (stream String)</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight protobuf"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">service PubSubService &#123;</span><br><span class="line">    rpc Publish (String) returns (String);</span><br><span class="line"></span><br><span class="line">    rpc Subscribe (String) returns (stream String);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
 <p>其中Publish是普通的RPC方法，Subscribe则是一个单向的流服务。然后gRPC插件会为服务端和客户端生成对应的接口：</p>
 <figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> PubsubServiceServer <span class="keyword">interface</span> &#123;</span><br><span class="line">    Publish(context.Context, *String) (*String, error)</span><br><span class="line">    Subscribe(*String, PubsubService_SubscribeServer) error</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">type</span> PubsubServiceClient <span class="keyword">interface</span> &#123;</span><br><span class="line">    Publish(context.Context, *String, ...grpc.CallOption) (*String, error)</span><br><span class="line">    Subscribe(context.Context, *String, ...grpc.CallOption) (</span><br><span class="line">        PubsubService_SubscribeClient, error,</span><br><span class="line">    )</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> PubsubService_SubscribeServer <span class="keyword">interface</span> &#123;</span><br><span class="line">    Send(*String) error</span><br><span class="line">    grpc.ServerStream</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
@@ -508,7 +514,7 @@
   <p><span>本文标题:</span><a href="/2020/05/13/grpc/">gRPC的魅力</a></p>
   <p><span>文章作者:</span><a href="/" title="访问 Wxning 的个人博客">Wxning</a></p>
   <p><span>发布时间:</span>2020年05月13日 - 16:05</p>
-  <p><span>最后更新:</span>2020年05月13日 - 19:05</p>
+  <p><span>最后更新:</span>2020年05月16日 - 22:05</p>
   <p><span>原始链接:</span><a href="/2020/05/13/grpc/" title="gRPC的魅力">http://yoursite.com/2020/05/13/grpc/</a>
     <span class="copy-path" title="点击复制文章链接"><i class="fa fa-clipboard" data-clipboard-text="http://yoursite.com/2020/05/13/grpc/" aria-label="复制成功！"></i></span>
   </p>
