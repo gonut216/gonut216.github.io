@@ -89,7 +89,11 @@
 <meta property="og:locale" content="zh-Hans">
 <meta property="og:image" content="http://yoursite.com/images/grpc2.png">
 <meta property="og:image" content="http://yoursite.com/images/grpc1.png">
-<meta property="og:updated_time" content="2020-05-16T14:27:21.898Z">
+<meta property="og:image" content="http://yoursite.com/images/grpc4.png">
+<meta property="og:image" content="http://yoursite.com/images/grpc5.png">
+<meta property="og:image" content="http://yoursite.com/images/grpc6.png">
+<meta property="og:image" content="http://yoursite.com/images/grpc3.png">
+<meta property="og:updated_time" content="2020-05-17T05:12:56.914Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="gRPC的魅力">
 <meta name="twitter:description" content="gRPC是什么？gRPC是Google公司基于Protobuf开发的跨语言的开源RPC框架。gRPC基于HTTP/2协议设计，可以基于一个HTTP/2链接提供多个服务，对于移动设备更加友好。 在 gRPC 里客户端应用可以像调用本地对象一样直接调用另一台不同的机器上服务端应用的方法，使得能够更容易地创建分布式应用和服务。与许多 RPC 系统类似，gRPC 也是基于以下理念：定义一个服务，指定其能够">
@@ -379,12 +383,15 @@
 <figure class="highlight protobuf"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">rpc</span> SayHello(HelloRequest) <span class="keyword">returns</span> (HelloResponse)&#123;&#125;</span></span><br></pre></td></tr></table></figure>
 
 <h2 id="服务端流式-RPC"><a href="#服务端流式-RPC" class="headerlink" title="服务端流式 RPC"></a>服务端流式 RPC</h2><p>客户端发送一个请求给服务端，可获取一个数据流用来读取一系列消息。客户端从返回的数据流里一直读取直到没有更多消息为止。</p>
+<p><img src="/images/grpc4.png" alt="grpc4"></p>
 <figure class="highlight protobuf"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">rpc</span> LotsOfReplies(HelloRequest) <span class="keyword">returns</span> (stream HelloResponse)&#123;&#125;</span></span><br></pre></td></tr></table></figure>
 
 <h2 id="客户端流式-RPC"><a href="#客户端流式-RPC" class="headerlink" title="客户端流式 RPC"></a>客户端流式 RPC</h2><p>客户端用提供的一个数据流写入并发送一系列消息给服务端。一旦客户端完成消息写入，就等待服务端读取这些消息并返回应答。</p>
+<p><img src="/images/grpc5.png" alt="grpc5"></p>
 <figure class="highlight protobuf"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">rpc</span> LotsOfGreetings(stream HelloRequest) <span class="keyword">returns</span> (HelloResponse) &#123;&#125;</span></span><br></pre></td></tr></table></figure>
 
 <h2 id="双向流式-RPC"><a href="#双向流式-RPC" class="headerlink" title="双向流式 RPC"></a>双向流式 RPC</h2><p>客户端服务器两端都可以分别通过一个读写数据流来发送一系列消息。这两个数据流操作是相互独立的，所以客户端和服务端能按其希望的任意顺序读写，例如：服务端可以在写应答前等待所有的客户端消息，或者它可以先读一个消息再写一个消息，或者是读写相结合的其他方式。每个数据流里消息的顺序会被保持。</p>
+<p><img src="/images/grpc6.png" alt="grpc6"></p>
 <figure class="highlight protobuf"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">rpc</span> BidiHello(stream HelloRequest) <span class="keyword">returns</span> (stream HelloResponse)&#123;&#125;</span></span><br></pre></td></tr></table></figure>
 
 <p>## </p>
@@ -429,6 +436,12 @@
 <p>gRPC和标准库的RPC框架有一个区别，gRPC生成的接口并不支持异步调用。不过我们可以在多个Goroutine之间安全地共享gRPC底层的HTTP/2链接，因此可以通过在另一个Goroutine阻塞调用的方式模拟异步调用。</p>
 <p>这样，我们就完成了简单的grpc调用了</p>
 <h2 id="gRPC流"><a href="#gRPC流" class="headerlink" title="gRPC流"></a>gRPC流</h2><p>RPC是远程函数调用，因此每次调用的函数参数和返回值不能太大，否则将严重影响每次调用的响应时间。因此传统的RPC方法调用对于上传和下载较大数据量场景并不适合。同时传统RPC模式也不适用于对时间不确定的订阅和发布模式。为此，gRPC框架针对服务器端和客户端分别提供了流特性。</p>
+<p><img src="/images/grpc3.png" alt="grpc3"></p>
+<p>为什么要有流式grpc呢？</p>
+<ul>
+<li>数据包过大造成的瞬时压力</li>
+<li>接收数据包时，需要所有数据包都接受成功且正确后，才能够回调响应，进行业务处理（无法客户端边发送，服务端边处理）</li>
+</ul>
 <p>就像上面我们介绍的那样，流分为<code>客户端流</code>，<code>服务器流</code>和<code>双向流</code>。服务端或客户端的单向流是双向流的特例，我们在HelloService增加一个支持双向流的Channel方法：</p>
 <figure class="highlight protobuf"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">service HelloService &#123;</span><br><span class="line">    rpc Hello (String) returns (String);</span><br><span class="line"></span><br><span class="line">    rpc Channel (stream String) returns (stream String);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
@@ -514,7 +527,7 @@
   <p><span>本文标题:</span><a href="/2020/05/13/grpc/">gRPC的魅力</a></p>
   <p><span>文章作者:</span><a href="/" title="访问 Wxning 的个人博客">Wxning</a></p>
   <p><span>发布时间:</span>2020年05月13日 - 16:05</p>
-  <p><span>最后更新:</span>2020年05月16日 - 22:05</p>
+  <p><span>最后更新:</span>2020年05月17日 - 13:05</p>
   <p><span>原始链接:</span><a href="/2020/05/13/grpc/" title="gRPC的魅力">http://yoursite.com/2020/05/13/grpc/</a>
     <span class="copy-path" title="点击复制文章链接"><i class="fa fa-clipboard" data-clipboard-text="http://yoursite.com/2020/05/13/grpc/" aria-label="复制成功！"></i></span>
   </p>
@@ -570,6 +583,10 @@
           <span class="post-nav-divider"></span>
 
           <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2020/05/17/grpcTLS/" rel="prev" title="安全的grpc通信">
+                安全的grpc通信 <i class="fa fa-chevron-right"></i>
+              </a>
             
           </div>
         </div>
@@ -653,7 +670,7 @@
               
                 <a href="/archives/">
               
-                  <span class="site-state-item-count">26</span>
+                  <span class="site-state-item-count">27</span>
                   <span class="site-state-item-name">日志</span>
                 </a>
               </div>
