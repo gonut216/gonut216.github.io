@@ -87,7 +87,7 @@
 <meta property="og:site_name" content="Wxning">
 <meta property="og:description" content="go range今天写代码遇到一个问题，在用go range遍历时，遍历的变量取地址时，最终得到的只是最后一个元素，看如下代码： 12345678910var results []*intfunc main() &amp;#123;	variables := []int&amp;#123;1, 2, 3, 4&amp;#125;	for _, variable := range variables &amp;#123;		res">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:updated_time" content="2019-11-19T12:10:17.592Z">
+<meta property="og:updated_time" content="2020-05-19T13:15:08.405Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="go range遍历循环变量复用地址问题">
 <meta name="twitter:description" content="go range今天写代码遇到一个问题，在用go range遍历时，遍历的变量取地址时，最终得到的只是最后一个元素，看如下代码： 12345678910var results []*intfunc main() &amp;#123;	variables := []int&amp;#123;1, 2, 3, 4&amp;#125;	for _, variable := range variables &amp;#123;		res">
@@ -357,6 +357,8 @@
 <blockquote>
 <p>The iteration variables may be declared by the “range” clause using a form of <a href="https://golang.org/ref/spec#Short_variable_declarations" target="_blank" rel="noopener">short variable declaration</a> (<code>:=</code>). In this case their types are set to the types of the respective iteration values and their <a href="https://golang.org/ref/spec#Declarations_and_scope" target="_blank" rel="noopener">scope</a> is the block of the “for” statement; they are re-used in each iteration. If the iteration variables are declared outside the “for” statement, after execution their values will be those of the last iteration.</p>
 </blockquote>
+<h2 id="2020-05-19"><a href="#2020-05-19" class="headerlink" title="2020.05.19"></a>2020.05.19</h2><p>现在是2020年5月19日晚9点14分，刚刚腾讯面试官问了我这道题：</p>
+<p>“for range 和普通循环谁的效率更高？”</p>
 <p><strong>Links：</strong></p>
 <p>官网介绍：<a href="https://golang.org/ref/spec#For_statements" target="_blank" rel="noopener">https://golang.org/ref/spec#For_statements</a></p>
 
@@ -389,7 +391,7 @@
   <p><span>本文标题:</span><a href="/2019/11/19/go-range/">go range遍历循环变量复用地址问题</a></p>
   <p><span>文章作者:</span><a href="/" title="访问 Wxning 的个人博客">Wxning</a></p>
   <p><span>发布时间:</span>2019年11月19日 - 19:11</p>
-  <p><span>最后更新:</span>2019年11月19日 - 20:11</p>
+  <p><span>最后更新:</span>2020年05月19日 - 21:05</p>
   <p><span>原始链接:</span><a href="/2019/11/19/go-range/" title="go range遍历循环变量复用地址问题">http://yoursite.com/2019/11/19/go-range/</a>
     <span class="copy-path" title="点击复制文章链接"><i class="fa fa-clipboard" data-clipboard-text="http://yoursite.com/2019/11/19/go-range/" aria-label="复制成功！"></i></span>
   </p>
@@ -597,7 +599,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#go-range"><span class="nav-number">1.</span> <span class="nav-text">go range</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#go-range"><span class="nav-number">1.</span> <span class="nav-text">go range</span></a></li></ol><li class="nav-item nav-level-2"><a class="nav-link" href="#2020-05-19"><span class="nav-number"></span> <span class="nav-text">2020.05.19</span></a></li></div>
             
 
           </div>
