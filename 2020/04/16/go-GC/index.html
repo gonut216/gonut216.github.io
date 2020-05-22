@@ -89,7 +89,7 @@
 <meta property="og:locale" content="zh-Hans">
 <meta property="og:image" content="http://yoursite.com/images/gc-01.jpg">
 <meta property="og:image" content="http://yoursite.com/images/gc-02.jpg">
-<meta property="og:updated_time" content="2020-04-16T09:59:00.818Z">
+<meta property="og:updated_time" content="2020-05-22T13:54:16.888Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="go垃圾回收机制">
 <meta name="twitter:description" content="追踪式垃圾回收主流垃圾回收算法有三种，引用计数法，分代收集法，还有就是标记清除算法 标记清除算法原理标记清除算法的核心就是判断一个对象是否可达，因为一旦这个对象不可达就会被GC回收掉。那怎么判断一个对象是否可达呢？第一步找出所有的全局变量和当前函数栈里的变量，并且标记为可达。第二步从已经标记的数据开始，进一步标记他们可访问的对象，以此类推，这就是传递闭包。判断一个对象是否为垃圾，就是看从root区">
@@ -362,11 +362,11 @@
 
       
         <h2 id="追踪式垃圾回收"><a href="#追踪式垃圾回收" class="headerlink" title="追踪式垃圾回收"></a>追踪式垃圾回收</h2><p>主流垃圾回收算法有三种，<code>引用计数法</code>，<code>分代收集法</code>，还有就是<code>标记清除算法</code></p>
-<h3 id="标记清除算法原理"><a href="#标记清除算法原理" class="headerlink" title="标记清除算法原理"></a>标记清除算法原理</h3><p>标记清除算法的核心就是判断一个对象是否可达，因为一旦这个对象不可达就会被GC回收掉。那怎么判断一个对象是否可达呢？第一步找出所有的全局变量和当前函数栈里的变量，并且标记为可达。第二步从已经标记的数据开始，进一步标记他们可访问的对象，以此类推，这就是传递闭包。判断一个对象是否为垃圾，就是看从root区域的对象是否有直接或间接的引用到这个对象。如果没有任何对象引用到它，则说明它没有被使用，因此可以安全地当作垃圾回收掉。</p>
+<h2 id="标记清除算法原理"><a href="#标记清除算法原理" class="headerlink" title="标记清除算法原理"></a>标记清除算法原理</h2><p>标记清除算法的核心就是判断一个对象是否可达，因为一旦这个对象不可达就会被GC回收掉。那怎么判断一个对象是否可达呢？第一步找出所有的全局变量和当前函数栈里的变量，并且标记为可达。第二步从已经标记的数据开始，进一步标记他们可访问的对象，以此类推，这就是传递闭包。判断一个对象是否为垃圾，就是看从root区域的对象是否有直接或间接的引用到这个对象。如果没有任何对象引用到它，则说明它没有被使用，因此可以安全地当作垃圾回收掉。</p>
 <p>标记清扫算法分为两阶段：标记阶段和清扫阶段。标记阶段，从root区域出发，扫描所有root区域的对象直接或间接引用到的对象，将这些对上全部加上标记。在回收阶段，扫描整个堆区，对所有无标记的对象进行回收。</p>
 <p>这个算法有一个缺陷，就是<code>STW</code>(stop the world)问题，即算法在标记时必须暂停整个程序，否则其他线程的代码可能会改变对象状态，从而可能把不应该回收的对象当做垃圾收集掉。</p>
 <h2 id="三色标记法"><a href="#三色标记法" class="headerlink" title="三色标记法"></a>三色标记法</h2><p>三色标记法属于标记清楚垃圾回收算法的一种，三色标记法解决了异步进行，很好的解决了STW的问题，因为可以异步执行所有可以以中断时间极少的代价，或者完全没有中断来进行整个GC。</p>
-<h3 id="三色标记法原理"><a href="#三色标记法原理" class="headerlink" title="三色标记法原理"></a>三色标记法原理</h3><ul>
+<h2 id="三色标记法原理"><a href="#三色标记法原理" class="headerlink" title="三色标记法原理"></a>三色标记法原理</h2><ul>
 <li>白色：还没搜索的对象</li>
 <li>灰色：正在搜索的对象</li>
 <li>黑色：搜索完成的对象</li>
@@ -399,11 +399,25 @@
 
 <h2 id="查看GC信息"><a href="#查看GC信息" class="headerlink" title="查看GC信息"></a>查看GC信息</h2><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">export GODEBUG=gctrace=<span class="number">1</span></span><br></pre></td></tr></table></figure>
 
-<h2 id="如何提高GC的性能"><a href="#如何提高GC的性能" class="headerlink" title="如何提高GC的性能"></a>如何提高GC的性能</h2><h3 id="sync-Pool"><a href="#sync-Pool" class="headerlink" title="sync.Pool"></a>sync.Pool</h3><p>sync.Pool主要是为了重用对象，一方面缩短了申请空间的时间，另一方面，还减轻了GC的压力。不过它是一个临时对象池，为什么这么说呢？因为对象池中的对象会被GC回收。所以说，有状态的对象，比如数据库连接是不能够用sync.Pool来实现的。</p>
+<h2 id="如何提高GC的性能"><a href="#如何提高GC的性能" class="headerlink" title="如何提高GC的性能"></a>如何提高GC的性能</h2><h2 id="sync-Pool"><a href="#sync-Pool" class="headerlink" title="sync.Pool"></a>sync.Pool</h2><p>sync.Pool主要是为了重用对象，一方面缩短了申请空间的时间，另一方面，还减轻了GC的压力。不过它是一个临时对象池，为什么这么说呢？因为对象池中的对象会被GC回收。所以说，有状态的对象，比如数据库连接是不能够用sync.Pool来实现的。</p>
 <p>sync.Pool主要有两个方法：</p>
 <figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(p *Pool)</span> <span class="title">Get</span><span class="params">()</span> <span class="title">interface</span></span>&#123;&#125; &#123;</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(p *Pool)</span> <span class="title">Put</span><span class="params">(x <span class="keyword">interface</span>&#123;&#125;)</span></span> &#123;</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
 <p>Get方法是指从临时对象池中申请对象，put是指把不再使用的对象返回对象池，以便后续重用。如果我们在使用Get申请新对象时pool中没有可用的对象，那么就会返回nil，除非设置了sync.Pool的New func。</p>
+<h2 id="高频请求注意的点："><a href="#高频请求注意的点：" class="headerlink" title="高频请求注意的点："></a>高频请求注意的点：</h2><ol>
+<li><p>函数尽量不要返回map， slice对象, 这种频繁调用的函数会给gc 带来压力。</p>
+</li>
+<li><p>小对象要合并。</p>
+</li>
+<li><p>函数频繁创建的简单的对象，直接返回对象，效果比返回指针效果要好。</p>
+</li>
+<li><p>避不开，能用sync.Pool 就用，虽然有人说1.10 后不推荐使用sync.Pool，但是压测来看，确实还是用效果，堆累计分配大小能减少一半以上。</p>
+</li>
+<li><p>类型转换要注意，官方用法消耗特别大，推荐使用雨痕的方式。</p>
+</li>
+<li><p>避免反复创建slice。</p>
+</li>
+</ol>
 
       
     </div>
@@ -434,7 +448,7 @@
   <p><span>本文标题:</span><a href="/2020/04/16/go-GC/">go垃圾回收机制</a></p>
   <p><span>文章作者:</span><a href="/" title="访问 Wxning 的个人博客">Wxning</a></p>
   <p><span>发布时间:</span>2020年04月16日 - 14:04</p>
-  <p><span>最后更新:</span>2020年04月16日 - 17:04</p>
+  <p><span>最后更新:</span>2020年05月22日 - 21:05</p>
   <p><span>原始链接:</span><a href="/2020/04/16/go-GC/" title="go垃圾回收机制">http://yoursite.com/2020/04/16/go-GC/</a>
     <span class="copy-path" title="点击复制文章链接"><i class="fa fa-clipboard" data-clipboard-text="http://yoursite.com/2020/04/16/go-GC/" aria-label="复制成功！"></i></span>
   </p>
@@ -644,7 +658,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#追踪式垃圾回收"><span class="nav-number">1.</span> <span class="nav-text">追踪式垃圾回收</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#标记清除算法原理"><span class="nav-number">1.1.</span> <span class="nav-text">标记清除算法原理</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#三色标记法"><span class="nav-number">2.</span> <span class="nav-text">三色标记法</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#三色标记法原理"><span class="nav-number">2.1.</span> <span class="nav-text">三色标记法原理</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#1-root-scan"><span class="nav-number">3.</span> <span class="nav-text">1. root scan</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-mark…mark…"><span class="nav-number">4.</span> <span class="nav-text">2. mark…mark…</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-mark-termination"><span class="nav-number">5.</span> <span class="nav-text">3. mark termination</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4-sweep…sweep…"><span class="nav-number">6.</span> <span class="nav-text">4. sweep…sweep…</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#触发GC"><span class="nav-number">7.</span> <span class="nav-text">触发GC</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#查看GC信息"><span class="nav-number">8.</span> <span class="nav-text">查看GC信息</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#如何提高GC的性能"><span class="nav-number">9.</span> <span class="nav-text">如何提高GC的性能</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#sync-Pool"><span class="nav-number">9.1.</span> <span class="nav-text">sync.Pool</span></a></li></ol></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#追踪式垃圾回收"><span class="nav-number">1.</span> <span class="nav-text">追踪式垃圾回收</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#标记清除算法原理"><span class="nav-number">2.</span> <span class="nav-text">标记清除算法原理</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#三色标记法"><span class="nav-number">3.</span> <span class="nav-text">三色标记法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#三色标记法原理"><span class="nav-number">4.</span> <span class="nav-text">三色标记法原理</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#1-root-scan"><span class="nav-number">5.</span> <span class="nav-text">1. root scan</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-mark…mark…"><span class="nav-number">6.</span> <span class="nav-text">2. mark…mark…</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-mark-termination"><span class="nav-number">7.</span> <span class="nav-text">3. mark termination</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4-sweep…sweep…"><span class="nav-number">8.</span> <span class="nav-text">4. sweep…sweep…</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#触发GC"><span class="nav-number">9.</span> <span class="nav-text">触发GC</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#查看GC信息"><span class="nav-number">10.</span> <span class="nav-text">查看GC信息</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#如何提高GC的性能"><span class="nav-number">11.</span> <span class="nav-text">如何提高GC的性能</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#sync-Pool"><span class="nav-number">12.</span> <span class="nav-text">sync.Pool</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#高频请求注意的点："><span class="nav-number">13.</span> <span class="nav-text">高频请求注意的点：</span></a></li></ol></div>
             
 
           </div>
