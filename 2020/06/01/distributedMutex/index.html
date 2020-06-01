@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="分布式锁,">
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="Redis分布式锁使用 redis 实现分布式锁使用 SETNX 命令实现的，我们直接看我在项目里实现 redis 分布式锁的代码吧！ 我们使用的第三方库是&amp;quot;github.com/go-redis/redis&amp;quot;, 首先我们定义一个接口，和sync.Mutex一样： 1234type Locker interface &amp;#123;   Lock(key string, expir">
+<meta name="keywords" content="分布式锁">
+<meta property="og:type" content="article">
+<meta property="og:title" content="分布式锁的多种实现">
+<meta property="og:url" content="http://yoursite.com/2020/06/01/distributedMutex/index.html">
+<meta property="og:site_name" content="Wxning">
+<meta property="og:description" content="Redis分布式锁使用 redis 实现分布式锁使用 SETNX 命令实现的，我们直接看我在项目里实现 redis 分布式锁的代码吧！ 我们使用的第三方库是&amp;quot;github.com/go-redis/redis&amp;quot;, 首先我们定义一个接口，和sync.Mutex一样： 1234type Locker interface &amp;#123;   Lock(key string, expir">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2020-06-01T13:42:58.917Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="分布式锁的多种实现">
+<meta name="twitter:description" content="Redis分布式锁使用 redis 实现分布式锁使用 SETNX 命令实现的，我们直接看我在项目里实现 redis 分布式锁的代码吧！ 我们使用的第三方库是&amp;quot;github.com/go-redis/redis&amp;quot;, 首先我们定义一个接口，和sync.Mutex一样： 1234type Locker interface &amp;#123;   Lock(key string, expir">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2020/06/01/distributedMutex/">
+
+
+
+
+
+  <title>分布式锁的多种实现 | Wxning</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+    <a href="https://github.com/wxning1107" class="github-corner" aria-label="View source on GitHub"><svg width="80" height="80" viewbox="0 0 250 250" style="fill:#151513; color:#fff; position: absolute; top: 0; border: 0; right: 0;" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"/><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"/><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"/></svg></a><style>.github-corner:hover .octo-arm{animation:octocat-wave 560ms ease-in-out}@keyframes octocat-wave{0%,100%{transform:rotate(0)}20%,60%{transform:rotate(-25deg)}40%,80%{transform:rotate(10deg)}}@media (max-width:500px){.github-corner:hover .octo-arm{animation:none}.github-corner .octo-arm{animation:octocat-wave 560ms ease-in-out}}</style>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Wxning</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br>
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br>
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-个人简历">
+          <a href="/个人简历/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br>
+            
+            个人简历
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/06/01/distributedMutex/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Wxning">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Wxning">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">分布式锁的多种实现</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-06-01T21:45:38+08:00">
+                2020-06-01
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/分布式系统/" itemprop="url" rel="index">
+                    <span itemprop="name">分布式系统</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/分布式系统/分布式锁/" itemprop="url" rel="index">
+                    <span itemprop="name">分布式锁</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+            <span class="post-meta-divider">|</span>
+            <span class="page-pv"><i class="fa fa-file-o"></i> 阅读数
+            <span class="busuanzi-value" id="busuanzi_value_page_pv"></span>次
+            </span>
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="Redis分布式锁"><a href="#Redis分布式锁" class="headerlink" title="Redis分布式锁"></a>Redis分布式锁</h2><p>使用 redis 实现分布式锁使用 SETNX 命令实现的，我们直接看我在项目里实现 redis 分布式锁的代码吧！</p>
+<p>我们使用的第三方库是<code>&quot;github.com/go-redis/redis&quot;</code>, 首先我们定义一个接口，和<code>sync.Mutex</code>一样：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> Locker <span class="keyword">interface</span> &#123;</span><br><span class="line">   Lock(key <span class="keyword">string</span>, expire time.Duration) (locked <span class="keyword">bool</span>, err error)</span><br><span class="line">   Unlock() error</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>接口里只有两个方法，分别是加锁Lock和解锁Unlock。然后我们创建一个锁实例实现这个接口吧：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> lock <span class="keyword">struct</span> &#123;</span><br><span class="line">   cache      redis.Client</span><br><span class="line">   key        <span class="keyword">string</span></span><br><span class="line">   needUnlock <span class="keyword">bool</span></span><br><span class="line">   isFirst    <span class="keyword">bool</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这个锁结构包含了我们的redis客户端、SETNX所要的key值，是否需要解锁needUnlock以及是否已经加上锁isFirst。</p>
+<p>那我们先实现一个Locker的构造函数吧，在Go里不推荐这么叫，那就叫工厂方法吧！</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">NewLocker</span><span class="params">(cache *redis.Client)</span> <span class="title">Locker</span></span> &#123;</span><br><span class="line">   <span class="keyword">return</span> &amp;lock&#123;</span><br><span class="line">      cache:      *cache,</span><br><span class="line">      key:        <span class="string">""</span>,</span><br><span class="line">      needUnlock: <span class="literal">false</span>,</span><br><span class="line">      isFirst:    <span class="literal">false</span>,</span><br><span class="line">   &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这里返回的是Lock接口。</p>
+<p>然后我们就可以实现Lock接口了。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(l *lock)</span> <span class="title">Lock</span><span class="params">(key <span class="keyword">string</span>, expire time.Duration)</span> <span class="params">(locked <span class="keyword">bool</span>, err error)</span></span> &#123;</span><br><span class="line">   <span class="keyword">if</span> l.isFirst &#123;</span><br><span class="line">      <span class="keyword">return</span> <span class="literal">false</span>, fmt.Errorf(<span class="string">"repeat lock"</span>)</span><br><span class="line">   &#125;</span><br><span class="line">   l.isFirst = <span class="literal">true</span></span><br><span class="line">   l.key = key</span><br><span class="line"></span><br><span class="line">   uuid := xid.New().String()</span><br><span class="line">   locked, err = l.cache.SetNX(l.key, uuid, expire).Result()</span><br><span class="line">   <span class="keyword">if</span> locked &#123;</span><br><span class="line">      l.needUnlock = <span class="literal">true</span></span><br><span class="line">   &#125;</span><br><span class="line"></span><br><span class="line">   <span class="keyword">return</span> locked, err</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>首先是 Lock 方法，这个方法先判断是否有其他 goroutine 已经加锁了，有则直接返回就行了。如果没有，我们就先标记 isFirst 为 true，然后我们基于 SetNX 去判断key是否已经存在。这里我们引入 <code>&quot;github.com/rs/xid&quot;</code>保证 key 的 value 不会重复，如果 SetNX 失败说明已经有 Goroutine 加锁了，这样我们就完成了加锁的逻辑。</p>
+<p>然后解锁Unlock就很简单了！</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(l *lock)</span> <span class="title">Unlock</span><span class="params">()</span> <span class="title">error</span></span> &#123;</span><br><span class="line">   <span class="keyword">if</span> !l.needUnlock &#123;</span><br><span class="line">      <span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">   &#125;</span><br><span class="line"></span><br><span class="line">   <span class="keyword">return</span> l.cache.Del(l.key).Err()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>直接判断是否需要解锁，如果需要就直接删除key就好了！</p>
+<p>这样我们就用Redis实现了分布式锁了，简单吧！</p>
+<p>那我们来测试一下吧！</p>
+<p>这里我就展示一个测试函数吧！</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">TestUnlockLockErr</span><span class="params">(t *testing.T)</span></span> &#123;</span><br><span class="line">   client := redis.NewClient(&amp;redis.Options&#123;</span><br><span class="line">      Addr:     <span class="string">"127.0.0.1:6379"</span>,</span><br><span class="line">      Password: <span class="string">"cc"</span>,</span><br><span class="line">      DB:       <span class="number">0</span>,</span><br><span class="line">   &#125;)</span><br><span class="line"></span><br><span class="line">   prefix := fmt.Sprintf(<span class="string">"%d"</span>, time.Now().Unix())</span><br><span class="line">   lockSucc := NewLocker(client)</span><br><span class="line">   locked, err := lockSucc.Lock(prefix+<span class="string">"UnlockLockErr"</span>, time.Minute*<span class="number">2</span>)</span><br><span class="line">   require.NoError(t, err)</span><br><span class="line">   require.Equal(t, <span class="literal">true</span>, locked)</span><br><span class="line"></span><br><span class="line">   lock := NewLocker(client)</span><br><span class="line">   locked, err = lock.Lock(prefix+<span class="string">"UnlockLockErr"</span>, time.Minute)</span><br><span class="line">   require.NoError(t, err)</span><br><span class="line">   require.Equal(t, <span class="literal">false</span>, locked)</span><br><span class="line"></span><br><span class="line">   <span class="comment">// lock failure, unlock no use</span></span><br><span class="line">   err = lock.Unlock()</span><br><span class="line">   require.NoError(t, err)</span><br><span class="line"></span><br><span class="line">   lock = NewLocker(client)</span><br><span class="line">   locked, err = lock.Lock(prefix+<span class="string">"UnlockLockErr"</span>, time.Minute)</span><br><span class="line">   require.NoError(t, err)</span><br><span class="line">   require.Equal(t, <span class="literal">false</span>, locked)</span><br><span class="line"></span><br><span class="line">   <span class="comment">// unlock firstLock</span></span><br><span class="line">   err = lockSucc.Unlock()</span><br><span class="line">   require.NoError(t, err)</span><br><span class="line"></span><br><span class="line">   lock = NewLocker(client)</span><br><span class="line">   locked, err = lock.Lock(prefix+<span class="string">"UnlockLockErr"</span>, time.Minute)</span><br><span class="line">   require.NoError(t, err)</span><br><span class="line">   require.Equal(t, <span class="literal">true</span>, locked)</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>测试我们习惯用<code>&quot;github.com/stretchr/testify/require&quot;</code>简化测试代码，这里直接看require.Equal就好了！</p>
+<p>SetNX 很适合在高并发场景下，用来争抢一些“唯一”的资源。比如交易系统中卖家发起订单，而多个买家会对其进行并发争抢。这种场景我们没有办法依赖具体的时间来判断先后，因为不管是用户设备的时间，还是分布式场景下的各台机器的时间，都是没有办法在合并后保证正确的时序的。哪怕是我们同一个机房的集群，不同的机器的系统时间可能也会有细微的差别。</p>
+<p>所以，我们需要依赖于这些请求到达 Redis 节点的顺序来做正确的抢锁操作。</p>
+<h2 id="ZooKeeper-分布式锁"><a href="#ZooKeeper-分布式锁" class="headerlink" title="ZooKeeper 分布式锁"></a>ZooKeeper 分布式锁</h2><p>我的项目同时也实现了 ZooKeeper 分布式锁，基于 ZooKeeper 的锁与基于 Redis 的锁的不同之处在于 Lock 成功之前会一直阻塞，这与我们单机场景中的<code>mutex.Lock</code>很相似。</p>
+<p>zookeeper实现分布式锁的原理如下：</p>
+<ol>
+<li>客户端连接zookeeper，并在/lock下创建临时的且有序的子节点，第一个客户端对应的子节点为/lock/lock-0000000000，第二个为/lock/lock-0000000001，以此类推。</li>
+<li>客户端获取/lock下的子节点列表，判断自己创建的子节点是否为当前子节点列表中序号最小的子节点，如果是则认为获得锁，否则监听/lock的子节点变更消息，获得子节点变更通知后重复此步骤直至获得锁；</li>
+</ol>
+<p>其原理也是基于临时Sequence节点和watch API，例如我们这里使用的是<code>/lock</code>节点。Lock会在该节点下的节点列表中插入自己的值，只要节点下的子节点发生变化，就会通知所有watch该节点的程序。这时候程序会检查当前节点下最小的子节点的id是否与自己的一致。如果一致，说明加锁成功了。</p>
+<p>那我们就来看看我项目中是怎么用ZooKeeper实现分布式锁的吧！</p>
+<p>首先同样的道理我们先定义一个zk锁的接口：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> ZKLocker <span class="keyword">interface</span> &#123;</span><br><span class="line">	Lock(path <span class="keyword">string</span>) error</span><br><span class="line">	Unlock() error</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>然后我们创建一个ZKLock的实例：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> ZKLock <span class="keyword">struct</span> &#123;</span><br><span class="line">   zkHost []<span class="keyword">string</span></span><br><span class="line">   zkConn *zk.Conn</span><br><span class="line">   zkAcl  []zk.ACL</span><br><span class="line">   zkLock *zk.Lock</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>ZKLock结构体包含了zk客户端连接需要的的主机信息、连接状态、认证信息、还有zk的锁。</p>
+<p>然后我们来初始化一个ZKLock吧！</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> (</span><br><span class="line">		AUTH_USER = <span class="string">"cc"</span></span><br><span class="line">		AUTH_PWD  = <span class="string">"3.0#bkcc"</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">NewZkLock</span><span class="params">(host []<span class="keyword">string</span>)</span> <span class="title">ZKLocker</span></span> &#123;</span><br><span class="line">   <span class="keyword">return</span> &amp;ZKLock&#123;</span><br><span class="line">      zkHost: host[:],</span><br><span class="line">      zkConn: <span class="literal">nil</span>,</span><br><span class="line">      zkAcl:  zk.DigestACL(zk.PermAll, AUTH_USER, AUTH_PWD),</span><br><span class="line">      zkLock: <span class="literal">nil</span>,</span><br><span class="line">   &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这里我们只是把主机列表和认证做了初始化，然后我们就实现 ZKLocker 接口吧！</p>
+<p>我们还是仿造官方sync.Mutex的代码规范，，首先实现Lock方法：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(zkLock *ZKLock)</span> <span class="title">Lock</span><span class="params">(path <span class="keyword">string</span>)</span> <span class="title">error</span></span> &#123;</span><br><span class="line">   <span class="keyword">return</span> zkLock.LockSlow(path, time.Second*<span class="number">5</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这里只是传入一个path并且设置了临时节点的会话结束时间，然后我们来看看 LockSlow 具体的逻辑吧！</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(zkLock *ZKLock)</span> <span class="title">LockSlow</span><span class="params">(path <span class="keyword">string</span>, sessionTimeOut time.Duration)</span> <span class="title">error</span></span> &#123;</span><br><span class="line">   <span class="keyword">if</span> zkLock.zkConn == <span class="literal">nil</span> &#123;</span><br><span class="line">      conn, _, connErr := zk.Connect(zkLock.zkHost, sessionTimeOut)</span><br><span class="line">      <span class="keyword">if</span> connErr != <span class="literal">nil</span> &#123;</span><br><span class="line">         <span class="keyword">return</span> connErr</span><br><span class="line">      &#125;</span><br><span class="line"></span><br><span class="line">      <span class="comment">// auth</span></span><br><span class="line">      auth := AUTH_USER + <span class="string">":"</span> + AUTH_PWD</span><br><span class="line">      <span class="keyword">if</span> connErr := conn.AddAuth(<span class="string">"digest"</span>, []<span class="keyword">byte</span>(auth)); connErr != <span class="literal">nil</span> &#123;</span><br><span class="line">         conn.Close()</span><br><span class="line">         <span class="keyword">return</span> connErr</span><br><span class="line">      &#125;</span><br><span class="line"></span><br><span class="line">      zkLock.zkConn = conn</span><br><span class="line">   &#125;</span><br><span class="line"></span><br><span class="line">   lock := zk.NewLock(zkLock.zkConn, path, zkLock.zkAcl)</span><br><span class="line">   <span class="keyword">if</span> lock == <span class="literal">nil</span> &#123;</span><br><span class="line">      <span class="keyword">return</span> fmt.Errorf(<span class="string">"fail to new lock for path(%s)"</span>, path)</span><br><span class="line">   &#125;</span><br><span class="line"></span><br><span class="line">   zkLock.zkLock = lock</span><br><span class="line"></span><br><span class="line">   <span class="keyword">return</span> zkLock.zkLock.Lock()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>我们先连接zk，然后做身份认证，再通过<code>zk.NewLock</code>生成一个锁，从而实现加锁的功能。这里我们需要 zkLock.zkLock = lock 赋值操作，因为我们解锁需要这个lock去解锁，那我们直接来看看解锁的代码吧！</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(zkLock *ZKLock)</span> <span class="title">Unlock</span><span class="params">()</span> <span class="title">error</span></span> &#123;</span><br><span class="line">   <span class="keyword">if</span> zkLock.zkLock != <span class="literal">nil</span> &#123;</span><br><span class="line">      <span class="keyword">if</span> unlock := zkLock.zkLock.Unlock(); unlock != <span class="literal">nil</span> &#123;</span><br><span class="line">         zkLock.zkConn.Close()</span><br><span class="line">         <span class="keyword">return</span> unlock</span><br><span class="line">      &#125;</span><br><span class="line">   &#125;</span><br><span class="line"></span><br><span class="line">   <span class="keyword">if</span> zkLock.zkConn != <span class="literal">nil</span> &#123;</span><br><span class="line">      zkLock.zkConn.Close()</span><br><span class="line">   &#125;</span><br><span class="line"></span><br><span class="line">   <span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>注意，这里在我们解锁后，我们仍然再次判断 zkLock.zkConn 是否是空的，如果不是再关闭连接，为什么要这样做呢？因为有可能在我们生成锁的时候，也就是调用 zk.NewLock 时失败了，这时我们的conn连接还没有关闭，这回占用着资源，所以我们要再释放锁时加一条判断。</p>
+<p>这样我们就实现了zk分布式锁了！</p>
+<p>那我们来测试一下吧！</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">TestZkLock</span><span class="params">(t *testing.T)</span></span> &#123;</span><br><span class="line">   fmt.Println(<span class="string">"TEST zk lock"</span>)</span><br><span class="line">   zkLock1 := NewZkLock([]<span class="keyword">string</span>&#123;<span class="string">"127.0.0.1:2181"</span>&#125;)</span><br><span class="line"></span><br><span class="line">   <span class="keyword">if</span> err := zkLock1.Lock(<span class="string">"/lock"</span>); err != <span class="literal">nil</span> &#123;</span><br><span class="line">      fmt.Printf(<span class="string">"lock1 fail lock. err:%s \n"</span>, err.Error())</span><br><span class="line">   &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">      fmt.Println(<span class="string">"lock1 lock"</span>)</span><br><span class="line">   &#125;</span><br><span class="line"></span><br><span class="line">   unlock := zkLock1.Unlock()</span><br><span class="line">   require.NoError(t, unlock)</span><br><span class="line"></span><br><span class="line">   fmt.Println(<span class="string">"lock1 unLocked"</span>)</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这种分布式的阻塞锁比较适合分布式任务调度场景，但不适合<code>高频次</code>持锁时间短的抢锁场景。按照Google的Chubby论文里的阐述，基于强一致协议的锁适用于<code>粗粒度</code>的加锁操作。这里的粗粒度指锁占用时间较长。我们在使用时也应思考在自己的业务场景中使用是否合适。</p>
+<h2 id="etcd-分布式锁"><a href="#etcd-分布式锁" class="headerlink" title="etcd 分布式锁"></a>etcd 分布式锁</h2><p>etcd是分布式系统中，功能上与ZooKeeper类似的组件，这两年越来越火了。上面基于ZooKeeper我们实现了分布式阻塞锁，基于etcd，也可以实现类似的功能：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">    <span class="string">"log"</span></span><br><span class="line"></span><br><span class="line">    <span class="string">"github.com/zieckey/etcdsync"</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">    m, err := etcdsync.New(<span class="string">"/lock"</span>, <span class="number">10</span>, []<span class="keyword">string</span>&#123;<span class="string">"http://127.0.0.1:2379"</span>&#125;)</span><br><span class="line">    <span class="keyword">if</span> m == <span class="literal">nil</span> || err != <span class="literal">nil</span> &#123;</span><br><span class="line">        log.Printf(<span class="string">"etcdsync.New failed"</span>)</span><br><span class="line">        <span class="keyword">return</span></span><br><span class="line">    &#125;</span><br><span class="line">    err = m.Lock()</span><br><span class="line">    <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">        log.Printf(<span class="string">"etcdsync.Lock failed"</span>)</span><br><span class="line">        <span class="keyword">return</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    log.Printf(<span class="string">"etcdsync.Lock OK"</span>)</span><br><span class="line">    log.Printf(<span class="string">"Get the lock. Do something here."</span>)</span><br><span class="line"></span><br><span class="line">    err = m.Unlock()</span><br><span class="line">    <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">        log.Printf(<span class="string">"etcdsync.Unlock failed"</span>)</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        log.Printf(<span class="string">"etcdsync.Unlock OK"</span>)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>etcd中没有像ZooKeeper那样的Sequence节点。所以其锁实现和基于ZooKeeper实现的有所不同。在上述示例代码中使用的etcdsync的Lock流程是：</p>
+<ol>
+<li>先检查<code>/lock</code>路径下是否有值，如果有值，说明锁已经被别人抢了</li>
+<li>如果没有值，那么写入自己的值。写入成功返回，说明加锁成功。写入时如果节点被其它节点写入过了，那么会导致加锁失败，这时候到 3</li>
+<li>watch <code>/lock</code>下的事件，此时陷入阻塞</li>
+<li>当<code>/lock</code>路径下发生事件时，当前进程被唤醒。检查发生的事件是否是删除事件（说明锁被持有者主动unlock），或者过期事件（说明锁过期失效）。如果是的话，那么回到 1，走抢锁流程。</li>
+</ol>
+<p>值得一提的是，在etcdv3的API中官方已经提供了可以直接使用的锁API，大家可以查阅etcd的文档做进一步的学习。</p>
+<h2 id="如何选择合适的锁"><a href="#如何选择合适的锁" class="headerlink" title="如何选择合适的锁"></a>如何选择合适的锁</h2><p>业务还在单机就可以搞定的量级时，那么按照需求使用任意的单机锁方案就可以。</p>
+<p>如果发展到了分布式服务阶段，但业务规模不大，qps很小的情况下，使用哪种锁方案都差不多。如果公司内已有可以使用的ZooKeeper、etcd或者Redis集群，那么就尽量在不引入新的技术栈的情况下满足业务需求。</p>
+<p>业务发展到一定量级的话，就需要从多方面来考虑了。首先是你的锁是否在任何恶劣的条件下都不允许数据丢失，如果不允许，那么就不要使用Redis的<code>setnx</code>的简单锁。</p>
+<p>对锁数据的可靠性要求极高的话，那只能使用etcd或者ZooKeeper这种通过一致性协议保证数据可靠性的锁方案。但可靠的背面往往都是较低的吞吐量和较高的延迟。需要根据业务的量级对其进行压力测试，以确保分布式锁所使用的etcd或ZooKeeper集群可以承受得住实际的业务请求压力。需要注意的是，etcd和Zookeeper集群是没有办法通过增加节点来提高其性能的。要对其进行横向扩展，只能增加搭建多个集群来支持更多的请求。这会进一步提高对运维和监控的要求。多个集群可能需要引入proxy，没有proxy那就需要业务去根据某个业务id来做分片。如果业务已经上线的情况下做扩展，还要考虑数据的动态迁移。这些都不是容易的事情。</p>
+
+      
+    </div>
+    
+    
+    
+
+    <div>
+      
+        <div>
+    
+        <div style="text-align:center;color: #ccc;font-size:14px;">-------------本文结束<i class="fa fa-paw"></i>感谢您的阅读-------------</div>
+    
+</div>
+
+      
+    </div>
+
+    <div>
+          
+            
+<div class="my_post_copyright">
+  <script src="//cdn.bootcss.com/clipboard.js/1.5.10/clipboard.min.js"></script>
+
+  <!-- JS库 sweetalert 可修改路径 -->
+  <script src="https://cdn.bootcss.com/jquery/2.0.0/jquery.min.js"></script>
+  <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+  <p><span>本文标题:</span><a href="/2020/06/01/distributedMutex/">分布式锁的多种实现</a></p>
+  <p><span>文章作者:</span><a href="/" title="访问 Wxning 的个人博客">Wxning</a></p>
+  <p><span>发布时间:</span>2020年06月01日 - 21:06</p>
+  <p><span>最后更新:</span>2020年06月01日 - 21:06</p>
+  <p><span>原始链接:</span><a href="/2020/06/01/distributedMutex/" title="分布式锁的多种实现">http://yoursite.com/2020/06/01/distributedMutex/</a>
+    <span class="copy-path" title="点击复制文章链接"><i class="fa fa-clipboard" data-clipboard-text="http://yoursite.com/2020/06/01/distributedMutex/" aria-label="复制成功！"></i></span>
+  </p>
+  <p><span>许可协议:</span><i class="fa fa-creative-commons"></i> <a rel="license" href="https://creativecommons.org/licenses/by-nc-nd/4.0/" target="_blank" title="Attribution-NonCommercial-NoDerivatives 4.0 International (CC BY-NC-ND 4.0)">署名-非商业性使用-禁止演绎 4.0 国际</a> 转载请保留原文链接及作者。</p>
+</div>
+<script>
+    var clipboard = new Clipboard('.fa-clipboard');
+    $(".fa-clipboard").click(function(){
+      clipboard.on('success', function(){
+        swal({
+          title: "",
+          text: '复制成功',
+          icon: "success",
+          showConfirmButton: true
+          });
+    });
+    });
+</script>
+
+
+          
+    </div>
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/分布式锁/" rel="tag"># 分布式锁</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2020/05/17/grpcTLS/" rel="next" title="安全的gRPC">
+                <i class="fa fa-chevron-left"></i> 安全的gRPC
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+    <div class="comments" id="comments">
+      <div id="lv-container" data-id="city" data-uid="MTAyMC80NTE2Ny8yMTY4NA=="></div>
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="/images/avatar.gif" alt="Wxning">
+            
+              <p class="site-author-name" itemprop="name">Wxning</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/">
+              
+                  <span class="site-state-item-count">28</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">32</span>
+                  <span class="site-state-item-name">分类</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">23</span>
+                  <span class="site-state-item-name">标签</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+            <div class="links-of-author motion-element">
+                
+                  <span class="links-of-author-item">
+                    <a href="https://github.com/wxning1107" target="_blank" title="GitHub">
+                      
+                        <i class="fa fa-fw fa-github"></i>GitHub</a>
+                  </span>
+                
+            </div>
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Redis分布式锁"><span class="nav-number">1.</span> <span class="nav-text">Redis分布式锁</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ZooKeeper-分布式锁"><span class="nav-number">2.</span> <span class="nav-text">ZooKeeper 分布式锁</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#etcd-分布式锁"><span class="nav-number">3.</span> <span class="nav-text">etcd 分布式锁</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#如何选择合适的锁"><span class="nav-number">4.</span> <span class="nav-text">如何选择合适的锁</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Wxning</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Mist</a> v5.1.4</div>
+
+
+
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+  
+    <span class="site-uv">
+      <i class="fa fa-user"></i> 访问人数
+      <span class="busuanzi-value" id="busuanzi_value_site_uv"></span>
+      人
+    </span>
+  
+
+  
+    <span class="site-pv">
+      <i class="fa fa-eye"></i> 总访问量
+      <span class="busuanzi-value" id="busuanzi_value_site_pv"></span>
+      次
+    </span>
+  
+</div>
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/canvas-nest/canvas-nest.min.js"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+    <script type="text/javascript">
+      (function(d, s) {
+        var j, e = d.getElementsByTagName(s)[0];
+        if (typeof LivereTower === 'function') { return; }
+        j = d.createElement(s);
+        j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+        j.async = true;
+        e.parentNode.insertBefore(j, e);
+      })(document, 'script');
+    </script>
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
