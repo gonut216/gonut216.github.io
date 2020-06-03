@@ -91,7 +91,7 @@
 <meta property="og:image" content="http://yoursite.com/images/gmp-02.jpg">
 <meta property="og:image" content="http://yoursite.com/images/gmp-03.jpg">
 <meta property="og:image" content="http://yoursite.com/images/gmp-04.jpg">
-<meta property="og:updated_time" content="2020-04-28T01:50:12.756Z">
+<meta property="og:updated_time" content="2020-06-03T07:45:33.030Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Go调度器">
 <meta name="twitter:description" content="go语言的schedulerGo 1.1的一个最大的特性是由Dmitry Vyukov贡献的新的调度器。新的调度器给并发Go程序提高了巨大的性能。 有三种场景的线程模型。第一种是N:1，即多个用户态线程运行在一个系统线程中。优点是上下文切换快，缺点是不能利用多核。另一种是1:1，一个用户态线程对应一个系统线程。这种利用了机器的多核，但是上下文切换会很慢，因为上下文切换需要陷入操作系统内核态。 Go">
@@ -309,6 +309,28 @@
           </span>
 
           
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Go/" itemprop="url" rel="index">
+                    <span itemprop="name">Go</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
 
           
             
@@ -349,14 +371,14 @@
 <ul>
 <li>三角形代表一个<code>系统线程</code>。这是被操作系统管理用来执行代码的线程，工作起来就像标准POSIX线程一样。在runtime代码中，被称为<code>M</code>，即machine的简称。</li>
 <li>圆圈代表一个<code>协程</code>。它包含了栈，指令指针和其它关于调度协程的重要信息。比如任何可能导致阻塞的channel。它被称为<code>G</code>。</li>
-<li>正方形代表一个用于调度的<code>上下文</code>。你可以把它看成一个本地化版本的调度器，用于在一个线程中执行Go代码。它是让我们可以从N:1模型转变成M:N模型的重要部分。在runtime代码中，被称为<code>P</code>，即processor的简称。</li>
+<li>正方形代表一个用于调度的<code>上下文</code>。你可以把它看成一个本地化版本的调度器，用于在一个线程中执行Go代码。它是让我们可以从N:1模型转变成M:N模型的重要部分。在runtime代码中，被称为<code>P</code>，即processor的简称。P能存放的G的数量不超过256个。</li>
 </ul>
 <p><img src="/images/gmp-02.jpg" alt="gmp-02"></p>
 <p>如图所示，我们有2个线程（<strong>M</strong>），每个线程持有一个上下文（<strong>P</strong>），每个线程执行一个协程（<strong>G</strong>）。为了执行协程，一个线程必须持有一个上下文。</p>
-<p>上下文的数量在程序启动时通过环境变量GOMAXPROCS指定，上下文数量固定以为着在任意时刻只有GOMAXPROCS数量的Go代码在运行。利用这点我们可以调整对Go调用的数量，比如在4核机器上运行4个线程。</p>
+<p>上下文的数量在程序启动时通过环境变量GOMAXPROCS指定，上下文数量固定以为着在任意时刻只有GOMAXPROCS数量的Go代码在运行。利用这点我们可以调整对Go调用的数量，比如在4核机器上运行4个线程。所有的P都在程序启动时创建，并保存在数组中，最多有<code>GOMAXPROCS</code>个。新建G时，G优先加入到P的本地队列，如果队列满了，则会把本地队列中一半的G移动到全局队列。</p>
 <p>灰色部分的协程处于非运行状态，但是已经准备就绪，可以被调度。它们被安置于被称为runqueues的队列中。当使用go关键字开启一个协程时，这个协程被添加至队列的末尾。当上下文执行完一个协程后，到达一个调度的点，它会从队列中取出一个协程。设置好栈和指令指针并开始执行这个协程。</p>
 <h2 id="goroutine发生阻塞"><a href="#goroutine发生阻塞" class="headerlink" title="goroutine发生阻塞"></a>goroutine发生阻塞</h2><p>为什么我们需要<code>P</code>呢，我们不能把任务队列直接挂载到线程上而去除掉<code>P</code>吗？</p>
-<p>答案是不行。原因是当运行着的线程由于某些原因需要阻塞时，我们需要通过<code>P把任务队列挂载到其它线程中</code>。当然还有一个原因，我们不能让所有的M去全局中获取G，这样要加锁，当M持有P时，访问的G不会出现数据竞争。</p>
+<p>答案是不行。原因是当运行着的线程由于某些原因需要阻塞时，我们需要通过<code>P把任务队列挂载到其它线程中</code>，这就是hand off机制。当然还有一个原因，我们不能让所有的M去全局中获取G，这样要加锁，当M持有P时，访问的G不会出现数据竞争。</p>
 <p>什么时候需要阻塞呢？举个例子，当我们调用系统调用的时候。因为一个线程不能一边执行代码一边阻塞在系统调用上，我们需要移交<strong>P</strong>使得它可以继续被调度。</p>
 <p><img src="/images/gmp-03.jpg" alt="gmp-03"></p>
 <p>上图演示了一个线程放弃它的<code>P</code>，使得其它线程可以运行这个<code>P</code>。调度器会确保有足够的线程运行所有的<code>P</code>。图中的M1用来处理这个系统调用，它可能是被新创建的，也有可能从空闲线程池中取出。这个线程用来保持调用系统调用的这个被阻塞的协程，因为理论上来说，这个线程依然在执行，只不过是阻塞在了系统调用上。</p>
@@ -405,7 +427,7 @@
   <p><span>本文标题:</span><a href="/2020/04/12/GMP/">Go调度器</a></p>
   <p><span>文章作者:</span><a href="/" title="访问 Wxning 的个人博客">Wxning</a></p>
   <p><span>发布时间:</span>2020年04月12日 - 20:04</p>
-  <p><span>最后更新:</span>2020年04月28日 - 09:04</p>
+  <p><span>最后更新:</span>2020年06月03日 - 15:06</p>
   <p><span>原始链接:</span><a href="/2020/04/12/GMP/" title="Go调度器">http://yoursite.com/2020/04/12/GMP/</a>
     <span class="copy-path" title="点击复制文章链接"><i class="fa fa-clipboard" data-clipboard-text="http://yoursite.com/2020/04/12/GMP/" aria-label="复制成功！"></i></span>
   </p>
@@ -559,7 +581,7 @@
               
               <div class="site-state-item site-state-categories">
                 <a href="/categories/index.html">
-                  <span class="site-state-item-count">32</span>
+                  <span class="site-state-item-count">33</span>
                   <span class="site-state-item-name">分类</span>
                 </a>
               </div>
