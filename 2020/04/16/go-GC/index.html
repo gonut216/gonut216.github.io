@@ -89,7 +89,7 @@
 <meta property="og:locale" content="zh-Hans">
 <meta property="og:image" content="http://yoursite.com/images/gc-01.jpg">
 <meta property="og:image" content="http://yoursite.com/images/gc-02.jpg">
-<meta property="og:updated_time" content="2020-05-22T13:54:16.888Z">
+<meta property="og:updated_time" content="2020-08-04T05:44:10.938Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="go垃圾回收机制">
 <meta name="twitter:description" content="追踪式垃圾回收主流垃圾回收算法有三种，引用计数法，分代收集法，还有就是标记清除算法 标记清除算法原理标记清除算法的核心就是判断一个对象是否可达，因为一旦这个对象不可达就会被GC回收掉。那怎么判断一个对象是否可达呢？第一步找出所有的全局变量和当前函数栈里的变量，并且标记为可达。第二步从已经标记的数据开始，进一步标记他们可访问的对象，以此类推，这就是传递闭包。判断一个对象是否为垃圾，就是看从root区">
@@ -365,7 +365,7 @@
 <h2 id="标记清除算法原理"><a href="#标记清除算法原理" class="headerlink" title="标记清除算法原理"></a>标记清除算法原理</h2><p>标记清除算法的核心就是判断一个对象是否可达，因为一旦这个对象不可达就会被GC回收掉。那怎么判断一个对象是否可达呢？第一步找出所有的全局变量和当前函数栈里的变量，并且标记为可达。第二步从已经标记的数据开始，进一步标记他们可访问的对象，以此类推，这就是传递闭包。判断一个对象是否为垃圾，就是看从root区域的对象是否有直接或间接的引用到这个对象。如果没有任何对象引用到它，则说明它没有被使用，因此可以安全地当作垃圾回收掉。</p>
 <p>标记清扫算法分为两阶段：标记阶段和清扫阶段。标记阶段，从root区域出发，扫描所有root区域的对象直接或间接引用到的对象，将这些对上全部加上标记。在回收阶段，扫描整个堆区，对所有无标记的对象进行回收。</p>
 <p>这个算法有一个缺陷，就是<code>STW</code>(stop the world)问题，即算法在标记时必须暂停整个程序，否则其他线程的代码可能会改变对象状态，从而可能把不应该回收的对象当做垃圾收集掉。</p>
-<h2 id="三色标记法"><a href="#三色标记法" class="headerlink" title="三色标记法"></a>三色标记法</h2><p>三色标记法属于标记清楚垃圾回收算法的一种，三色标记法解决了异步进行，很好的解决了STW的问题，因为可以异步执行所有可以以中断时间极少的代价，或者完全没有中断来进行整个GC。</p>
+<h2 id="三色标记法"><a href="#三色标记法" class="headerlink" title="三色标记法"></a>三色标记法</h2><p>三色标记法属于标记清除垃圾回收算法的一种，三色标记法解决了异步进行，很好的解决了STW的问题，因为可以异步执行所有可以以中断时间极少的代价，或者完全没有中断来进行整个GC。</p>
 <h2 id="三色标记法原理"><a href="#三色标记法原理" class="headerlink" title="三色标记法原理"></a>三色标记法原理</h2><ul>
 <li>白色：还没搜索的对象</li>
 <li>灰色：正在搜索的对象</li>
@@ -448,7 +448,7 @@
   <p><span>本文标题:</span><a href="/2020/04/16/go-GC/">go垃圾回收机制</a></p>
   <p><span>文章作者:</span><a href="/" title="访问 Wxning 的个人博客">Wxning</a></p>
   <p><span>发布时间:</span>2020年04月16日 - 14:04</p>
-  <p><span>最后更新:</span>2020年05月22日 - 21:05</p>
+  <p><span>最后更新:</span>2020年08月04日 - 13:08</p>
   <p><span>原始链接:</span><a href="/2020/04/16/go-GC/" title="go垃圾回收机制">http://yoursite.com/2020/04/16/go-GC/</a>
     <span class="copy-path" title="点击复制文章链接"><i class="fa fa-clipboard" data-clipboard-text="http://yoursite.com/2020/04/16/go-GC/" aria-label="复制成功！"></i></span>
   </p>
