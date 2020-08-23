@@ -87,10 +87,12 @@
 <meta property="og:site_name" content="Wxning">
 <meta property="og:description" content="PodPod是Kubernetes最重要的基本概念，它是一组紧密关联的容器集合，它们共享IPC、存储、网络资源 和 namespace，是 Kubernetes 调度的基本单位。Pod 的设计理念是支持多个容器在一个 Pod 中共享网络和文件系统，可以通过进程间通信和文件共享这种简单高效的方式组合完成服务。 Static Pod静态 Pod 由kubelet进行管理的仅存在于特定 Node 上的">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:updated_time" content="2020-08-23T14:00:07.451Z">
+<meta property="og:image" content="http://yoursite.com/images/pod1.jpg">
+<meta property="og:updated_time" content="2020-08-23T14:09:09.701Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="深入理解Kubernetes之Pod">
 <meta name="twitter:description" content="PodPod是Kubernetes最重要的基本概念，它是一组紧密关联的容器集合，它们共享IPC、存储、网络资源 和 namespace，是 Kubernetes 调度的基本单位。Pod 的设计理念是支持多个容器在一个 Pod 中共享网络和文件系统，可以通过进程间通信和文件共享这种简单高效的方式组合完成服务。 Static Pod静态 Pod 由kubelet进行管理的仅存在于特定 Node 上的">
+<meta name="twitter:image" content="http://yoursite.com/images/pod1.jpg">
 
 
 
@@ -384,6 +386,9 @@
 <li><code>LivenessProbe</code>探针：用于判断容器是否存活（Running状态），如果LivenessProbe探针检测到容器不健康，则kubelet会杀掉该容器，并根据容器的充气策略做响应处理</li>
 <li><code>ReadinessProbe</code>探针：用于判断容器服务是否可用（Ready状态），达到Ready状态的Pod才可以接收请求，对于Service（相当于Pod服务发现组件，这里后续文章再详细讲解）管理的Pod，Service与Pod Endpoint的关联关系也将基于Pod是否Ready进行配置，如果在运行过程中Ready状态变为False，则系统自动将其从Service的后端Endpoint列表中隔离出去，后续再把恢复到Ready状态的Pod加入后端Endpoint列表，这样保证客户端在访问Service时不会被发到服务不可用的Pod实例上。</li>
 </ul>
+<p>我们来看一下Pod钩子和Pod探针的区别</p>
+<p><img src="/images/pod1.jpg" alt="pod"></p>
+<p>从上面这张图我们可以直观的看到<code>PostStart</code>和<code>PreStop</code>包括<code>LivenessProbe</code>和<code>ReadinessProbe</code>是属于主容器的生命周期范围内的，<code>Init Container</code>（用来做初始化工作的容器）是独立于主容器之外的，当然他们都属于<code>Pod</code>的生命周期范畴之内的</p>
 <p><code>LivenessProbe</code>和<code>ReadinessProbe</code>均可配置以下三种实现方式：</p>
 <ul>
 <li>ExecAction：在容器内执行一个命令，如果命令返回码为0，则表示容器健康</li>
