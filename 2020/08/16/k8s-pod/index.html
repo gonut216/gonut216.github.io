@@ -79,21 +79,22 @@
 
 
 
-<meta name="description" content="PodPod是Kubernetes最重要的基本概念，它是一组紧密关联的容器集合，它们共享IPC、存储、网络资源 和 namespace，是 Kubernetes 调度的基本单位。Pod 的设计理念是支持多个容器在一个 Pod 中共享网络和文件系统，可以通过进程间通信和文件共享这种简单高效的方式组合完成服务。 静态 Pod静态 Pod 由kubelet进行管理的仅存在于特定 Node 上的 Pod，">
+<meta name="description" content="学了好久的kubernetes，应该做个总结了！下一代分布式架构的王者—kubernetes！ PodPod是Kubernetes最重要的基本概念，它是一组紧密关联的容器集合，它们共享IPC、存储、网络资源 和 namespace，是 Kubernetes 调度的基本单位。Pod 的设计理念是支持多个容器在一个 Pod 中共享网络和文件系统，可以通过进程间通信和文件共享这种简单高效的方式组合完成服">
 <meta name="keywords" content="kubernnetes">
 <meta property="og:type" content="article">
 <meta property="og:title" content="深入理解Kubernetes之Pod">
 <meta property="og:url" content="http://yoursite.com/2020/08/16/k8s-pod/index.html">
 <meta property="og:site_name" content="Wxning">
-<meta property="og:description" content="PodPod是Kubernetes最重要的基本概念，它是一组紧密关联的容器集合，它们共享IPC、存储、网络资源 和 namespace，是 Kubernetes 调度的基本单位。Pod 的设计理念是支持多个容器在一个 Pod 中共享网络和文件系统，可以通过进程间通信和文件共享这种简单高效的方式组合完成服务。 静态 Pod静态 Pod 由kubelet进行管理的仅存在于特定 Node 上的 Pod，">
+<meta property="og:description" content="学了好久的kubernetes，应该做个总结了！下一代分布式架构的王者—kubernetes！ PodPod是Kubernetes最重要的基本概念，它是一组紧密关联的容器集合，它们共享IPC、存储、网络资源 和 namespace，是 Kubernetes 调度的基本单位。Pod 的设计理念是支持多个容器在一个 Pod 中共享网络和文件系统，可以通过进程间通信和文件共享这种简单高效的方式组合完成服">
 <meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="http://yoursite.com/images/pod3.png">
 <meta property="og:image" content="http://yoursite.com/images/pod2.png">
 <meta property="og:image" content="http://yoursite.com/images/pod1.jpg">
-<meta property="og:updated_time" content="2020-08-24T04:45:52.981Z">
+<meta property="og:updated_time" content="2020-08-24T15:35:17.363Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="深入理解Kubernetes之Pod">
-<meta name="twitter:description" content="PodPod是Kubernetes最重要的基本概念，它是一组紧密关联的容器集合，它们共享IPC、存储、网络资源 和 namespace，是 Kubernetes 调度的基本单位。Pod 的设计理念是支持多个容器在一个 Pod 中共享网络和文件系统，可以通过进程间通信和文件共享这种简单高效的方式组合完成服务。 静态 Pod静态 Pod 由kubelet进行管理的仅存在于特定 Node 上的 Pod，">
-<meta name="twitter:image" content="http://yoursite.com/images/pod2.png">
+<meta name="twitter:description" content="学了好久的kubernetes，应该做个总结了！下一代分布式架构的王者—kubernetes！ PodPod是Kubernetes最重要的基本概念，它是一组紧密关联的容器集合，它们共享IPC、存储、网络资源 和 namespace，是 Kubernetes 调度的基本单位。Pod 的设计理念是支持多个容器在一个 Pod 中共享网络和文件系统，可以通过进程间通信和文件共享这种简单高效的方式组合完成服">
+<meta name="twitter:image" content="http://yoursite.com/images/pod3.png">
 
 
 
@@ -372,15 +373,19 @@
       
 
       
-        <h2 id="Pod"><a href="#Pod" class="headerlink" title="Pod"></a>Pod</h2><p>Pod是Kubernetes最重要的基本概念，它是一组紧密关联的容器集合，它们共享IPC、存储、网络资源 和 namespace，是 Kubernetes 调度的基本单位。Pod 的设计理念是支持多个容器在一个 Pod 中共享网络和文件系统，可以通过进程间通信和文件共享这种简单高效的方式组合完成服务。</p>
-<h2 id="静态-Pod"><a href="#静态-Pod" class="headerlink" title="静态 Pod"></a>静态 Pod</h2><p>静态 Pod 由<code>kubelet</code>进行管理的仅存在于特定 Node 上的 Pod，它们不能通过 master 节点上的<code>API Server</code>进行管理。无法与我们常用的 Pod 控制器 <code>ReplicationController</code>、<code>Deployment</code>或者 <code>DaemonSet</code> 进行关联，并且<code>kubelet</code>无法对它们进行健康检查。静态 pod 是由<code>kubelet</code>创建，并且始终运行在 kubelet 所在 Node 上。创建静态 Pod 有两种方式：配置文件方式和 HTTP 方式。</p>
+        <p>学了好久的kubernetes，应该做个总结了！下一代分布式架构的王者—kubernetes！</p>
+<h2 id="Pod"><a href="#Pod" class="headerlink" title="Pod"></a>Pod</h2><p>Pod是Kubernetes最重要的基本概念，它是一组紧密关联的容器集合，它们共享IPC、存储、网络资源 和 namespace，是 Kubernetes 调度的基本单位。Pod 的设计理念是支持多个容器在一个 Pod 中共享网络和文件系统，可以通过进程间通信和文件共享这种简单高效的方式组合完成服务。</p>
+<h2 id="静态-Pod"><a href="#静态-Pod" class="headerlink" title="静态 Pod"></a>静态 Pod</h2><p>静态 Pod 由<code>kubelet</code>进行管理的仅存在于特定 Node 上的 Pod，它们不能通过 master 节点上的<code>API Server</code>进行管理。无法与我们常用的 Pod 控制器 <code>ReplicationController</code>、<code>Deployment</code>或者 <code>DaemonSet</code> 进行关联，并且<code>kubelet</code>无法对它们进行健康检查。静态 pod 是由<code>kubelet</code>创建，并且始终运行在 kubelet 所在 Node 上。</p>
+<p>创建静态 Pod 有两种方式：配置文件方式和 HTTP 方式。</p>
 <p>通过下面命令找到kubelet对应的启动配置文件:</p>
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> systemctl status kubelet</span><br></pre></td></tr></table></figure>
 
 <p>配置文件路径为：</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/etc/systemd/system/kubelet.service.d/10-kubeadm.conf</span><br></pre></td></tr></table></figure>
 
-<p>我们只需要在该目录下面创建一个标准的 Pod 的 YAML 文件即可，它会自动创建静态Pod。</p>
+<p>打开这个文件我们可以看到其中有一条如下的环境变量配置：</p>
+<p><img src="/images/pod3.png" alt="pod"></p>
+<p>所以如果我们通过<code>kubeadm</code>的方式来安装的集群环境，对应的<code>kubelet</code>已经配置了我们的静态 Pod 文件的路径，那就是<code>/etc/kubernetes/manifests</code>，我们只需要在该目录下面创建一个标准的 Pod 的 YAML 文件即可，它会自动创建静态Pod。由于静态Pod无法通过API Server直接管理，所以在Master上尝试删除这个Pod时，会使它变成Pending状态，且不会直接删除。删除该静态Pod只能是去其所在node上把配置文件删除。</p>
 <p>我们可以查看该目录下已存在的静态Pod：</p>
 <p><img src="/images/pod2.png" alt="pod"></p>
 <p>可以看到诸如etcd，APIServer，Controller Manager，Scheduler组件以静态Pod方式存在，静态 Pod 为我们将集群的一些组件容器化提供了可能，因为这些 Pod 都不会受到 apiserver 的控制。</p>
@@ -431,7 +436,7 @@
 <h2 id="初始化容器"><a href="#初始化容器" class="headerlink" title="初始化容器"></a>初始化容器</h2><p><code>Init Container</code>就是用来做初始化工作的容器，可以是一个或者多个，如果有多个的话，这些容器会按定义的顺序依次执行，只有所有的<code>Init Container</code>执行完后，主容器才会被启动。我们知道一个<code>Pod</code>里面的所有容器是共享数据卷和网络命名空间的，所以<code>Init Container</code>里面产生的数据可以被主容器使用到的。</p>
 <p>我们说<code>Init Container</code>主要是来做初始化容器工作的，那么他有哪些应用场景呢？</p>
 <ul>
-<li>等待其他模块Ready：这个可以用来解决服务之间的依赖问题，比如我们有一个 Web 服务，该服务又依赖于另外一个数据库服务，但是在我们启动这个 Web 服务的时候我们并不能保证依赖的这个数据库服务就已经启动起来了，所以可能会出现一段时间内 Web 服务连接数据库异常。要解决这个问题的话我们就可以在 Web 服务的 Pod 中使用一个 InitContainer，在这个初始化容器中去检查数据库是否已经准备好了，准备好了过后初始化容器就结束退出，然后我们的主容器 Web 服务被启动起来，这个时候去连接数据库就不会有问题了。</li>
+<li>等待其他关联组件正确运行：这个可以用来解决服务之间的依赖问题，比如我们有一个 Web 服务，该服务又依赖于另外一个数据库服务，但是在我们启动这个 Web 服务的时候我们并不能保证依赖的这个数据库服务就已经启动起来了，所以可能会出现一段时间内 Web 服务连接数据库异常。要解决这个问题的话我们就可以在 Web 服务的 Pod 中使用一个 InitContainer，在这个初始化容器中去检查数据库是否已经准备好了，准备好了过后初始化容器就结束退出，然后我们的主容器 Web 服务被启动起来，这个时候去连接数据库就不会有问题了。</li>
 <li>做初始化配置：比如集群里检测所有已经存在的成员节点，为主容器准备好集群的配置信息，这样主容器起来后就能用这个配置信息加入集群。</li>
 <li>其它场景：如将 pod 注册到一个中央数据库、配置中心等。</li>
 </ul>
@@ -440,6 +445,81 @@
 
 <p>我们在<code>Pod</code>启动过程中，初始化容器会按顺序在网络和数据卷初始化之后启动。每个容器必须在下一个容器启动之前成功退出。如果由于运行时或失败退出，导致容器启动失败，它会根据<code>Pod</code>的<code>restartPolicy</code>指定的策略进行重试。 然而，如果 Pod 的 restartPolicy 设置为 Always，Init 容器失败时会使用 RestartPolicy 策略。</p>
 <p>这就是Pod整个生命周期几个阶段，我们就总结完了！</p>
+<h2 id="Pod的配置管理ConfigMap"><a href="#Pod的配置管理ConfigMap" class="headerlink" title="Pod的配置管理ConfigMap"></a>Pod的配置管理ConfigMap</h2><p>应用部署的一个最佳实践是将应用所需的配置信息与程序进行分离，这样可以使应用程序被更好的复用，通过不同的配置也能实现更灵活的功能，将应用打包为容器镜像后，可以通过环境变量或外挂文件的方式在创建容器时进行配置注入，但在大规模容器集群的环境下，对多个容器的不容配置将变得非常复杂。kubernetes为我们提供了一个配置管理方案—<code>ConfigMap</code></p>
+<p>我们先来创建ConfigMap对象吧！</p>
+<p>先定义yaml文件如下：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">kind:</span> <span class="string">ConfigMap</span></span><br><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line"><span class="attr">  name:</span> <span class="string">cm-demo</span></span><br><span class="line"><span class="attr">  namespace:</span> <span class="string">default</span></span><br><span class="line"><span class="attr">data:</span></span><br><span class="line">  <span class="string">mysql.conf:</span> <span class="string">|</span></span><br><span class="line"><span class="string">  	host=127.0.0.1</span></span><br><span class="line"><span class="string">		port=3306</span></span><br><span class="line"><span class="string">  redis.conf: |</span></span><br><span class="line"><span class="string">  	host=127.0.0.1</span></span><br><span class="line"><span class="string">		port=6379</span></span><br></pre></td></tr></table></figure>
+
+<p>创建ConfigMap资源：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> kubectl create -f xx.yaml</span><br></pre></td></tr></table></figure>
+
+<p>通过以下命令查看ConfigMap列表：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> kubectl get configmap</span><br><span class="line">NAME       DATA      AGE</span><br><span class="line">cm-demo   	2         5m</span><br></pre></td></tr></table></figure>
+
+<p>可以看到已经创建了一个<code>cm-demo</code>的<code>ConfigMap</code>对象，然后可以使用<code>describe</code>命令查看详细信息：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> kubectl describe configmap cm-demo3</span><br><span class="line">Name:         cm-demo</span><br><span class="line">Namespace:    default</span><br><span class="line">Labels:       &lt;none&gt;</span><br><span class="line">Annotations:  &lt;none&gt;</span><br><span class="line"></span><br><span class="line">Data</span><br><span class="line">====</span><br><span class="line">myslq.conf:</span><br><span class="line">----</span><br><span class="line">host=127.0.0.1</span><br><span class="line">port=3306</span><br><span class="line"></span><br><span class="line">redis.conf:</span><br><span class="line">----</span><br><span class="line">host=127.0.0.1</span><br><span class="line">port=6379</span><br><span class="line"></span><br><span class="line">Events:  &lt;none&gt;</span><br></pre></td></tr></table></figure>
+
+<p>这样就创建好了一个ConfigMap资源对象了！</p>
+<p>创建ConfigMap还可以通过命令行指定文件，我们创建一个<code>redis</code>的配置的一个单独<code>ConfigMap</code>对象：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> kubectl create configmap cm-demo2 --from-file=./redis.conf</span><br></pre></td></tr></table></figure>
+
+<p>或者使用<code>from-file</code>关键字来创建包含这个目录下面所以配置文件的<code>ConfigMap</code>：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> kubectl create configmap cm-demo1 --from-file=conf</span><br></pre></td></tr></table></figure>
+
+<p>其中<code>from-file</code>参数指定在该目录下面的所有文件都会被用在<code>ConfigMap</code>里面创建一个键值对，键的名字就是文件名，值就是文件的内容。</p>
+<p>这样我们就创建好ConfigMap资源对象了！</p>
+<p>那我们怎么使用它呢？ConfigMap供容器使用的典型方法如下：</p>
+<ul>
+<li>生成为容器内的环境变量</li>
+<li>设置容器启动命令的启动参数</li>
+<li>以Volume的形式挂载为容器内部的文件或目录</li>
+</ul>
+<p>我们的Pod yaml文件这样定义：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Pod</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line"><span class="attr">  name:</span> <span class="string">testcm1-pod</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line"><span class="attr">  containers:</span></span><br><span class="line"><span class="attr">    - name:</span> <span class="string">testcm1</span></span><br><span class="line"><span class="attr">      image:</span> <span class="string">busybox</span></span><br><span class="line"><span class="attr">      command:</span> <span class="string">[</span> <span class="string">"/bin/sh"</span><span class="string">,</span> <span class="string">"-c"</span><span class="string">,</span> <span class="string">"env"</span> <span class="string">]</span></span><br><span class="line"><span class="attr">      env:</span></span><br><span class="line"><span class="attr">        - name:</span> <span class="string">DB_HOST</span></span><br><span class="line"><span class="attr">          valueFrom:</span></span><br><span class="line"><span class="attr">            configMapKeyRef:</span></span><br><span class="line"><span class="attr">              name:</span> <span class="string">cm-demo3</span></span><br><span class="line"><span class="attr">              key:</span> <span class="string">myslq.conf</span></span><br><span class="line"><span class="attr">        - name:</span> <span class="string">DB_PORT</span></span><br><span class="line"><span class="attr">          valueFrom:</span></span><br><span class="line"><span class="attr">            configMapKeyRef:</span></span><br><span class="line"><span class="attr">              name:</span> <span class="string">cm-demo3</span></span><br><span class="line"><span class="attr">              key:</span> <span class="string">redis.conf</span></span><br><span class="line"><span class="attr">      envFrom:</span></span><br><span class="line"><span class="attr">        - configMapRef:</span></span><br><span class="line"><span class="attr">            name:</span> <span class="string">cm-demo</span></span><br></pre></td></tr></table></figure>
+
+<p>查看该Pod日志：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> kubectl logs testcm1-pod</span><br><span class="line">......</span><br><span class="line">DB_PORT=host=127.0.0.1</span><br><span class="line">port=6379</span><br><span class="line">data.2=world</span><br><span class="line">DB_HOST=host=127.0.0.1</span><br><span class="line">port=3306</span><br><span class="line">data.1=hello</span><br><span class="line">config=property.1=value-1</span><br><span class="line">property.2=value-2</span><br><span class="line">property.3=value-3</span><br><span class="line">......</span><br></pre></td></tr></table></figure>
+
+<p>我们可以看到mysql.conf和redis.conf都已经正常输出了，这里直接把<code>cm-demo</code>给注入进来了，所以把他们的整个键值给输出出来了</p>
+<p>还有其他两种方式通过命令行和通过数据卷挂载这里就不演示了！</p>
+<h2 id="Pod安全的配置管理Secret"><a href="#Pod安全的配置管理Secret" class="headerlink" title="Pod安全的配置管理Secret"></a>Pod安全的配置管理Secret</h2><p>一般情况下<code>ConfigMap</code>是用来存储一些非安全的配置信息，如果涉及到一些安全相关的数据的话用<code>ConfigMap</code>就非常不妥了，这个时候我们就需要用到另外一个资源对象了：<code>Secret</code>，<code>Secret</code>用来保存敏感信息，例如密码、OAuth 令牌和 ssh key等等，将这些信息放在<code>Secret</code>中比放在<code>Pod</code>的定义中或者<code>docker</code>镜像中来说更加安全和灵活。</p>
+<p>我们把用户名和密码以base64编码格式数据来编写一个<code>YAML</code>文件：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Secret</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line"><span class="attr">  name:</span> <span class="string">mysecret</span></span><br><span class="line"><span class="attr">type:</span> <span class="string">Opaque</span></span><br><span class="line"><span class="attr">data:</span></span><br><span class="line"><span class="attr">  username:</span> <span class="string">YWRtaW4=</span></span><br><span class="line"><span class="attr">  password:</span> <span class="string">YWRtaW4zMjE=</span></span><br></pre></td></tr></table></figure>
+
+<p>创建好<code>Secret</code>对象后，有两种方式来使用它：</p>
+<ul>
+<li><p>以环境变量的形式</p>
+</li>
+<li><p>以Volume的形式挂载</p>
+</li>
+</ul>
+<p>我们来演示下以环境变量的方式使用secret：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Pod</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line"><span class="attr">  name:</span> <span class="string">secret-pod</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line"><span class="attr">  containers:</span></span><br><span class="line"><span class="attr">  - name:</span> <span class="string">secret</span></span><br><span class="line"><span class="attr">    image:</span> <span class="string">busybox</span></span><br><span class="line"><span class="attr">    command:</span> <span class="string">[</span> <span class="string">"/bin/sh"</span><span class="string">,</span> <span class="string">"-c"</span><span class="string">,</span> <span class="string">"env"</span> <span class="string">]</span></span><br><span class="line"><span class="attr">    env:</span></span><br><span class="line"><span class="attr">    - name:</span> <span class="string">USERNAME</span></span><br><span class="line"><span class="attr">      valueFrom:</span></span><br><span class="line"><span class="attr">        secretKeyRef:</span></span><br><span class="line"><span class="attr">          name:</span> <span class="string">mysecret</span></span><br><span class="line"><span class="attr">          key:</span> <span class="string">username</span></span><br><span class="line"><span class="attr">    - name:</span> <span class="string">PASSWORD</span></span><br><span class="line"><span class="attr">      valueFrom:</span></span><br><span class="line"><span class="attr">        secretKeyRef:</span></span><br><span class="line"><span class="attr">          name:</span> <span class="string">mysecret</span></span><br><span class="line"><span class="attr">          key:</span> <span class="string">password</span></span><br></pre></td></tr></table></figure>
+
+<p>创建上面的<code>Pod</code>：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> kubectl create -f secret-pod.yaml</span><br></pre></td></tr></table></figure>
+
+<p>然后我们查看<code>Pod</code>的日志输出：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> kubectl logs secret-pod</span><br><span class="line">...</span><br><span class="line">USERNAME=admin</span><br><span class="line">PASSWORD=admin321</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+
+<p>可以看到有 USERNAME 和 PASSWORD 两个环境变量输出出来。</p>
+<p>我们来比较一下Secret 与 ConfigMap 吧：</p>
+<p>相同点：</p>
+<ul>
+<li>key/value的形式</li>
+<li>属于某个特定的namespace</li>
+<li>可以导出到环境变量</li>
+<li>可以通过目录/文件形式挂载</li>
+<li>通过 volume 挂载的配置信息均可热更新</li>
+</ul>
+<p>不同点：</p>
+<ul>
+<li>Secret 可以被 ServerAccount 关联</li>
+<li>Secret 可以存储 docker register 的鉴权信息，用在 ImagePullSecret 参数中，用于拉取私有仓库的镜像</li>
+<li>Secret 支持 Base64 加密</li>
+<li>Secret 分为 kubernetes.io/service-account-token、kubernetes.io/dockerconfigjson、Opaque 三种类型，而 Configmap 不区分类型</li>
+</ul>
+<p>好！这就是Pod的深入理解内容，轻松又愉快的写完了！</p>
 
       
     </div>
@@ -470,7 +550,7 @@
   <p><span>本文标题:</span><a href="/2020/08/16/k8s-pod/">深入理解Kubernetes之Pod</a></p>
   <p><span>文章作者:</span><a href="/" title="访问 Wxning 的个人博客">Wxning</a></p>
   <p><span>发布时间:</span>2020年08月16日 - 20:08</p>
-  <p><span>最后更新:</span>2020年08月24日 - 12:08</p>
+  <p><span>最后更新:</span>2020年08月24日 - 23:08</p>
   <p><span>原始链接:</span><a href="/2020/08/16/k8s-pod/" title="深入理解Kubernetes之Pod">http://yoursite.com/2020/08/16/k8s-pod/</a>
     <span class="copy-path" title="点击复制文章链接"><i class="fa fa-clipboard" data-clipboard-text="http://yoursite.com/2020/08/16/k8s-pod/" aria-label="复制成功！"></i></span>
   </p>
@@ -678,7 +758,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Pod"><span class="nav-number">1.</span> <span class="nav-text">Pod</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#静态-Pod"><span class="nav-number">2.</span> <span class="nav-text">静态 Pod</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Pod-Hook"><span class="nav-number">3.</span> <span class="nav-text">Pod Hook</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Pod-健康检查"><span class="nav-number">4.</span> <span class="nav-text">Pod 健康检查</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#初始化容器"><span class="nav-number">5.</span> <span class="nav-text">初始化容器</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Pod"><span class="nav-number">1.</span> <span class="nav-text">Pod</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#静态-Pod"><span class="nav-number">2.</span> <span class="nav-text">静态 Pod</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Pod-Hook"><span class="nav-number">3.</span> <span class="nav-text">Pod Hook</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Pod-健康检查"><span class="nav-number">4.</span> <span class="nav-text">Pod 健康检查</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#初始化容器"><span class="nav-number">5.</span> <span class="nav-text">初始化容器</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Pod的配置管理ConfigMap"><span class="nav-number">6.</span> <span class="nav-text">Pod的配置管理ConfigMap</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Pod安全的配置管理Secret"><span class="nav-number">7.</span> <span class="nav-text">Pod安全的配置管理Secret</span></a></li></ol></div>
             
 
           </div>
