@@ -89,7 +89,7 @@
 <meta property="og:locale" content="zh-Hans">
 <meta property="og:image" content="http://yoursite.com/images/podController1.png">
 <meta property="og:image" content="http://yoursite.com/images/pod4.svg">
-<meta property="og:updated_time" content="2020-08-25T02:49:43.234Z">
+<meta property="og:updated_time" content="2020-08-26T14:04:52.099Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="深入理解Kubernetes之Pod控制器">
 <meta name="twitter:description" content="为什么要用Pod控制器假如我们有一个Pod正在提供线上的服务，我们来想想一下我们可能会遇到的一些场景：  某次电商活动非常成功，网站访问量突然暴增 运行当前Pod的节点发生故障了，Pod不能正常提供服务了  上篇文章里讲的Pod钩子和Pod探针是属于Pod生命周期内，无法解决这类问题：Pod挂掉重启，Pod动态扩容缩容，Pod回滚等，这些操作都应该由kubernetes自动完成而不是我们手动去更改">
@@ -475,7 +475,7 @@
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> kubectl rollout undo deployment nginx-deploy --to-revision=2</span><br></pre></td></tr></table></figure>
 
 <h2 id="DaemonSet-控制器"><a href="#DaemonSet-控制器" class="headerlink" title="DaemonSet 控制器"></a>DaemonSet 控制器</h2><p>通过该控制器的名称我们可以看出它的用法：Daemon，就是用来部署守护进程的，<code>DaemonSet</code>用于在每个<code>Kubernetes</code>节点中将守护进程的副本作为后台进程运行，说白了就是在每个节点部署一个<code>Pod</code>副本，当节点加入到<code>Kubernetes</code>集群中，<code>Pod</code>会被调度到该节点上运行，当节点从集群中被移除后，该节点上的这个<code>Pod</code>也会被移除，当然，如果我们删除<code>DaemonSet</code>，所有和这个对象相关的<code>Pods</code>都会被删除。</p>
-<p>在哪种情况下我们会需要用到这种业务场景呢？其实这种场景还是比较普通的，比如：</p>
+<p>这种用法适合有这种场景的应用：</p>
 <ul>
 <li>集群存储守护程序，如<code>glusterd</code>、<code>ceph</code>要部署在每个节点上以提供持久性存储；</li>
 <li>节点监视守护进程，如<code>Prometheus</code>监控集群，可以在每个节点上运行一个<code>node-exporter</code>进程来收集监控节点的信息；</li>
@@ -492,6 +492,7 @@
 <p>然后创建并查看：</p>
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> kubectl create -f nginx-ds.yaml</span><br><span class="line"><span class="meta">$</span> kubectl get nodes</span><br><span class="line"><span class="meta">$</span> kubectl get pods -o wide</span><br></pre></td></tr></table></figure>
 
+<p>可以看到在每个Node上都创建了一个Pod。</p>
 <h2 id="StatefulSet-控制器"><a href="#StatefulSet-控制器" class="headerlink" title="StatefulSet 控制器"></a>StatefulSet 控制器</h2><p>我们就得先弄明白一个概念：什么是有状态服务？什么是无状态服务？</p>
 <ul>
 <li>无状态服务（Stateless Service）：该服务运行的实例不会在本地存储需要持久化的数据，并且多个实例对于同一个请求响应的结果是完全一致的，有时候对于一个服务我们是可以同时启动多个实例，但是我们访问任意一个实例得到的结果都是一样，因为这个服务唯一需要持久化的数据是存储在<code>MySQL</code>数据库中的，所以我们可以说个服务是无状态服务，但是<code>MySQL</code>数据库就不是了，因为他需要把数据持久化到本地。</li>
@@ -551,6 +552,12 @@
 <p>也可以用<code>kubectl run</code>来创建一个<code>CronJob</code>：</p>
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl run hello --schedule="*/1 * * * *" --restart=OnFailure --image=busybox -- /bin/sh -c "date; echo Hello from the Kubernetes cluster"</span><br></pre></td></tr></table></figure>
 
+<h2 id="参考资料："><a href="#参考资料：" class="headerlink" title="参考资料："></a>参考资料：</h2><ol>
+<li><p><a href="https://www.qikqiak.com/k8s-book/" target="_blank" rel="noopener">https://www.qikqiak.com/k8s-book/</a></p>
+</li>
+<li><p>《kubernetes权威指南》</p>
+</li>
+</ol>
 
       
     </div>
@@ -581,7 +588,7 @@
   <p><span>本文标题:</span><a href="/2020/08/23/k8s-podController/">深入理解Kubernetes之Pod控制器</a></p>
   <p><span>文章作者:</span><a href="/" title="访问 Wxning 的个人博客">Wxning</a></p>
   <p><span>发布时间:</span>2020年08月23日 - 22:08</p>
-  <p><span>最后更新:</span>2020年08月25日 - 10:08</p>
+  <p><span>最后更新:</span>2020年08月26日 - 22:08</p>
   <p><span>原始链接:</span><a href="/2020/08/23/k8s-podController/" title="深入理解Kubernetes之Pod控制器">http://yoursite.com/2020/08/23/k8s-podController/</a>
     <span class="copy-path" title="点击复制文章链接"><i class="fa fa-clipboard" data-clipboard-text="http://yoursite.com/2020/08/23/k8s-podController/" aria-label="复制成功！"></i></span>
   </p>
@@ -785,7 +792,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#为什么要用Pod控制器"><span class="nav-number">1.</span> <span class="nav-text">为什么要用Pod控制器</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Replication-Controller控制器"><span class="nav-number">2.</span> <span class="nav-text">Replication Controller控制器</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Replication-Set控制器"><span class="nav-number">3.</span> <span class="nav-text">Replication Set控制器</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Deployment控制器"><span class="nav-number">4.</span> <span class="nav-text">Deployment控制器</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#滚动升级"><span class="nav-number">4.1.</span> <span class="nav-text">滚动升级</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#回滚"><span class="nav-number">4.2.</span> <span class="nav-text">回滚</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#DaemonSet-控制器"><span class="nav-number">5.</span> <span class="nav-text">DaemonSet 控制器</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#StatefulSet-控制器"><span class="nav-number">6.</span> <span class="nav-text">StatefulSet 控制器</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#HPA-控制器"><span class="nav-number">7.</span> <span class="nav-text">HPA 控制器</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Job-控制器"><span class="nav-number">8.</span> <span class="nav-text">Job 控制器</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#CronJob-控制器"><span class="nav-number">9.</span> <span class="nav-text">CronJob 控制器</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#为什么要用Pod控制器"><span class="nav-number">1.</span> <span class="nav-text">为什么要用Pod控制器</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Replication-Controller控制器"><span class="nav-number">2.</span> <span class="nav-text">Replication Controller控制器</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Replication-Set控制器"><span class="nav-number">3.</span> <span class="nav-text">Replication Set控制器</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Deployment控制器"><span class="nav-number">4.</span> <span class="nav-text">Deployment控制器</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#滚动升级"><span class="nav-number">4.1.</span> <span class="nav-text">滚动升级</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#回滚"><span class="nav-number">4.2.</span> <span class="nav-text">回滚</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#DaemonSet-控制器"><span class="nav-number">5.</span> <span class="nav-text">DaemonSet 控制器</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#StatefulSet-控制器"><span class="nav-number">6.</span> <span class="nav-text">StatefulSet 控制器</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#HPA-控制器"><span class="nav-number">7.</span> <span class="nav-text">HPA 控制器</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Job-控制器"><span class="nav-number">8.</span> <span class="nav-text">Job 控制器</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#CronJob-控制器"><span class="nav-number">9.</span> <span class="nav-text">CronJob 控制器</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考资料："><span class="nav-number">10.</span> <span class="nav-text">参考资料：</span></a></li></ol></div>
             
 
           </div>
