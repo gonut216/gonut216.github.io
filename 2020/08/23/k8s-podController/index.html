@@ -89,7 +89,7 @@
 <meta property="og:locale" content="zh-Hans">
 <meta property="og:image" content="http://yoursite.com/images/podController1.png">
 <meta property="og:image" content="http://yoursite.com/images/pod4.svg">
-<meta property="og:updated_time" content="2020-08-26T14:04:52.099Z">
+<meta property="og:updated_time" content="2020-10-17T09:46:30.685Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="深入理解Kubernetes之Pod控制器">
 <meta name="twitter:description" content="为什么要用Pod控制器假如我们有一个Pod正在提供线上的服务，我们来想想一下我们可能会遇到的一些场景：  某次电商活动非常成功，网站访问量突然暴增 运行当前Pod的节点发生故障了，Pod不能正常提供服务了  上篇文章里讲的Pod钩子和Pod探针是属于Pod生命周期内，无法解决这类问题：Pod挂掉重启，Pod动态扩容缩容，Pod回滚等，这些操作都应该由kubernetes自动完成而不是我们手动去更改">
@@ -538,6 +538,11 @@
 <p>我们用<code>Job</code>这个资源对象来创建一个任务，我们定一个<code>Job</code>来执行一个倒计时的任务，定义<code>YAML</code>文件：</p>
 <figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">batch/v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Job</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line"><span class="attr">  name:</span> <span class="string">job-demo</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line"><span class="attr">  template:</span></span><br><span class="line"><span class="attr">    metadata:</span></span><br><span class="line"><span class="attr">      name:</span> <span class="string">job-demo</span></span><br><span class="line"><span class="attr">    spec:</span></span><br><span class="line"><span class="attr">      restartPolicy:</span> <span class="string">Never</span></span><br><span class="line"><span class="attr">      containers:</span></span><br><span class="line"><span class="attr">      - name:</span> <span class="string">counter</span></span><br><span class="line"><span class="attr">        image:</span> <span class="string">busybox</span></span><br><span class="line"><span class="attr">        command:</span></span><br><span class="line"><span class="bullet">        -</span> <span class="string">"bin/sh"</span></span><br><span class="line"><span class="bullet">        -</span> <span class="string">"-c"</span></span><br><span class="line"><span class="bullet">        -</span> <span class="string">"for i in 9 8 7 6 5 4 3 2 1; do echo $i; done"</span></span><br></pre></td></tr></table></figure>
 
+<p><code>.spec.completions</code>: 指定job需要成功运行Pods的次数。默认值: 1。</p>
+<p><code>.spec.parallelism</code>: 指定job在任一时刻应该并发运行Pods的数量。默认值: 1</p>
+<p><code>.spec.activeDeadlineSeconds</code>:指定job可运行的时间期限，超过时间还未结束，系统将会尝试进行终止。</p>
+<p> <code>.spec.backoffLimit</code>:指定job失败后进行重试的次数。默认是6次，每次失败后重试会有延迟时间，该时间是指数级增长，最长时间是6min。</p>
+<p><code>.spec.restartPolicy</code>：设置为Always：对job控制器不适用，因此需要设定为Never或OnFailure，设置为Never：pod失败后，重新创建pod，设置为OnFailure：pod失败后，重启pod。</p>
 <p>创建该<code>Job</code></p>
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> kubectl create -f job.yaml</span><br></pre></td></tr></table></figure>
 
@@ -548,7 +553,13 @@
 <p>我们用<code>CronJob</code>来管理我们上面的<code>Job</code>任务：</p>
 <figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">batch/v2alpha1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">CronJob</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line"><span class="attr">  name:</span> <span class="string">cronjob-demo</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line"><span class="attr">  schedule:</span> <span class="string">"*/1 * * * *"</span></span><br><span class="line"><span class="attr">  jobTemplate:</span></span><br><span class="line"><span class="attr">    spec:</span></span><br><span class="line"><span class="attr">      template:</span></span><br><span class="line"><span class="attr">        spec:</span></span><br><span class="line"><span class="attr">          restartPolicy:</span> <span class="string">OnFailure</span></span><br><span class="line"><span class="attr">          containers:</span></span><br><span class="line"><span class="attr">          - name:</span> <span class="string">hello</span></span><br><span class="line"><span class="attr">            image:</span> <span class="string">busybox</span></span><br><span class="line"><span class="attr">            args:</span></span><br><span class="line"><span class="bullet">            -</span> <span class="string">"bin/sh"</span></span><br><span class="line"><span class="bullet">            -</span> <span class="string">"-c"</span></span><br><span class="line"><span class="bullet">            -</span> <span class="string">"for i in 9 8 7 6 5 4 3 2 1; do echo $i; done"</span></span><br></pre></td></tr></table></figure>
 
-<p><code>.spec.schedule</code>字段是必须填写的，用来指定任务运行的周期，格式就和<code>crontab</code>一样，另外一个字段是<code>.spec.jobTemplate</code>, 用来指定需要运行的任务，</p>
+<p><code>.spec.jobTemplate</code>：job控制器模板，用于为cronjob控制器生成job对象；必选字段</p>
+<p><code>.spec.schedule</code>字段是必须填写的，用来指定任务运行的周期，格式就和<code>crontab</code>一样，另外一个字段是<code>.spec.jobTemplate</code>, 用来指定需要运行的任务。</p>
+<p><code>.spec.concurrencyPolicy</code>：并发执行策略，可用值有Allow、Forbid和Replace，用于定义前一次作业运行尚未完成时是否以及如何运行后一次的作业，Allow（默认）：允许并发运行 Job、Forbid：禁止并发运行，如果前一个还没有完成，则直接跳过下一个、Replace：取消当前正在运行的 Job，用一个新的来替换。当前策略只能应用于同一个 Cron Job 创建的 Job。如果存在多个 Cron Job，它们创建的 Job 之间总是允许并发运行。</p>
+<p><code>.spec.failedJobHistoryLimit</code>：number 为失败的任务执行保留的历史记录数，默认为1</p>
+<p><code>.spec.successfulJobHistoryLimit</code>：number 为成功的任务执行保留的历史记录数，默认为3</p>
+<p><code>.spec.startingDeadlineSeconds</code>：启动 Job 的期限（秒级别），如果因为任何原因而错过了被调度的时间，那么错过执行时间的 Job 将被认为是失败的。如果没有指定，则没有期限。</p>
+<p><code>.spec.suspend</code>：true/flase 是否挂起后续的任务执行，默认为false，对运行中的作业不会产生影响。</p>
 <p>也可以用<code>kubectl run</code>来创建一个<code>CronJob</code>：</p>
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl run hello --schedule="*/1 * * * *" --restart=OnFailure --image=busybox -- /bin/sh -c "date; echo Hello from the Kubernetes cluster"</span><br></pre></td></tr></table></figure>
 
@@ -588,7 +599,7 @@
   <p><span>本文标题:</span><a href="/2020/08/23/k8s-podController/">深入理解Kubernetes之Pod控制器</a></p>
   <p><span>文章作者:</span><a href="/" title="访问 Wxning 的个人博客">Wxning</a></p>
   <p><span>发布时间:</span>2020年08月23日 - 22:08</p>
-  <p><span>最后更新:</span>2020年08月26日 - 22:08</p>
+  <p><span>最后更新:</span>2020年10月17日 - 17:10</p>
   <p><span>原始链接:</span><a href="/2020/08/23/k8s-podController/" title="深入理解Kubernetes之Pod控制器">http://yoursite.com/2020/08/23/k8s-podController/</a>
     <span class="copy-path" title="点击复制文章链接"><i class="fa fa-clipboard" data-clipboard-text="http://yoursite.com/2020/08/23/k8s-podController/" aria-label="复制成功！"></i></span>
   </p>
