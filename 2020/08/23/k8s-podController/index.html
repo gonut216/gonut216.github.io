@@ -89,7 +89,7 @@
 <meta property="og:locale" content="zh-Hans">
 <meta property="og:image" content="http://yoursite.com/images/podController1.png">
 <meta property="og:image" content="http://yoursite.com/images/pod4.svg">
-<meta property="og:updated_time" content="2020-10-17T09:46:30.685Z">
+<meta property="og:updated_time" content="2020-10-17T09:50:18.422Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="深入理解Kubernetes之Pod控制器">
 <meta name="twitter:description" content="为什么要用Pod控制器假如我们有一个Pod正在提供线上的服务，我们来想想一下我们可能会遇到的一些场景：  某次电商活动非常成功，网站访问量突然暴增 运行当前Pod的节点发生故障了，Pod不能正常提供服务了  上篇文章里讲的Pod钩子和Pod探针是属于Pod生命周期内，无法解决这类问题：Pod挂掉重启，Pod动态扩容缩容，Pod回滚等，这些操作都应该由kubernetes自动完成而不是我们手动去更改">
@@ -564,10 +564,9 @@
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl run hello --schedule="*/1 * * * *" --restart=OnFailure --image=busybox -- /bin/sh -c "date; echo Hello from the Kubernetes cluster"</span><br></pre></td></tr></table></figure>
 
 <h2 id="参考资料："><a href="#参考资料：" class="headerlink" title="参考资料："></a>参考资料：</h2><ol>
-<li><p><a href="https://www.qikqiak.com/k8s-book/" target="_blank" rel="noopener">https://www.qikqiak.com/k8s-book/</a></p>
-</li>
-<li><p>《kubernetes权威指南》</p>
-</li>
+<li><a href="https://www.qikqiak.com/k8s-book/" target="_blank" rel="noopener">https://www.qikqiak.com/k8s-book/</a></li>
+<li>《kubernetes权威指南》</li>
+<li>kubenetes官网</li>
 </ol>
 
       
