@@ -68,7 +68,7 @@
 
 
 
-  <meta name="keywords" content="go,">
+  <meta name="keywords" content="go,区块链,">
 
 
 
@@ -79,23 +79,18 @@
 
 
 
-<meta name="description" content="go语言的schedulerGo 1.1的一个最大的特性是由Dmitry Vyukov贡献的新的调度器。新的调度器给并发Go程序提高了巨大的性能。 有三种场景的线程模型。第一种是N:1，即多个用户态线程运行在一个系统线程中。优点是上下文切换快，缺点是不能利用多核。另一种是1:1，一个用户态线程对应一个系统线程。这种利用了机器的多核，但是上下文切换会很慢，因为上下文切换需要陷入操作系统内核态。 Go">
-<meta name="keywords" content="go">
+<meta name="description" content="Introduction在上一篇文章中，我们利用非常简单的数据结构构建了blockchain数据库。Block之间存在链式关系：每个block都保存上一个block的链接。但是，我们的blockchain实现存在一个严重的问题：添加block操作过于简单。而区块链和比特币系统的主旨是让新增block成为一个高成本的操作。这篇文章我们将修改这个问题。 工作量证明天道酬勤是blockchain的核心思">
+<meta name="keywords" content="go,区块链">
 <meta property="og:type" content="article">
-<meta property="og:title" content="Go调度器">
-<meta property="og:url" content="http://yoursite.com/2020/04/12/GMP/index.html">
+<meta property="og:title" content="基于golang建立区块链part 2 ：工作量证明">
+<meta property="og:url" content="http://yoursite.com/2019/08/03/blockchain-part2/index.html">
 <meta property="og:site_name" content="Wxning">
-<meta property="og:description" content="go语言的schedulerGo 1.1的一个最大的特性是由Dmitry Vyukov贡献的新的调度器。新的调度器给并发Go程序提高了巨大的性能。 有三种场景的线程模型。第一种是N:1，即多个用户态线程运行在一个系统线程中。优点是上下文切换快，缺点是不能利用多核。另一种是1:1，一个用户态线程对应一个系统线程。这种利用了机器的多核，但是上下文切换会很慢，因为上下文切换需要陷入操作系统内核态。 Go">
+<meta property="og:description" content="Introduction在上一篇文章中，我们利用非常简单的数据结构构建了blockchain数据库。Block之间存在链式关系：每个block都保存上一个block的链接。但是，我们的blockchain实现存在一个严重的问题：添加block操作过于简单。而区块链和比特币系统的主旨是让新增block成为一个高成本的操作。这篇文章我们将修改这个问题。 工作量证明天道酬勤是blockchain的核心思">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:image" content="http://yoursite.com/images/gmp-01.jpg">
-<meta property="og:image" content="http://yoursite.com/images/gmp-02.jpg">
-<meta property="og:image" content="http://yoursite.com/images/gmp-03.jpg">
-<meta property="og:image" content="http://yoursite.com/images/gmp-04.jpg">
-<meta property="og:updated_time" content="2020-06-03T07:45:33.030Z">
+<meta property="og:updated_time" content="2020-10-18T05:47:03.834Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Go调度器">
-<meta name="twitter:description" content="go语言的schedulerGo 1.1的一个最大的特性是由Dmitry Vyukov贡献的新的调度器。新的调度器给并发Go程序提高了巨大的性能。 有三种场景的线程模型。第一种是N:1，即多个用户态线程运行在一个系统线程中。优点是上下文切换快，缺点是不能利用多核。另一种是1:1，一个用户态线程对应一个系统线程。这种利用了机器的多核，但是上下文切换会很慢，因为上下文切换需要陷入操作系统内核态。 Go">
-<meta name="twitter:image" content="http://yoursite.com/images/gmp-01.jpg">
+<meta name="twitter:title" content="基于golang建立区块链part 2 ：工作量证明">
+<meta name="twitter:description" content="Introduction在上一篇文章中，我们利用非常简单的数据结构构建了blockchain数据库。Block之间存在链式关系：每个block都保存上一个block的链接。但是，我们的blockchain实现存在一个严重的问题：添加block操作过于简单。而区块链和比特币系统的主旨是让新增block成为一个高成本的操作。这篇文章我们将修改这个问题。 工作量证明天道酬勤是blockchain的核心思">
 
 
 
@@ -125,13 +120,13 @@
 
 
 
-  <link rel="canonical" href="http://yoursite.com/2020/04/12/GMP/">
+  <link rel="canonical" href="http://yoursite.com/2019/08/03/blockchain-part2/">
 
 
 
 
 
-  <title>Go调度器 | Wxning</title>
+  <title>基于golang建立区块链part 2 ：工作量证明 | Wxning</title>
   
 
 
@@ -269,7 +264,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/04/12/GMP/">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/08/03/blockchain-part2/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="Wxning">
@@ -286,7 +281,7 @@
 
         
         
-          <h1 class="post-title" itemprop="name headline">Go调度器</h1>
+          <h1 class="post-title" itemprop="name headline">基于golang建立区块链part 2 ：工作量证明</h1>
         
 
         <div class="post-meta">
@@ -298,8 +293,8 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-04-12T20:11:43+08:00">
-                2020-04-12
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-08-03T20:01:53+08:00">
+                2019-08-03
               </time>
             
 
@@ -321,8 +316,19 @@
               
               
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Go/" itemprop="url" rel="index">
-                    <span itemprop="name">Go</span>
+                  <a href="/categories/go项目/" itemprop="url" rel="index">
+                    <span itemprop="name">go项目</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/go项目/区块链/" itemprop="url" rel="index">
+                    <span itemprop="name">区块链</span>
                   </a>
                 </span>
 
@@ -363,40 +369,27 @@
       
 
       
-        <h2 id="go语言的scheduler"><a href="#go语言的scheduler" class="headerlink" title="go语言的scheduler"></a>go语言的scheduler</h2><p>Go 1.1的一个最大的特性是由<a href="http://morsmachine.dk/" target="_blank" rel="noopener">Dmitry Vyukov</a>贡献的新的调度器。新的调度器给并发Go程序提高了巨大的性能。</p>
-<p>有三种场景的线程模型。第一种是N:1，即多个用户态线程运行在一个系统线程中。优点是上下文切换快，缺点是不能利用多核。另一种是1:1，一个用户态线程对应一个系统线程。这种利用了机器的多核，但是上下文切换会很慢，因为上下文切换需要陷入操作系统内核态。</p>
-<p>Go使用一种<code>M:N</code>的调度器来结合前两种模型，扬长避短。它调度任意数量的协程运行于任意数量的系统线程中。即保证了上下文切换的速度，又利用了多核。这种模型的主要缺点是增加了调度器的复杂度。</p>
-<p>Go调度器使用了下面三个实体：</p>
-<p><img src="/images/gmp-01.jpg" alt="gmp-01"></p>
-<ul>
-<li>三角形代表一个<code>系统线程</code>。这是被操作系统管理用来执行代码的线程，工作起来就像标准POSIX线程一样。在runtime代码中，被称为<code>M</code>，即machine的简称。</li>
-<li>圆圈代表一个<code>协程</code>。它包含了栈，指令指针和其它关于调度协程的重要信息。比如任何可能导致阻塞的channel。它被称为<code>G</code>。</li>
-<li>正方形代表一个用于调度的<code>上下文</code>。你可以把它看成一个本地化版本的调度器，用于在一个线程中执行Go代码。它是让我们可以从N:1模型转变成M:N模型的重要部分。在runtime代码中，被称为<code>P</code>，即processor的简称。P能存放的G的数量不超过256个。</li>
-</ul>
-<p><img src="/images/gmp-02.jpg" alt="gmp-02"></p>
-<p>如图所示，我们有2个线程（<strong>M</strong>），每个线程持有一个上下文（<strong>P</strong>），每个线程执行一个协程（<strong>G</strong>）。为了执行协程，一个线程必须持有一个上下文。</p>
-<p>上下文的数量在程序启动时通过环境变量GOMAXPROCS指定，上下文数量固定以为着在任意时刻只有GOMAXPROCS数量的Go代码在运行。利用这点我们可以调整对Go调用的数量，比如在4核机器上运行4个线程。所有的P都在程序启动时创建，并保存在数组中，最多有<code>GOMAXPROCS</code>个。新建G时，G优先加入到P的本地队列，如果队列满了，则会把本地队列中一半的G移动到全局队列。</p>
-<p>灰色部分的协程处于非运行状态，但是已经准备就绪，可以被调度。它们被安置于被称为runqueues的队列中。当使用go关键字开启一个协程时，这个协程被添加至队列的末尾。当上下文执行完一个协程后，到达一个调度的点，它会从队列中取出一个协程。设置好栈和指令指针并开始执行这个协程。</p>
-<h2 id="goroutine发生阻塞"><a href="#goroutine发生阻塞" class="headerlink" title="goroutine发生阻塞"></a>goroutine发生阻塞</h2><p>为什么我们需要<code>P</code>呢，我们不能把任务队列直接挂载到线程上而去除掉<code>P</code>吗？</p>
-<p>答案是不行。原因是当运行着的线程由于某些原因需要阻塞时，我们需要通过<code>P把任务队列挂载到其它线程中</code>，这就是hand off机制。当然还有一个原因，我们不能让所有的M去全局中获取G，这样要加锁，当M持有P时，访问的G不会出现数据竞争。</p>
-<p>什么时候需要阻塞呢？举个例子，当我们调用系统调用的时候。因为一个线程不能一边执行代码一边阻塞在系统调用上，我们需要移交<strong>P</strong>使得它可以继续被调度。</p>
-<p><img src="/images/gmp-03.jpg" alt="gmp-03"></p>
-<p>上图演示了一个线程放弃它的<code>P</code>，使得其它线程可以运行这个<code>P</code>。调度器会确保有足够的线程运行所有的<code>P</code>。图中的M1用来处理这个系统调用，它可能是被新创建的，也有可能从空闲线程池中取出。这个线程用来保持调用系统调用的这个被阻塞的协程，因为理论上来说，这个线程依然在执行，只不过是阻塞在了系统调用上。</p>
-<p>当系统调用返回，这个线程必须尝试获取一个上下文以用来执行这个正在返回的协程。常规操作是从其他线程偷取一个上下文。如果偷取失败，会把这个协程放入全局运行队列（global runqueue）。再把线程放入空闲线程池中并睡眠。</p>
-<p>当某个上下文本地运行队列为空时，会从全局运行队列取任务。所有的上下文都会周期性从全局队列获取协程任务。以防止全局队列中的协程饿死，永远得不到执行。</p>
-<p>这种处理系统调用的方式就是为什么Go程序是<code>多线程</code>执行的原因，即使GOMAXPROCS是1。运行时使用协程调用系统调用，将线程隐藏在其后。</p>
-<h2 id="偷取任务"><a href="#偷取任务" class="headerlink" title="偷取任务"></a>偷取任务</h2><p>另一种导致这种稳定状态发生改变的原因是一个上下文执行完了调度给它的所有协程。这种情况发生的原因是所有上下文的运行队列上的任务不均衡。此时系统中还有其他等待执行的任务。为了保持Go代码继续执行，一个上下文可以从全局运行队列取协程，但是如果全局运行队列没有协程了，这个上下文只能从其他地方取任务。</p>
-<p><img src="/images/gmp-04.jpg" alt="gmp-04"></p>
-<p>这个<code>其他地方</code>就是其他上下文。当一个上下文没任务了，它会尝试从另一个上下文的运行队列中偷取<code>一半</code>的任务。这保证了每个上下文都总是有任务在执行，这也就保证了所有的线程都在尽可能的工作。</p>
-<h2 id="CSP并发模型"><a href="#CSP并发模型" class="headerlink" title="CSP并发模型"></a>CSP并发模型</h2><p>CSP讲究的是<code>以通信的方式来共享内存</code>。</p>
-<p>引用go作者Rob Pike说过的一句话：</p>
-<blockquote>
-<p><strong>Do not communicate by sharing memory; instead, share memory by communicating.</strong></p>
-</blockquote>
-<p>普通的线程并发模型，就是像Java、C++、或者Python，他们线程间通信都是通过共享内存的方式来进行的。非常典型的方式就是，在访问共享数据（例如数组、Map、或者某个结构体或对象）的时候，通过锁来访问，因此，在很多时候，衍生出一种方便操作的数据结构，叫做“线程安全的数据结构”。例如Java提供的包”java.util.concurrent”中的数据结构。Go中也实现了传统的线程并发模型。</p>
-<p>Go的CSP并发模型，是通过<code>goroutine</code>和<code>channel</code>来实现的。</p>
-<p>无论语言层面何种并发模型，到了操作系统层面，一定是以线程的形态存在的。而操作系统根据资源访问权限的不同，体系架构可分为用户空间和内核空间；内核空间主要操作访问CPU资源、I/O资源、内存资源等硬件资源，为上层应用程序提供最基本的基础资源，用户空间呢就是上层应用程序的固定活动空间，用户空间不可以直接访问资源，必须通过“系统调用”、“库函数”或“Shell脚本”来调用内核空间提供的资源。</p>
-<h2 id="参考资料："><a href="#参考资料：" class="headerlink" title="参考资料："></a>参考资料：</h2><p><a href="http://morsmachine.dk/go-scheduler" target="_blank" rel="noopener">http://morsmachine.dk/go-scheduler</a></p>
+        <h2 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h2><p>在<a href="https://wxning1107.github.io/2019/07/11/1/" target="_blank" rel="noopener">上一篇文章</a>中，我们利用非常简单的数据结构构建了blockchain数据库。Block之间存在链式关系：每个block都保存上一个block的链接。但是，我们的blockchain实现存在一个严重的问题：添加block操作过于简单。而区块链和比特币系统的主旨是让新增block成为一个高成本的操作。这篇文章我们将修改这个问题。</p>
+<h2 id="工作量证明"><a href="#工作量证明" class="headerlink" title="工作量证明"></a>工作量证明</h2><p>天道酬勤是blockchain的核心思想之一，即要想将block放到blockchain中，是需要付出一定努力的。这确保blockchain的安全性和一致性。与此同时，也会受到相应的奖赏（整个过程称作挖矿）。</p>
+<p>这种机制与现实生活有异曲同工之妙：努力工作挣钱从而维持生计。在blockchain中，参与者（矿工）努力工作（挖矿）添加block进而获取奖励，从而维持整个blockchain网络。挖矿使block安全地加入blockchain，维持了整个blockchain的稳定。值得注意的是，挖矿是需要某种方式来证明的。</p>
+<p>上述机制被称作“工作量证明”（即PoW）。PoW需要大量算力，即使是高性能计算机也不能非常快速地完成计算。此外，PoW随着时间的推移，难度也相应增加。<br>此外，PoW算法必须满足一个要求：工作量难度很高，但证明很容易。由于往往是其他人进行验证工作量，因此“快速证明”十分重要。</p>
+<p>有一点要说明，工作量证明算法必须满足一个要求:工作很难，但验证工作量是很容易的,工作量证明总是交给其他人处理，所以对于他们来说，验证工作量不需要花费很多时间。</p>
+<h2 id="哈希"><a href="#哈希" class="headerlink" title="哈希"></a>哈希</h2><p>获得指定数据的一个哈希值的过程，就叫做<a href="https://en.bitcoin.it/wiki/Block_hashing_algorithm" target="_blank" rel="noopener">哈希计算</a>。一个哈希，就是对所计算数据的一个唯一表示。对于一个哈希函数，输入任意大小的数据，它会输出一个固定大小的哈希值。下面是哈希的几个关键特性：</p>
+<ol>
+<li>无法从一个哈希值恢复原始数据。也就是说，哈希并不是加密。</li>
+<li>对于特定的数据，只能有一个哈希，并且这个哈希是唯一的。</li>
+<li>即使是仅仅改变输入数据中的一个字节，也会导致输出一个完全不同的哈希。</li>
+</ol>
+<p>哈希函数被广泛用于检测数据的一致性。软件提供者常常在除了提供软件包以外，还会发布校验码。当下载完一个文件以后，你可以用哈希函数对下载好的文件计算一个哈希，并与作者提供的哈希进行比较，以此来保证文件下载的完整性。</p>
+<p>在区块链中，哈希被用于保证一个块的一致性。哈希算法的输入数据包含了前一个块的哈希，因此使得不太可能（或者，至少很困难）去修改链中的一个块：因为如果一个人想要修改前面一个块的哈希，那么他必须要重新计算这个块以及后面所有块的哈希。</p>
+<h2 id="代码实现"><a href="#代码实现" class="headerlink" title="代码实现"></a>代码实现</h2><p>接下来我们用代码实现工作量证明</p>
+<p>首先，先定义挖矿的难度</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> targetBits = <span class="number">24</span></span><br></pre></td></tr></table></figure>
+
+<p>在比特币中，当一个块被挖出来以后，“target bits” 代表了区块头里存储的难度，也就是开头有多少个 0。这里的 24 指的是算出来的哈希前 24 位必须是 0，如果用 16 进制表示，就是前 6 位必须是 0，这一点从最后的输出可以看出来。目前我们并不会实现一个动态调整目标的算法，所以将难度定义为一个全局的常量即可。</p>
+<p>24 其实是一个可以任意取的数字，其目的只是为了有一个目标（target）而已，这个目标占据不到 256 位的内存空间。同时，我们想要有足够的差异性，但是又不至于大的过分，因为差异性越大，就越难找到一个合适的哈希。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> ProofOfWork <span class="keyword">struct</span> &#123;</span><br><span class="line">	block  *Block</span><br><span class="line">	target *big.Int</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">NewProofOfWork</span><span class="params">(b *Block)</span> *<span class="title">ProofOfWork</span></span> &#123;</span><br><span class="line">	target := big.NewInt(<span class="number">1</span>)</span><br><span class="line">	target.Lsh(target, <span class="keyword">uint</span>(<span class="number">256</span>-targetBits))</span><br><span class="line"></span><br><span class="line">	pow := &amp;ProofOfWork&#123;b, target&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> pow</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
 
       
     </div>
@@ -424,12 +417,12 @@
   <!-- JS库 sweetalert 可修改路径 -->
   <script src="https://cdn.bootcss.com/jquery/2.0.0/jquery.min.js"></script>
   <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
-  <p><span>本文标题:</span><a href="/2020/04/12/GMP/">Go调度器</a></p>
+  <p><span>本文标题:</span><a href="/2019/08/03/blockchain-part2/">基于golang建立区块链part 2 ：工作量证明</a></p>
   <p><span>文章作者:</span><a href="/" title="访问 Wxning 的个人博客">Wxning</a></p>
-  <p><span>发布时间:</span>2020年04月12日 - 20:04</p>
-  <p><span>最后更新:</span>2020年06月03日 - 15:06</p>
-  <p><span>原始链接:</span><a href="/2020/04/12/GMP/" title="Go调度器">http://yoursite.com/2020/04/12/GMP/</a>
-    <span class="copy-path" title="点击复制文章链接"><i class="fa fa-clipboard" data-clipboard-text="http://yoursite.com/2020/04/12/GMP/" aria-label="复制成功！"></i></span>
+  <p><span>发布时间:</span>2019年08月03日 - 20:08</p>
+  <p><span>最后更新:</span>2020年10月18日 - 13:10</p>
+  <p><span>原始链接:</span><a href="/2019/08/03/blockchain-part2/" title="基于golang建立区块链part 2 ：工作量证明">http://yoursite.com/2019/08/03/blockchain-part2/</a>
+    <span class="copy-path" title="点击复制文章链接"><i class="fa fa-clipboard" data-clipboard-text="http://yoursite.com/2019/08/03/blockchain-part2/" aria-label="复制成功！"></i></span>
   </p>
   <p><span>许可协议:</span><i class="fa fa-creative-commons"></i> <a rel="license" href="https://creativecommons.org/licenses/by-nc-nd/4.0/" target="_blank" title="Attribution-NonCommercial-NoDerivatives 4.0 International (CC BY-NC-ND 4.0)">署名-非商业性使用-禁止演绎 4.0 国际</a> 转载请保留原文链接及作者。</p>
 </div>
@@ -463,6 +456,8 @@
           
             <a href="/tags/go/" rel="tag"># go</a>
           
+            <a href="/tags/区块链/" rel="tag"># 区块链</a>
+          
         </div>
       
 
@@ -474,8 +469,8 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2020/04/09/goMap/" rel="next" title="go语言map底层实现">
-                <i class="fa fa-chevron-left"></i> go语言map底层实现
+              <a href="/2019/07/12/go-crawler1/" rel="next" title="go实现单任务版爬虫">
+                <i class="fa fa-chevron-left"></i> go实现单任务版爬虫
               </a>
             
           </div>
@@ -484,8 +479,8 @@
 
           <div class="post-nav-prev post-nav-item">
             
-              <a href="/2020/04/15/go-json/" rel="prev" title="go语言优雅的json处理">
-                go语言优雅的json处理 <i class="fa fa-chevron-right"></i>
+              <a href="/2019/08/03/go-crawler2/" rel="prev" title="go实现并发版爬虫">
+                go实现并发版爬虫 <i class="fa fa-chevron-right"></i>
               </a>
             
           </div>
@@ -635,7 +630,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#go语言的scheduler"><span class="nav-number">1.</span> <span class="nav-text">go语言的scheduler</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#goroutine发生阻塞"><span class="nav-number">2.</span> <span class="nav-text">goroutine发生阻塞</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#偷取任务"><span class="nav-number">3.</span> <span class="nav-text">偷取任务</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#CSP并发模型"><span class="nav-number">4.</span> <span class="nav-text">CSP并发模型</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考资料："><span class="nav-number">5.</span> <span class="nav-text">参考资料：</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Introduction"><span class="nav-number">1.</span> <span class="nav-text">Introduction</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#工作量证明"><span class="nav-number">2.</span> <span class="nav-text">工作量证明</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#哈希"><span class="nav-number">3.</span> <span class="nav-text">哈希</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#代码实现"><span class="nav-number">4.</span> <span class="nav-text">代码实现</span></a></li></ol></div>
             
 
           </div>
