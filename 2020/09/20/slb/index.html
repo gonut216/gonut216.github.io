@@ -87,7 +87,7 @@
 <meta property="og:site_name" content="Wxning">
 <meta property="og:description" content="负载均衡slb最近我们团队想把对内的load balancer换成Ingress，围绕对服务内到底是用kong还是Ingress做路由转发还爆发了激烈的讨论，一般来说，对外，也就是面向用户层，我们都会有个load balancer负载均衡器，然后把请求发给api gateway，再由gw去转发请求，这些都是在接入层的工作，而在应用层，同样需要负载均衡器，把请求分发给相应的k8s service，所">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:updated_time" content="2020-10-20T10:36:43.766Z">
+<meta property="og:updated_time" content="2020-10-20T10:38:03.028Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="负载均衡slb浅谈">
 <meta name="twitter:description" content="负载均衡slb最近我们团队想把对内的load balancer换成Ingress，围绕对服务内到底是用kong还是Ingress做路由转发还爆发了激烈的讨论，一般来说，对外，也就是面向用户层，我们都会有个load balancer负载均衡器，然后把请求发给api gateway，再由gw去转发请求，这些都是在接入层的工作，而在应用层，同样需要负载均衡器，把请求分发给相应的k8s service，所">
@@ -426,6 +426,7 @@
 <p>比如有5台机器，两台新买入的性能等各方面都特别好，剩下三台老古董。这时候我们设置一个<code>权重</code>，让新机器接收更多的请求。物尽其用、能者多劳嘛！</p>
 <h5 id="Least-Connections"><a href="#Least-Connections" class="headerlink" title="Least Connections"></a>Least Connections</h5><p>最少连接：这是最符合负载均衡算法的一个。需要记录每个应用服务器正在处理的连接数，然后将新来的请求转发到最少的那台上。</p>
 <h5 id="Source-Hashing"><a href="#Source-Hashing" class="headerlink" title="Source Hashing"></a>Source Hashing</h5><p>源地址散列：根据请求的来源ip进行hash计算，然后对应到一个服务器上。之后所有来自这个ip的请求都由同一台服务器处理。</p>
+<p>关于负载均衡还会有更深入的研究…</p>
 
       
     </div>
