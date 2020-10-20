@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="负载均衡,slb,">
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="负载均衡slb最近我们团队想把对内的load balancer换成Ingress，围绕对服务内到底是用kong还是Ingress做路由转发还爆发了激烈的讨论，一般来说，对外，也就是面向用户层，我们都会有个load balancer负载均衡器，然后把请求发给api gateway，再由gw去转发请求，这些都是在接入层的工作，而在应用层，同样需要负载均衡器，把请求分发给相应的k8s service，所">
+<meta name="keywords" content="负载均衡,slb">
+<meta property="og:type" content="article">
+<meta property="og:title" content="slb">
+<meta property="og:url" content="http://yoursite.com/2020/09/20/slb/index.html">
+<meta property="og:site_name" content="Wxning">
+<meta property="og:description" content="负载均衡slb最近我们团队想把对内的load balancer换成Ingress，围绕对服务内到底是用kong还是Ingress做路由转发还爆发了激烈的讨论，一般来说，对外，也就是面向用户层，我们都会有个load balancer负载均衡器，然后把请求发给api gateway，再由gw去转发请求，这些都是在接入层的工作，而在应用层，同样需要负载均衡器，把请求分发给相应的k8s service，所">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2020-10-20T10:33:56.752Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="slb">
+<meta name="twitter:description" content="负载均衡slb最近我们团队想把对内的load balancer换成Ingress，围绕对服务内到底是用kong还是Ingress做路由转发还爆发了激烈的讨论，一般来说，对外，也就是面向用户层，我们都会有个load balancer负载均衡器，然后把请求发给api gateway，再由gw去转发请求，这些都是在接入层的工作，而在应用层，同样需要负载均衡器，把请求分发给相应的k8s service，所">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2020/09/20/slb/">
+
+
+
+
+
+  <title>slb | Wxning</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+    <a href="https://github.com/wxning1107" class="github-corner" aria-label="View source on GitHub"><svg width="80" height="80" viewbox="0 0 250 250" style="fill:#151513; color:#fff; position: absolute; top: 0; border: 0; right: 0;" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"/><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"/><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"/></svg></a><style>.github-corner:hover .octo-arm{animation:octocat-wave 560ms ease-in-out}@keyframes octocat-wave{0%,100%{transform:rotate(0)}20%,60%{transform:rotate(-25deg)}40%,80%{transform:rotate(10deg)}}@media (max-width:500px){.github-corner:hover .octo-arm{animation:none}.github-corner .octo-arm{animation:octocat-wave 560ms ease-in-out}}</style>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Wxning</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br>
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br>
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-个人简历">
+          <a href="/个人简历/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br>
+            
+            个人简历
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/09/20/slb/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Wxning">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Wxning">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">slb</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-09-20T22:14:22+08:00">
+                2020-09-20
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/负载均衡/" itemprop="url" rel="index">
+                    <span itemprop="name">负载均衡</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+            <span class="post-meta-divider">|</span>
+            <span class="page-pv"><i class="fa fa-file-o"></i> 阅读数
+            <span class="busuanzi-value" id="busuanzi_value_page_pv"></span>次
+            </span>
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h3 id="负载均衡slb"><a href="#负载均衡slb" class="headerlink" title="负载均衡slb"></a>负载均衡slb</h3><p>最近我们团队想把对内的load balancer换成<code>Ingress</code>，围绕对服务内到底是用<code>kong</code>还是<code>Ingress</code>做路由转发还爆发了激烈的讨论，一般来说，对外，也就是面向用户层，我们都会有个load balancer负载均衡器，然后把请求发给api gateway，再由gw去转发请求，这些都是在接入层的工作，而在应用层，同样需要负载均衡器，把请求分发给相应的k8s service，所以负载均衡器无论是对内还是对外都是不可或缺的。</p>
+<p>负载均衡Server Load Balancer是将访问流量根据转发策略分发到后端多台云服务器（ECS实例）的流量分发控制服务。软件负载均衡是使用软件的方式来分发和均衡流量。分为<code>7层协议（HTTP/HTTPS）</code> 和 <code>4层协议（TCP/UDP）</code>。</p>
+<p>网络协议有七层，基于第四层传输层来做流量分发的方案称为4层负载均衡，例如 LVS，而基于第七层应用层来做流量分发的称为7层负载均衡，例如 Nginx。这两种在性能和灵活性上是有些区别的。基于4层的负载均衡性能要高一些。</p>
+<h3 id="四层负载均衡和七层负载均衡"><a href="#四层负载均衡和七层负载均衡" class="headerlink" title="四层负载均衡和七层负载均衡"></a>四层负载均衡和七层负载均衡</h3><p>所谓四层负载均衡就是使用IP加端口的方式进行路由转发，七层负载均衡一般是基于请求URL地址的方式进行代理转发。</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>四层负载均衡</th>
+<th>七层负载均衡</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>基于</td>
+<td>基于IP + Port</td>
+<td>基于URL或IP</td>
+</tr>
+<tr>
+<td>类似于</td>
+<td>路由器</td>
+<td>代理服务器</td>
+</tr>
+<tr>
+<td>握手次数</td>
+<td>1</td>
+<td>2</td>
+</tr>
+<tr>
+<td>复杂度</td>
+<td>低</td>
+<td>高</td>
+</tr>
+<tr>
+<td>性能</td>
+<td>高（无需解析内容）</td>
+<td>中（需要算法识别URL，Cookie和HTTP head等信息）</td>
+</tr>
+<tr>
+<td>安全性</td>
+<td>低（无法识别DDOs攻击）</td>
+<td>高（可以防御SYN）</td>
+</tr>
+</tbody></table>
+<p>四层负载均衡具体实现方式为：通过报文中的IP地址和端口，再加上负载均衡设备所采用的负载均衡算法，最终确定选择后端哪台下游服务器。<strong>四层负载均衡只针对由上游服务发送和接收的网络包，而并不检查包内的具体内容是什么</strong>，以TCP为例，客户端向负载均衡发送SYN请求建立第一次连接，通过配置的负载均衡算法选择一台后端服务器，并且将报文中的IP地址信息修改为后台服务器的IP地址信息，因此<strong>TCP三次握手连接是与后端服务器直接建立起来的</strong>。</p>
+<p>七层负载均衡在应用层选择服务器，只能先与负载均衡设备进行TCP连接，<strong>然后负载均衡设备再与后端服务器建立另外一条TCP连接通道</strong>。因此，七层设备在网络性能损耗会更多一些。简单来说，<strong>一个七层负载均衡器终止网络传输并读取消息中的内容。它可以基于消息中内容( 比如URL或者cookie中的信息 )来做出负载均衡的决定。</strong>之后，七层负载均衡器建立一个新的TCP连接来选择上游服务( 或者再利用一个已经存在的TCP连接)并向这个服务发出请求。</p>
+<p>但是四层负载均衡与服务器直接建立起TCP连接，很容易遭受DDoS攻击，DDos攻击是一种利用TCP协议缺陷，发送大量伪造的TCP连接请求，从而使得被攻击方资源耗尽的攻击方式。从技术实现原理上可以看出，四层负载均衡很容易将垃圾流量转发至后台服务器，而七层设备则可以过滤这些恶意并清洗这些流量，但要求设备本身具备很强的抗DDOS流量的能力。</p>
+<p>常见的四层负载均衡：F5、LVS</p>
+<p>常见的七层负载均衡：nginx、apache</p>
+<h3 id="健康检查"><a href="#健康检查" class="headerlink" title="健康检查"></a>健康检查</h3><p>4层TCP健康检查通过TCP 3次握手检查后端 ECS 端口是否监听。与普通的TCP连接使用TCP FIN方式销毁过程不同，健康检查的连接在3次握手建立成功后，以TCP Reset方式主动将连接断开。</p>
+<p>7层健康检查通过HTTP HEAD 请求检查指定URL路径的返回值，如果返回值与自定义的健康检查成功返回值相匹配，则判定检查成功。</p>
+<h3 id="负载均衡算法"><a href="#负载均衡算法" class="headerlink" title="负载均衡算法"></a>负载均衡算法</h3><p>常用的负载均衡算法有：Random 随机，Round Robin 轮询，Weighted Round Robin 加权轮询，Least Connections 最少连接，Source Hashing 源地址散列。</p>
+<h5 id="Random随机"><a href="#Random随机" class="headerlink" title="Random随机"></a>Random随机</h5><p>Random是最简单的一种，不需要额外的配置和算法，Random随机数的特点是在数据量大到一定量时才能保证均衡，所以如果请求量有限的话，可能会达不到均衡负载的要求。</p>
+<h5 id="Round-Robin"><a href="#Round-Robin" class="headerlink" title="Round Robin"></a>Round Robin</h5><p>轮询，请求到达后，依次转发，不偏不向。每个服务器的请求数量很平均。但是当集群中服务器硬件配置不同、性能差别大时，无法区别对待。</p>
+<h5 id="Weighted-Round-Robin"><a href="#Weighted-Round-Robin" class="headerlink" title="Weighted Round Robin"></a>Weighted Round Robin</h5><p>加权轮训：这种算法的出现就是为了解决简单轮询策略中的不足。在实际项目中，经常会遇到这样的情况。</p>
+<p>比如有5台机器，两台新买入的性能等各方面都特别好，剩下三台老古董。这时候我们设置一个<code>权重</code>，让新机器接收更多的请求。物尽其用、能者多劳嘛！</p>
+<h5 id="Least-Connections"><a href="#Least-Connections" class="headerlink" title="Least Connections"></a>Least Connections</h5><p>最少连接：这是最符合负载均衡算法的一个。需要记录每个应用服务器正在处理的连接数，然后将新来的请求转发到最少的那台上。</p>
+<h5 id="Source-Hashing"><a href="#Source-Hashing" class="headerlink" title="Source Hashing"></a>Source Hashing</h5><p>源地址散列：根据请求的来源ip进行hash计算，然后对应到一个服务器上。之后所有来自这个ip的请求都由同一台服务器处理。</p>
+
+      
+    </div>
+    
+    
+    
+
+    <div>
+      
+        <div>
+    
+        <div style="text-align:center;color: #ccc;font-size:14px;">-------------本文结束<i class="fa fa-paw"></i>感谢您的阅读-------------</div>
+    
+</div>
+
+      
+    </div>
+
+    <div>
+          
+            
+<div class="my_post_copyright">
+  <script src="//cdn.bootcss.com/clipboard.js/1.5.10/clipboard.min.js"></script>
+
+  <!-- JS库 sweetalert 可修改路径 -->
+  <script src="https://cdn.bootcss.com/jquery/2.0.0/jquery.min.js"></script>
+  <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+  <p><span>本文标题:</span><a href="/2020/09/20/slb/">slb</a></p>
+  <p><span>文章作者:</span><a href="/" title="访问 Wxning 的个人博客">Wxning</a></p>
+  <p><span>发布时间:</span>2020年09月20日 - 22:09</p>
+  <p><span>最后更新:</span>2020年10月20日 - 18:10</p>
+  <p><span>原始链接:</span><a href="/2020/09/20/slb/" title="slb">http://yoursite.com/2020/09/20/slb/</a>
+    <span class="copy-path" title="点击复制文章链接"><i class="fa fa-clipboard" data-clipboard-text="http://yoursite.com/2020/09/20/slb/" aria-label="复制成功！"></i></span>
+  </p>
+  <p><span>许可协议:</span><i class="fa fa-creative-commons"></i> <a rel="license" href="https://creativecommons.org/licenses/by-nc-nd/4.0/" target="_blank" title="Attribution-NonCommercial-NoDerivatives 4.0 International (CC BY-NC-ND 4.0)">署名-非商业性使用-禁止演绎 4.0 国际</a> 转载请保留原文链接及作者。</p>
+</div>
+<script>
+    var clipboard = new Clipboard('.fa-clipboard');
+    $(".fa-clipboard").click(function(){
+      clipboard.on('success', function(){
+        swal({
+          title: "",
+          text: '复制成功',
+          icon: "success",
+          showConfirmButton: true
+          });
+    });
+    });
+</script>
+
+
+          
+    </div>
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/负载均衡/" rel="tag"># 负载均衡</a>
+          
+            <a href="/tags/slb/" rel="tag"># slb</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2020/08/23/k8s-podController/" rel="next" title="深入理解Kubernetes之Pod控制器">
+                <i class="fa fa-chevron-left"></i> 深入理解Kubernetes之Pod控制器
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+    <div class="comments" id="comments">
+      <div id="lv-container" data-id="city" data-uid="MTAyMC80NTE2Ny8yMTY4NA=="></div>
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="/images/avatar.gif" alt="Wxning">
+            
+              <p class="site-author-name" itemprop="name">Wxning</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/">
+              
+                  <span class="site-state-item-count">33</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">38</span>
+                  <span class="site-state-item-name">分类</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">27</span>
+                  <span class="site-state-item-name">标签</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+            <div class="links-of-author motion-element">
+                
+                  <span class="links-of-author-item">
+                    <a href="https://github.com/wxning1107" target="_blank" title="GitHub">
+                      
+                        <i class="fa fa-fw fa-github"></i>GitHub</a>
+                  </span>
+                
+            </div>
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#负载均衡slb"><span class="nav-number">1.</span> <span class="nav-text">负载均衡slb</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#四层负载均衡和七层负载均衡"><span class="nav-number">2.</span> <span class="nav-text">四层负载均衡和七层负载均衡</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#健康检查"><span class="nav-number">3.</span> <span class="nav-text">健康检查</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#负载均衡算法"><span class="nav-number">4.</span> <span class="nav-text">负载均衡算法</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#Random随机"><span class="nav-number">4.0.1.</span> <span class="nav-text">Random随机</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#Round-Robin"><span class="nav-number">4.0.2.</span> <span class="nav-text">Round Robin</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#Weighted-Round-Robin"><span class="nav-number">4.0.3.</span> <span class="nav-text">Weighted Round Robin</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#Least-Connections"><span class="nav-number">4.0.4.</span> <span class="nav-text">Least Connections</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#Source-Hashing"><span class="nav-number">4.0.5.</span> <span class="nav-text">Source Hashing</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Wxning</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Mist</a> v5.1.4</div>
+
+
+
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+  
+    <span class="site-uv">
+      <i class="fa fa-user"></i> 访问人数
+      <span class="busuanzi-value" id="busuanzi_value_site_uv"></span>
+      人
+    </span>
+  
+
+  
+    <span class="site-pv">
+      <i class="fa fa-eye"></i> 总访问量
+      <span class="busuanzi-value" id="busuanzi_value_site_pv"></span>
+      次
+    </span>
+  
+</div>
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/canvas-nest/canvas-nest.min.js"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+    <script type="text/javascript">
+      (function(d, s) {
+        var j, e = d.getElementsByTagName(s)[0];
+        if (typeof LivereTower === 'function') { return; }
+        j = d.createElement(s);
+        j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+        j.async = true;
+        e.parentNode.insertBefore(j, e);
+      })(document, 'script');
+    </script>
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
