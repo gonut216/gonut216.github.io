@@ -87,7 +87,7 @@
 <meta property="og:description" content="公司的应用集群往往不是一个，这些集群需要一个Api Gateway网关对外服务，但是在Gateway和集群之间，往往需要负载均衡器slb，事实上每个集群都需要一个内网slb负责分发请求，传统的load balancer或者API网关例如kong都可以作为这个对内的请求分发器，但是经过一番调研，Ingress更适合这个工作。 在k8s集群里我们知道使用NodePort和LoadBlancer 类型的">
 <meta property="og:locale" content="zh-Hans">
 <meta property="og:image" content="http://yoursite.com/images/traefik-architecture.png">
-<meta property="og:updated_time" content="2020-10-22T10:26:55.800Z">
+<meta property="og:updated_time" content="2020-10-31T09:57:39.576Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="深入理解Kubernetes之Ingress">
 <meta name="twitter:description" content="公司的应用集群往往不是一个，这些集群需要一个Api Gateway网关对外服务，但是在Gateway和集群之间，往往需要负载均衡器slb，事实上每个集群都需要一个内网slb负责分发请求，传统的load balancer或者API网关例如kong都可以作为这个对内的请求分发器，但是经过一番调研，Ingress更适合这个工作。 在k8s集群里我们知道使用NodePort和LoadBlancer 类型的">
@@ -339,8 +339,10 @@
       
         <p>公司的应用集群往往不是一个，这些集群需要一个<code>Api Gateway</code>网关对外服务，但是在Gateway和集群之间，往往需要负载均衡器slb，事实上每个集群都需要一个内网slb负责分发请求，传统的load balancer或者API网关例如kong都可以作为这个对内的请求分发器，但是经过一番调研，<code>Ingress</code>更适合这个工作。</p>
 <p>在k8s集群里我们知道使用NodePort和LoadBlancer 类型的 Service 可以实现把应用暴露给外部用户使用，除此之外，Kubernetes 还为我们提供了一个非常重要的资源对象可以用来暴露服务给外部用户，那就是 <code>ingress</code>。对于小规模的应用我们使用<code>NodePort</code>或许能够满足我们的需求，但是当你的应用越来越多的时候，会发现对于 NodePort 的管理就非常麻烦了，这个时候使用 ingress 就非常方便了，可以避免管理大量的 Port。</p>
-<h3 id="Ingress简介"><a href="#Ingress简介" class="headerlink" title="Ingress简介"></a>Ingress简介</h3><p><code>Ingress</code>其实就是从 kuberenets 集群外部访问集群的一个入口，将外部的请求转发到集群内不同的 Service 上，其实就相当于 nginx负载均衡代理服务器，Ingress 实际上就相当于一个带有服务发现功能的Nginx，服务发现Ingress自己已经实现了，然后再加上一个域名规则定义，路由信息的刷新需要一个靠 <code>Ingress controller</code> 来提供。</p>
+<h3 id="Ingress简介"><a href="#Ingress简介" class="headerlink" title="Ingress简介"></a>Ingress简介</h3><p>我们知道service的变现形式是IP:Port，即工作在TCP/IP层，而对于基于HTTP的服务来说，不同的URL地址经常对应到不同的后端服务，这些应用层的转发机制仅通过service机制是无法实现的。</p>
+<p><code>Ingress</code>其实就是从 kuberenets 集群外部访问集群的一个入口，将外部的请求转发到集群内不同的 Service 上，其实就相当于 nginx负载均衡代理服务器，Ingress 实际上就相当于一个带有服务发现功能的Nginx，服务发现Ingress自己已经实现了，然后再加上一个域名规则定义，路由信息的刷新需要一个靠 <code>Ingress controller</code> 来提供。</p>
 <p>Ingress controller 可以理解为一个监听器，通过不断地与 kube-apiserver 打交道，实时的感知后端 service、pod 的变化，当得到这些变化信息后，Ingress controller 再结合 Ingress 的配置，更新反向代理负载均衡器，达到服务发现的作用。现在可以供大家使用的 Ingress controller 有很多，比如 <a href="https://traefik.io/" target="_blank" rel="noopener">traefik</a>、<a href="https://kubernetes.github.io/ingress-nginx/" target="_blank" rel="noopener">nginx-controller</a>、<a href="https://konghq.com/blog/kubernetes-ingress-controller-for-kong/" target="_blank" rel="noopener">Kubernetes Ingress Controller for Kong</a>、<a href="https://github.com/jcmoraisjr/haproxy-ingress" target="_blank" rel="noopener">HAProxy Ingress controller</a>，现在普遍用得较多的是 traefik 和 nginx-controller，traefik 的性能较 nginx-controller 差，但是配置使用要简单许多。</p>
+<p>简单来说，使用Ingress进行负载分发时，Ingress Controller基于Ingress规则将客户端请求直接转发到Service对应的后端Endpoint上，这样会跳过kube-proxy的转发功能，kube-proxy不再起作用。</p>
 <h3 id="Traefik"><a href="#Traefik" class="headerlink" title="Traefik"></a>Traefik</h3><p>Traefik 是一款开源的反向代理与负载均衡工具。它最大的优点是能够与常见的微服务系统直接整合，可以实现自动化动态配置。</p>
 <p><img src="/images/traefik-architecture.png" alt="traefix"></p>
 
@@ -373,7 +375,7 @@
   <p><span>本文标题:</span><a href="/2020/10/22/ingress/">深入理解Kubernetes之Ingress</a></p>
   <p><span>文章作者:</span><a href="/" title="访问 Wxning 的个人博客">Wxning</a></p>
   <p><span>发布时间:</span>2020年10月22日 - 09:10</p>
-  <p><span>最后更新:</span>2020年10月22日 - 18:10</p>
+  <p><span>最后更新:</span>2020年10月31日 - 17:10</p>
   <p><span>原始链接:</span><a href="/2020/10/22/ingress/" title="深入理解Kubernetes之Ingress">http://yoursite.com/2020/10/22/ingress/</a>
     <span class="copy-path" title="点击复制文章链接"><i class="fa fa-clipboard" data-clipboard-text="http://yoursite.com/2020/10/22/ingress/" aria-label="复制成功！"></i></span>
   </p>
