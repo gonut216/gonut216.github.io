@@ -86,12 +86,15 @@
 <meta property="og:site_name" content="Wxning">
 <meta property="og:description" content="公司的应用集群往往不是一个，这些集群需要一个Api Gateway网关对外服务，但是在Gateway和集群之间，往往需要负载均衡器slb，事实上每个集群都需要一个内网slb负责分发请求，传统的load balancer或者API网关例如kong都可以作为这个对内的请求分发器，但是经过一番调研，Ingress更适合这个工作。 在k8s集群里我们知道使用NodePort和LoadBlancer 类型的">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:image" content="http://yoursite.com/images/traefik-architecture.png">
-<meta property="og:updated_time" content="2020-10-31T09:57:39.576Z">
+<meta property="og:image" content="http://yoursite.com/images/ingress1.png">
+<meta property="og:image" content="http://yoursite.com/images/ingress2.png">
+<meta property="og:image" content="http://yoursite.com/images/ingress3.png">
+<meta property="og:image" content="http://yoursite.com/images/ingress4.png">
+<meta property="og:updated_time" content="2020-11-12T02:34:51.051Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="深入理解Kubernetes之Ingress">
 <meta name="twitter:description" content="公司的应用集群往往不是一个，这些集群需要一个Api Gateway网关对外服务，但是在Gateway和集群之间，往往需要负载均衡器slb，事实上每个集群都需要一个内网slb负责分发请求，传统的load balancer或者API网关例如kong都可以作为这个对内的请求分发器，但是经过一番调研，Ingress更适合这个工作。 在k8s集群里我们知道使用NodePort和LoadBlancer 类型的">
-<meta name="twitter:image" content="http://yoursite.com/images/traefik-architecture.png">
+<meta name="twitter:image" content="http://yoursite.com/images/ingress1.png">
 
 
 
@@ -339,12 +342,30 @@
       
         <p>公司的应用集群往往不是一个，这些集群需要一个<code>Api Gateway</code>网关对外服务，但是在Gateway和集群之间，往往需要负载均衡器slb，事实上每个集群都需要一个内网slb负责分发请求，传统的load balancer或者API网关例如kong都可以作为这个对内的请求分发器，但是经过一番调研，<code>Ingress</code>更适合这个工作。</p>
 <p>在k8s集群里我们知道使用NodePort和LoadBlancer 类型的 Service 可以实现把应用暴露给外部用户使用，除此之外，Kubernetes 还为我们提供了一个非常重要的资源对象可以用来暴露服务给外部用户，那就是 <code>ingress</code>。对于小规模的应用我们使用<code>NodePort</code>或许能够满足我们的需求，但是当你的应用越来越多的时候，会发现对于 NodePort 的管理就非常麻烦了，这个时候使用 ingress 就非常方便了，可以避免管理大量的 Port。</p>
-<h3 id="Ingress简介"><a href="#Ingress简介" class="headerlink" title="Ingress简介"></a>Ingress简介</h3><p>我们知道service的变现形式是IP:Port，即工作在TCP/IP层，而对于基于HTTP的服务来说，不同的URL地址经常对应到不同的后端服务，这些应用层的转发机制仅通过service机制是无法实现的。</p>
+<h3 id="使用ClusterIP服务"><a href="#使用ClusterIP服务" class="headerlink" title="使用ClusterIP服务"></a>使用ClusterIP服务</h3><p>我们有两个 worker 节点，有两个服务 <strong>service-nginx</strong> 和 <strong>service-python</strong>，它们指向不同的 pods。这两个服务没有被调度到任何特定的节点上，也就是在任何节点上都有可能，如下图所示：</p>
+<p><img src="/images/ingress1.png" alt="clusterIP"></p>
+<p>在集群内部我们可以通过他们的 Service 服务来请求到 Nginx pods 和 Python pods 上去，现在我们想让这些服务也能从集群外部进行访问，我们就需要将这些服务转换为 LoadBalancer 服务。</p>
+<h3 id="使用LoadBalancer-服务"><a href="#使用LoadBalancer-服务" class="headerlink" title="使用LoadBalancer 服务"></a>使用LoadBalancer 服务</h3><p>我们将上面的 ClusterIP 服务转换为 LoadBalancer 服务，可以创建两个外部负载均衡器，将请求重定向到我们的节点 IP，然后重定向到内部的 ClusterIP 服务。</p>
+<p><img src="/images/ingress2.png" alt="loadBalancer"></p>
+<p>我们可以看到两个 LoadBalancers 都有自己的 IP，如果我们向 LoadBalancer <code>22.33.44.55</code> 发送请求，它请被重定向到我们的内部的 <strong>service-nginx</strong> 服务去。如果发送请求到 77.66.55.44，它将被重定向到我们的内部的 <strong>service-python</strong> 服务。</p>
+<p>这个确实很方便，但是要知道 IP 地址是比较稀有的，而且价格可不便宜。想象下我们 Kubernetes 集群中不只是两个服务，有很多的话，我们为这些服务创建 LoadBalancers 成本是不是就成倍增加了。</p>
+<p>那么是否有另一种解决方案可以让我们只使用一个 LoadBalancer 就可以把请求转发给我们的内部服务呢？</p>
+<h3 id="配置Nginx-代理服务"><a href="#配置Nginx-代理服务" class="headerlink" title="配置Nginx 代理服务"></a>配置Nginx 代理服务</h3><p>我们知道 Nginx 可以作为一个代理使用，所以我们可以很容易想到运行一个 Nginx 来代理我们的服务。如下图所示，我们新增了一个名为 <strong>service-nginx-proxy</strong> 的新服务，它实际上是我们唯一的一个 LoadBalancer 服务。service-nginx-proxy 仍然会指向一个或多个 <strong>Nginx-pod-endpoints</strong>（为了简单没有在图上标识），之前的另外两个服务转换为简单的 ClusterIP 服务了。</p>
+<p><img src="/images/ingress3.png" alt="nginx"></p>
+<p>可以看到我们只分配了一个 IP 地址为 <code>11.22.33.44</code> 的负载均衡器，对于不同的 http 请求路径我们用黄色来进行标记，他们的目标是一致的，只是包含的不同的请求 URL。</p>
+<p><strong>service-nginx-proxy</strong> 服务会根据请求的 URL 来决定他们应该将请求重定向到哪个服务去。</p>
+<p>在上图中我们有两个背后的服务，分别用红色和蓝色进行了标记，红色会重定向到 <strong>service-nginx</strong> 服务，蓝色重定向到 <strong>service-python</strong> 服务。对应的 Nginx 代理配置如下所示：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">location /folder &#123;</span><br><span class="line">    proxy_pass http://service-nginx:3001;</span><br><span class="line">&#125;</span><br><span class="line">location /other &#123;</span><br><span class="line">    proxy_pass http://service-python:3002;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>只是目前我们需要去手动配置 <strong>service-nginx-proxy</strong> 服务，比如新增了一个请求路径需要路由到其他服务去，我们就需要去重新配置 Nginx 的配置让其生效，但是这个确实是一个可行的解决方案，但是并不能应用于生产。我们还是希望少去人工操作。</p>
+<p>而 Kubernetes Ingress 就是为了让我们的配置更加容易、更加智能、更容易管理出现的，所以在 Kubernetes 集群中我们会用 Ingress 来代替上面的手动配置的方式将服务暴露到集群外去。</p>
+<h3 id="使用-Kubernetes-Ingress"><a href="#使用-Kubernetes-Ingress" class="headerlink" title="使用 Kubernetes Ingress"></a>使用 Kubernetes Ingress</h3><p>现在我们将上面手动配置代理的方式转换为 Kubernetes Ingress 的方式，如下图所示，我们只是使用了一个预先配置好的 Nginx（Ingress），它已经为我们做了所有的代理重定向工作，这为我们节省了大量的手动配置工作了。</p>
+<p><img src="/images/ingress4.png" alt="ingress"></p>
+<h3 id="优雅的Ingress"><a href="#优雅的Ingress" class="headerlink" title="优雅的Ingress"></a>优雅的Ingress</h3><p>我们知道service的变现形式是IP:Port，即工作在TCP/IP层，而对于基于HTTP的服务来说，不同的URL地址经常对应到不同的后端服务，这些应用层的转发机制仅通过service机制是无法实现的。</p>
 <p><code>Ingress</code>其实就是从 kuberenets 集群外部访问集群的一个入口，将外部的请求转发到集群内不同的 Service 上，其实就相当于 nginx负载均衡代理服务器，Ingress 实际上就相当于一个带有服务发现功能的Nginx，服务发现Ingress自己已经实现了，然后再加上一个域名规则定义，路由信息的刷新需要一个靠 <code>Ingress controller</code> 来提供。</p>
 <p>Ingress controller 可以理解为一个监听器，通过不断地与 kube-apiserver 打交道，实时的感知后端 service、pod 的变化，当得到这些变化信息后，Ingress controller 再结合 Ingress 的配置，更新反向代理负载均衡器，达到服务发现的作用。现在可以供大家使用的 Ingress controller 有很多，比如 <a href="https://traefik.io/" target="_blank" rel="noopener">traefik</a>、<a href="https://kubernetes.github.io/ingress-nginx/" target="_blank" rel="noopener">nginx-controller</a>、<a href="https://konghq.com/blog/kubernetes-ingress-controller-for-kong/" target="_blank" rel="noopener">Kubernetes Ingress Controller for Kong</a>、<a href="https://github.com/jcmoraisjr/haproxy-ingress" target="_blank" rel="noopener">HAProxy Ingress controller</a>，现在普遍用得较多的是 traefik 和 nginx-controller，traefik 的性能较 nginx-controller 差，但是配置使用要简单许多。</p>
 <p>简单来说，使用Ingress进行负载分发时，Ingress Controller基于Ingress规则将客户端请求直接转发到Service对应的后端Endpoint上，这样会跳过kube-proxy的转发功能，kube-proxy不再起作用。</p>
-<h3 id="Traefik"><a href="#Traefik" class="headerlink" title="Traefik"></a>Traefik</h3><p>Traefik 是一款开源的反向代理与负载均衡工具。它最大的优点是能够与常见的微服务系统直接整合，可以实现自动化动态配置。</p>
-<p><img src="/images/traefik-architecture.png" alt="traefix"></p>
+<h3 id="参考资料："><a href="#参考资料：" class="headerlink" title="参考资料："></a>参考资料：</h3><p><a href="https://www.qikqiak.com/post/visually-explained-k8s-ingress/" target="_blank" rel="noopener">阳明的博客:https://www.qikqiak.com/post/visually-explained-k8s-ingress/</a></p>
 
       
     </div>
@@ -375,7 +396,7 @@
   <p><span>本文标题:</span><a href="/2020/10/22/ingress/">深入理解Kubernetes之Ingress</a></p>
   <p><span>文章作者:</span><a href="/" title="访问 Wxning 的个人博客">Wxning</a></p>
   <p><span>发布时间:</span>2020年10月22日 - 09:10</p>
-  <p><span>最后更新:</span>2020年10月31日 - 17:10</p>
+  <p><span>最后更新:</span>2020年11月12日 - 10:11</p>
   <p><span>原始链接:</span><a href="/2020/10/22/ingress/" title="深入理解Kubernetes之Ingress">http://yoursite.com/2020/10/22/ingress/</a>
     <span class="copy-path" title="点击复制文章链接"><i class="fa fa-clipboard" data-clipboard-text="http://yoursite.com/2020/10/22/ingress/" aria-label="复制成功！"></i></span>
   </p>
@@ -577,7 +598,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#Ingress简介"><span class="nav-number">1.</span> <span class="nav-text">Ingress简介</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Traefik"><span class="nav-number">2.</span> <span class="nav-text">Traefik</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#使用ClusterIP服务"><span class="nav-number">1.</span> <span class="nav-text">使用ClusterIP服务</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#使用LoadBalancer-服务"><span class="nav-number">2.</span> <span class="nav-text">使用LoadBalancer 服务</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#配置Nginx-代理服务"><span class="nav-number">3.</span> <span class="nav-text">配置Nginx 代理服务</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#使用-Kubernetes-Ingress"><span class="nav-number">4.</span> <span class="nav-text">使用 Kubernetes Ingress</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#优雅的Ingress"><span class="nav-number">5.</span> <span class="nav-text">优雅的Ingress</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#参考资料："><span class="nav-number">6.</span> <span class="nav-text">参考资料：</span></a></li></ol></div>
             
 
           </div>
