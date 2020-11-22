@@ -90,7 +90,8 @@
 <meta property="og:image" content="http://yoursite.com/images/pod3.png">
 <meta property="og:image" content="http://yoursite.com/images/pod2.png">
 <meta property="og:image" content="http://yoursite.com/images/pod1.jpg">
-<meta property="og:updated_time" content="2020-11-08T11:55:04.006Z">
+<meta property="og:image" content="http://yoursite.com/images/pod5.png">
+<meta property="og:updated_time" content="2020-11-22T12:51:55.789Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="深入理解Kubernetes之Pod">
 <meta name="twitter:description" content="学了好久的kubernetes，应该做个总结了！下一代分布式架构的王者—kubernetes！ PodPod是Kubernetes最重要的基本概念，它是一组紧密关联的容器集合，它们共享IPC、存储、网络资源 和 namespace，是 Kubernetes 调度的基本单位。Pod 的设计理念是支持多个容器在一个 Pod 中共享网络和文件系统，可以通过进程间通信和文件共享这种简单高效的方式组合完成服">
@@ -523,6 +524,15 @@
 <li>Secret 支持 Base64 加密</li>
 <li>Secret 分为 kubernetes.io/service-account-token、kubernetes.io/dockerconfigjson、Opaque 三种类型，而 Configmap 不区分类型</li>
 </ul>
+<h2 id="Pod工作流"><a href="#Pod工作流" class="headerlink" title="Pod工作流"></a>Pod工作流</h2><p>我们创建<code>Pod</code>的时候是怎样创建成功<code>Pod</code>的呢？</p>
+<p><img src="/images/pod5.png" alt="pod"></p>
+<ul>
+<li>第一步通过<code>apiserver REST API</code>创建一个<code>Pod</code></li>
+<li>然后<code>apiserver</code>接收到数据后将数据写入到<code>etcd</code>中</li>
+<li>由于<code>kube-scheduler</code>通过<code>apiserver watch API</code>一直在监听资源的变化，这个时候发现有一个新的<code>Pod</code>，但是这个时候该<code>Pod</code>还没和任何<code>Node</code>节点进行绑定，所以<code>kube-scheduler</code>就经过一系列复杂的调度策略，选择出一个合适的<code>Node</code>节点，将该<code>Pod</code>和该目标<code>Node</code>进行绑定，当然也会更新到<code>etcd</code>中去的</li>
+<li>这个时候一样的目标<code>Node</code>节点上的<code>kubelet</code>通过<code>apiserver watch API</code>检测到有一个新的<code>Pod</code>被调度过来了，他就将该<code>Pod</code>的相关数据传递给后面的容器运行时(<code>container runtime</code>)，比如<code>Docker</code>，让他们去运行该<code>Pod</code></li>
+<li>而且<code>kubelet</code>还会通过<code>container runtime</code>获取<code>Pod</code>的状态，然后更新到<code>apiserver</code>中，当然最后也是写入到<code>etcd</code>中去的。</li>
+</ul>
 <p>好！这就是Pod的深入理解内容，轻松又愉快的写完了！</p>
 
       
@@ -554,7 +564,7 @@
   <p><span>本文标题:</span><a href="/2020/08/16/k8s-pod/">深入理解Kubernetes之Pod</a></p>
   <p><span>文章作者:</span><a href="/" title="访问 Wxning 的个人博客">Wxning</a></p>
   <p><span>发布时间:</span>2020年08月16日 - 20:08</p>
-  <p><span>最后更新:</span>2020年11月08日 - 19:11</p>
+  <p><span>最后更新:</span>2020年11月22日 - 20:11</p>
   <p><span>原始链接:</span><a href="/2020/08/16/k8s-pod/" title="深入理解Kubernetes之Pod">http://yoursite.com/2020/08/16/k8s-pod/</a>
     <span class="copy-path" title="点击复制文章链接"><i class="fa fa-clipboard" data-clipboard-text="http://yoursite.com/2020/08/16/k8s-pod/" aria-label="复制成功！"></i></span>
   </p>
@@ -764,7 +774,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Pod"><span class="nav-number">1.</span> <span class="nav-text">Pod</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#静态-Pod"><span class="nav-number">2.</span> <span class="nav-text">静态 Pod</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Pod-Hook"><span class="nav-number">3.</span> <span class="nav-text">Pod Hook</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Pod-健康检查"><span class="nav-number">4.</span> <span class="nav-text">Pod 健康检查</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#初始化容器"><span class="nav-number">5.</span> <span class="nav-text">初始化容器</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Pod的配置管理ConfigMap"><span class="nav-number">6.</span> <span class="nav-text">Pod的配置管理ConfigMap</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Pod安全的配置管理Secret"><span class="nav-number">7.</span> <span class="nav-text">Pod安全的配置管理Secret</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Pod"><span class="nav-number">1.</span> <span class="nav-text">Pod</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#静态-Pod"><span class="nav-number">2.</span> <span class="nav-text">静态 Pod</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Pod-Hook"><span class="nav-number">3.</span> <span class="nav-text">Pod Hook</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Pod-健康检查"><span class="nav-number">4.</span> <span class="nav-text">Pod 健康检查</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#初始化容器"><span class="nav-number">5.</span> <span class="nav-text">初始化容器</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Pod的配置管理ConfigMap"><span class="nav-number">6.</span> <span class="nav-text">Pod的配置管理ConfigMap</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Pod安全的配置管理Secret"><span class="nav-number">7.</span> <span class="nav-text">Pod安全的配置管理Secret</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Pod工作流"><span class="nav-number">8.</span> <span class="nav-text">Pod工作流</span></a></li></ol></div>
             
 
           </div>
