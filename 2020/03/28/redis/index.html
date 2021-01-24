@@ -100,7 +100,7 @@
 <meta property="og:image" content="http://yoursite.com/images/redis-4.png">
 <meta property="og:image" content="http://yoursite.com/images/redis-5.png">
 <meta property="og:image" content="http://yoursite.com/images/redis-7.png">
-<meta property="og:updated_time" content="2020-05-11T07:25:04.656Z">
+<meta property="og:updated_time" content="2021-01-24T08:27:16.356Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="redis">
 <meta name="twitter:description" content="Redis介绍Redis 是完全开源免费的，遵守BSD协议，是一个高性能的key-value数据库。 NoSQL数据库的产生就是为了解决大规模数据集合，多重数据种类带来的挑战。 Redis 与其他 key - value 缓存产品有以下三个特点：  Redis支持数据的持久化，可以将内存中的数据保存在磁盘中，重启的时候可以再次加载进行使用。 Redis不仅仅支持简单的key-value类型的数据，">
@@ -522,7 +522,42 @@
 <ol start="3">
 <li>执行命令save或者bgsave</li>
 </ol>
-<p>save只管保存，其他不管，全部阻塞，save是使用主进程去持久化，此时是不能够操作redis的。<code>bgsave</code>命令redis会在后台异步进行持久化</p>
+<p><code>save</code>命令只管保存，其他不管，全部阻塞，save是使用主进程去持久化，此时是不能够操作redis的，它是一个同步操作。</p>
+<p><code>bgsave</code>命令redis会在后台异步进行持久化，过程是会fork一个子进程，这个进程再创建RDB文件</p>
+<table>
+<thead>
+<tr>
+<th>命令</th>
+<th>save</th>
+<th>bgsave</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>IO类型</td>
+<td>同步</td>
+<td>异步</td>
+</tr>
+<tr>
+<td>阻塞？</td>
+<td>是</td>
+<td>是（阻塞发生在fork）</td>
+</tr>
+<tr>
+<td>复杂度</td>
+<td>O(n)</td>
+<td>O(n)</td>
+</tr>
+<tr>
+<td>优点</td>
+<td>不会消耗额外内存</td>
+<td>不阻塞客户端命令</td>
+</tr>
+<tr>
+<td>缺点</td>
+<td>阻塞客户端命令</td>
+<td>需要fork消耗内存</td>
+</tr>
+</tbody></table>
 <h3 id="优点"><a href="#优点" class="headerlink" title="优点"></a>优点</h3><p>他会生成多个数据文件，每个数据文件分别都代表了某一时刻<strong>Redis</strong>里面的数据，这种方式，有没有觉得很适合做<strong>冷备</strong>，完整的数据运维设置定时任务，定时同步到远端的服务器，比如阿里的云服务，这样一旦线上挂了，你想恢复多少分钟之前的数据，就去远端拷贝一份之前的数据就好了。</p>
 <p><strong>RDB</strong>对<strong>Redis</strong>的性能影响非常小，是因为在同步数据的时候他只是<strong>fork</strong>了一个子进程去做持久化的，而且他在数据恢复的时候速度比<strong>AOF</strong>来的快。</p>
 <h3 id="缺点"><a href="#缺点" class="headerlink" title="缺点"></a>缺点</h3><p><strong>RDB</strong>都是快照文件，都是默认五分钟甚至更久的时间才会生成一次，这意味着你这次同步到下次同步这中间五分钟的数据都很可能全部丢失掉。<strong>AOF</strong>则最多丢一秒的数据，<strong>数据完整性</strong>上高下立判。</p>
@@ -700,7 +735,7 @@
   <p><span>本文标题:</span><a href="/2020/03/28/redis/">redis</a></p>
   <p><span>文章作者:</span><a href="/" title="访问 Wxning 的个人博客">Wxning</a></p>
   <p><span>发布时间:</span>2020年03月28日 - 23:03</p>
-  <p><span>最后更新:</span>2020年05月11日 - 15:05</p>
+  <p><span>最后更新:</span>2021年01月24日 - 16:01</p>
   <p><span>原始链接:</span><a href="/2020/03/28/redis/" title="redis">http://yoursite.com/2020/03/28/redis/</a>
     <span class="copy-path" title="点击复制文章链接"><i class="fa fa-clipboard" data-clipboard-text="http://yoursite.com/2020/03/28/redis/" aria-label="复制成功！"></i></span>
   </p>
@@ -930,7 +965,7 @@
 
     <footer id="footer" class="footer">
       <div class="footer-inner">
-        <div class="copyright">&copy; <span itemprop="copyrightYear">2020</span>
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2021</span>
   <span class="with-love">
     <i class="fa fa-user"></i>
   </span>
