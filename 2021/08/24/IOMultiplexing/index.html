@@ -79,15 +79,20 @@
 
 
 
+<meta name="description" content="操作系统上的 I/O 是用户空间和内核空间的数据交互，通常包含以下两个步骤：   等待网络数据到达网卡(读就绪)/等待网卡可写(写就绪) –&amp;gt; 读取/写入到内核缓冲区 从内核缓冲区复制数据 –&amp;gt; 用户空间(读)/从用户空间复制数据 -&amp;gt; 内核缓冲区(写)   而判定一个 I/O 模型是同步还是异步，主要看第二步：数据在用户和内核空间之间复制的时候是不是会阻塞当前进程，如果会，则是">
 <meta name="keywords" content="golang,golang source">
 <meta property="og:type" content="article">
-<meta property="og:title" content="深入理解Golang NetPoller">
+<meta property="og:title" content="深入理解Golang网络轮询器NetPoller">
 <meta property="og:url" content="http://yoursite.com/2021/08/24/IOMultiplexing/index.html">
 <meta property="og:site_name" content="Wxning">
+<meta property="og:description" content="操作系统上的 I/O 是用户空间和内核空间的数据交互，通常包含以下两个步骤：   等待网络数据到达网卡(读就绪)/等待网卡可写(写就绪) –&amp;gt; 读取/写入到内核缓冲区 从内核缓冲区复制数据 –&amp;gt; 用户空间(读)/从用户空间复制数据 -&amp;gt; 内核缓冲区(写)   而判定一个 I/O 模型是同步还是异步，主要看第二步：数据在用户和内核空间之间复制的时候是不是会阻塞当前进程，如果会，则是">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:updated_time" content="2021-08-24T09:13:51.183Z">
+<meta property="og:image" content="http://yoursite.com/images/io-1.png">
+<meta property="og:updated_time" content="2021-08-25T10:38:41.793Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="深入理解Golang NetPoller">
+<meta name="twitter:title" content="深入理解Golang网络轮询器NetPoller">
+<meta name="twitter:description" content="操作系统上的 I/O 是用户空间和内核空间的数据交互，通常包含以下两个步骤：   等待网络数据到达网卡(读就绪)/等待网卡可写(写就绪) –&amp;gt; 读取/写入到内核缓冲区 从内核缓冲区复制数据 –&amp;gt; 用户空间(读)/从用户空间复制数据 -&amp;gt; 内核缓冲区(写)   而判定一个 I/O 模型是同步还是异步，主要看第二步：数据在用户和内核空间之间复制的时候是不是会阻塞当前进程，如果会，则是">
+<meta name="twitter:image" content="http://yoursite.com/images/io-1.png">
 
 
 
@@ -123,7 +128,7 @@
 
 
 
-  <title>深入理解Golang NetPoller | Wxning</title>
+  <title>深入理解Golang网络轮询器NetPoller | Wxning</title>
   
 
 
@@ -278,7 +283,7 @@
 
         
         
-          <h1 class="post-title" itemprop="name headline">深入理解Golang NetPoller</h1>
+          <h1 class="post-title" itemprop="name headline">深入理解Golang网络轮询器NetPoller</h1>
         
 
         <div class="post-meta">
@@ -355,7 +360,73 @@
       
 
       
-        
+        <p>操作系统上的 I/O 是用户空间和内核空间的数据交互，通常包含以下两个步骤：</p>
+<blockquote>
+<ol>
+<li>等待网络数据到达网卡(读就绪)/等待网卡可写(写就绪) –&gt; 读取/写入到内核缓冲区</li>
+<li>从内核缓冲区复制数据 –&gt; 用户空间(读)/从用户空间复制数据 -&gt; 内核缓冲区(写)</li>
+</ol>
+</blockquote>
+<p>而判定一个 I/O 模型是同步还是异步，主要看第二步：数据在用户和内核空间之间复制的时候是不是会阻塞当前进程，如果会，则是同步 I/O，否则，就是异步 I/O。</p>
+<h2 id="阻塞I-O与非阻塞I-O"><a href="#阻塞I-O与非阻塞I-O" class="headerlink" title="阻塞I/O与非阻塞I/O"></a>阻塞I/O与非阻塞I/O</h2><p>当我们通过 <code>read</code> 或者 <code>write</code> 等系统调用读写文件或者网络时，应用程序会被阻塞，当我们执行 <code>read</code> 系统调用时，应用程序会从用户态陷入内核态，内核会检查文件描述符是否可读，当文件描述符中存在数据时，操作系统内核会将准备好的数据拷贝给应用程序并交回控制权。</p>
+<p>非阻塞I/O就是所有 I/O 操作都是立刻返回而不会阻塞当前用户进程，当进程把一个文件描述符设置成非阻塞时，执行 <code>read</code> 和 <code>write</code> 等 I/O 操作会立刻返回，下面是C语言代码，<a href="https://github.com/torvalds/linux/blob/f757165705e92db62f85a1ad287e9251d1f2cd82/fs/fcntl.c#L448" target="_blank" rel="noopener"><code>fcntl</code></a> 为我们提供了操作文件描述符的能力，我们可以通过它修改文件描述符的特性。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">int</span> flags = fcntl(fd, F_GETFL, <span class="number">0</span>);</span><br><span class="line">fcntl(fd, F_SETFL, flags | O_NONBLOCK);</span><br></pre></td></tr></table></figure>
+
+<p>当我们将文件描述符修改成非阻塞后，读写文件会经历以下流程：</p>
+<p><img src="/images/io-1.png" alt="io"></p>
+<p>如果 kernel 中的数据还没有准备好，那么它并不会 block 用户进程，而是立刻返回一个 <code>EAGAIN</code> error，<code>EAGAIN</code> 意味着该文件描述符还在等待缓冲区中的数据，随后，应用程序会不断轮询调用 <code>read</code> 直到它的返回值大于 0，这时应用程序就可以对读取操作系统缓冲区中的数据并进行操作。从用户进程角度讲 ，它发起一个 read 操作后，并不需要等待，而是马上就得到了一个结果。用户进程判断结果是一个 error 时，它就知道数据还没有准备好，于是它可以再次发送 read 操作。一旦 kernel 中的数据准备好了，并且又再次收到了用户进程的 system call，那么它马上就将数据拷贝到了用户内存，然后返回。进程使用非阻塞的 I/O 操作时，可以在等待过程中执行其他任务，提高 CPU 的利用率。</p>
+<h2 id="I-O多路复用"><a href="#I-O多路复用" class="headerlink" title="I/O多路复用"></a>I/O多路复用</h2><p><strong>所谓 I/O 多路复用指的就是 select/poll/epoll 这一系列的多路选择器：支持单一线程同时监听多个文件描述符（I/O 事件），阻塞等待，并在其中某个文件描述符可读写时收到通知。 I/O 复用其实复用的不是 I/O 连接，而是复用线程，让一个 thread of control 能够处理多个连接（I/O 事件）。</strong></p>
+<h2 id="select-amp-poll"><a href="#select-amp-poll" class="headerlink" title="select &amp; poll"></a>select &amp; poll</h2><p>select 是 epoll 之前 Linux 使用的 I/O 事件驱动技术。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"> <span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/select.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"> <span class="comment">/* According to earlier standards */</span></span><br><span class="line"> <span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/time.h&gt;</span></span></span><br><span class="line"> <span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/types.h&gt;</span></span></span><br><span class="line"> <span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;unistd.h&gt;</span></span></span><br><span class="line"> </span><br><span class="line"> <span class="comment">// nfds是监听的文件描述符的集合中的最大文件描述符加1。readset是读事件集合，writeset是写事件集合，exceptset是异常事件集合，若如果对某一个集合不感兴趣，就可以把它设为NULL</span></span><br><span class="line"> <span class="comment">// 返回值：若有就绪描述符返回其数目，若超时则为0，若出错则为-1</span></span><br><span class="line"> <span class="function"><span class="keyword">int</span> <span class="title">select</span><span class="params">(<span class="keyword">int</span> nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, struct timeval *timeout)</span></span>;</span><br><span class="line"> </span><br><span class="line"><span class="comment">// 和 select 紧密结合的四个宏：</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">FD_CLR</span><span class="params">(<span class="keyword">int</span> fd, fd_set *<span class="built_in">set</span>)</span></span>; <span class="comment">// 在文件描述符集合中删除一个文件描述符</span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">FD_ISSET</span><span class="params">(<span class="keyword">int</span> fd, fd_set *<span class="built_in">set</span>)</span></span>; <span class="comment">//指定的文件描述符是否在该集合中，如fd在文件描述符集中，返回非0值，否则返回0</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">FD_SET</span><span class="params">(<span class="keyword">int</span> fd, fd_set *<span class="built_in">set</span>)</span></span>; <span class="comment">// 在文件描述符集合中增加一个新的文件描述符</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">FD_ZERO</span><span class="params">(fd_set *<span class="built_in">set</span>)</span></span>; <span class="comment">// 清空文件描述符集</span></span><br></pre></td></tr></table></figure>
+
+<p>下面是一个<code>select</code>例子，创建 5 个子进程，每个进程连接到服务器并向服务器发送消息，服务器进程使用 accept 为每个客户端创建不同的文件描述符，<code>select</code> 中的第一个参数应该是三个集合中任何一个中编号最大的文件描述符加上 1。创建一组所有文件描述符，调用 <code>select</code> 并在返回时检查哪个文件描述符已准备好读取。<code>select</code> 返回时， 将集合更改为仅包含准备好的文件描述符，因此我们需要在每次迭代时再次构建该集合。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/types.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/socket.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;netinet/in.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;wait.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;signal.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;errno.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/select.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/time.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;unistd.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> MAXBUF 256</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">child_process</span><span class="params">(<span class="keyword">void</span>)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  sleep(<span class="number">2</span>);</span><br><span class="line">  <span class="keyword">char</span> msg[MAXBUF];</span><br><span class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">sockaddr_in</span> <span class="title">addr</span> = &#123;</span><span class="number">0</span>&#125;;</span><br><span class="line">  <span class="keyword">int</span> n, sockfd,num=<span class="number">1</span>;</span><br><span class="line">  srandom(getpid());</span><br><span class="line">  <span class="comment">/* Create socket and connect to server */</span></span><br><span class="line">  sockfd = socket(AF_INET, SOCK_STREAM, <span class="number">0</span>);</span><br><span class="line">  addr.sin_family = AF_INET;</span><br><span class="line">  addr.sin_port = htons(<span class="number">2000</span>);</span><br><span class="line">  addr.sin_addr.s_addr = inet_addr(<span class="string">"127.0.0.1"</span>);</span><br><span class="line"></span><br><span class="line">  connect(sockfd, (struct sockaddr*)&amp;addr, <span class="keyword">sizeof</span>(addr));</span><br><span class="line"></span><br><span class="line">  <span class="built_in">printf</span>(<span class="string">"child &#123;%d&#125; connected \n"</span>, getpid());</span><br><span class="line">  <span class="keyword">while</span>(<span class="number">1</span>)&#123;</span><br><span class="line">        <span class="keyword">int</span> sl = (random() % <span class="number">10</span> ) +  <span class="number">1</span>;</span><br><span class="line">        num++;</span><br><span class="line">     	sleep(sl);</span><br><span class="line">  	<span class="built_in">sprintf</span> (msg, <span class="string">"Test message %d from client %d"</span>, num, getpid());</span><br><span class="line">  	n = write(sockfd, msg, <span class="built_in">strlen</span>(msg));	<span class="comment">/* Send message */</span></span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  <span class="keyword">char</span> buffer[MAXBUF];</span><br><span class="line">  <span class="keyword">int</span> fds[<span class="number">5</span>];</span><br><span class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">sockaddr_in</span> <span class="title">addr</span>;</span></span><br><span class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">sockaddr_in</span> <span class="title">client</span>;</span></span><br><span class="line">  <span class="comment">// 用于记录最大的fd位置</span></span><br><span class="line">  <span class="keyword">int</span> addrlen, n,i,max=<span class="number">0</span>;;</span><br><span class="line">  <span class="keyword">int</span> sockfd, commfd;</span><br><span class="line">  fd_set rset;</span><br><span class="line">  <span class="keyword">for</span>(i=<span class="number">0</span>;i&lt;<span class="number">5</span>;i++)</span><br><span class="line">  &#123;</span><br><span class="line">  	<span class="keyword">if</span>(fork() == <span class="number">0</span>)</span><br><span class="line">  	&#123;</span><br><span class="line">  		child_process();</span><br><span class="line">  		<span class="built_in">exit</span>(<span class="number">0</span>);</span><br><span class="line">  	&#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  sockfd = socket(AF_INET, SOCK_STREAM, <span class="number">0</span>);</span><br><span class="line">  <span class="built_in">memset</span>(&amp;addr, <span class="number">0</span>, <span class="keyword">sizeof</span> (addr));</span><br><span class="line">  addr.sin_family = AF_INET;</span><br><span class="line">  addr.sin_port = htons(<span class="number">2000</span>);</span><br><span class="line">  addr.sin_addr.s_addr = INADDR_ANY;</span><br><span class="line">  bind(sockfd,(struct sockaddr*)&amp;addr ,<span class="keyword">sizeof</span>(addr));</span><br><span class="line">  listen (sockfd, <span class="number">5</span>); </span><br><span class="line">	<span class="comment">// 创建5个文件描述符</span></span><br><span class="line">  <span class="keyword">for</span> (i=<span class="number">0</span>;i&lt;<span class="number">5</span>;i++) </span><br><span class="line">  &#123;</span><br><span class="line">    <span class="built_in">memset</span>(&amp;client, <span class="number">0</span>, <span class="keyword">sizeof</span> (client));</span><br><span class="line">    addrlen = <span class="keyword">sizeof</span>(client);</span><br><span class="line">    <span class="comment">// 声明文件描述符</span></span><br><span class="line">    fds[i] = accept(sockfd,(struct sockaddr*)&amp;client, &amp;addrlen);</span><br><span class="line">    <span class="keyword">if</span>(fds[i] &gt; max)</span><br><span class="line">    	max = fds[i];</span><br><span class="line">  &#125;</span><br><span class="line">  </span><br><span class="line">  <span class="keyword">while</span>(<span class="number">1</span>)&#123;</span><br><span class="line">  <span class="comment">// 由于select后的rset会被置位，所有每次循环需要对rset置空，然后再将fds赋给rset</span></span><br><span class="line">	FD_ZERO(&amp;rset);</span><br><span class="line">  	<span class="keyword">for</span> (i = <span class="number">0</span>; i&lt; <span class="number">5</span>; i++ ) &#123;</span><br><span class="line">  		FD_SET(fds[i],&amp;rset);</span><br><span class="line">  	&#125;</span><br><span class="line"></span><br><span class="line">  <span class="built_in">puts</span>(<span class="string">"round again"</span>);</span><br><span class="line">  <span class="comment">// rset是一个bitmap  </span></span><br><span class="line">  <span class="comment">// 阻塞，每次需要把fd从用户态拷贝到内核态 </span></span><br><span class="line">  <span class="comment">// 当有I/O数据时，select返回，并且将rset置位，没数据的位会被清空  </span></span><br><span class="line">	select(max+<span class="number">1</span>, &amp;rset, <span class="literal">NULL</span>, <span class="literal">NULL</span>, <span class="literal">NULL</span>);</span><br><span class="line">  <span class="comment">// 遍历，判断哪个fd被置位</span></span><br><span class="line">	<span class="keyword">for</span>(i=<span class="number">0</span>;i&lt;<span class="number">5</span>;i++) &#123;</span><br><span class="line">		<span class="keyword">if</span> (FD_ISSET(fds[i], &amp;rset))&#123;</span><br><span class="line">			<span class="built_in">memset</span>(buffer,<span class="number">0</span>,MAXBUF);</span><br><span class="line">      <span class="comment">// 读数据</span></span><br><span class="line">			read(fds[i], buffer, MAXBUF);</span><br><span class="line">			<span class="built_in">puts</span>(buffer);</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;	</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>理解 select 的关键在于理解 <code>fd_set</code>，为说明方便，取 <code>fd_set</code> 长度为 1 字节，fd_set 中的每一 bit 可以对应一个文件描述符 <code>fd</code>，则 1 字节长的 <code>fd_set</code> 最大可以对应 8 个 fd。select 的调用过程如下：</p>
+<blockquote>
+<ol>
+<li>执行 FD_ZERO(&amp;set), 则 set 用位表示是 <code>0000,0000</code></li>
+<li>若 fd＝5, 执行 FD_SET(fd, &amp;set); 后 set 变为 0001,0000(第 5 位置为 1)</li>
+<li>再加入 fd＝2, fd=1，则 set 变为 <code>0001,0011</code></li>
+<li>执行 select(6, &amp;set, 0, 0, 0) 阻塞等待（这里max是5+1，这是因为set最大只能是5，内核没必要把所有set位都取出来，只需要最大到6的位置）</li>
+<li>若 fd=1, fd=2 上都发生可读事件，则 select 返回，此时 set 变为 <code>0000,0011</code> (注意：没有事件发生的 fd=5 被清空)</li>
+</ol>
+</blockquote>
+<p><strong>根据上面例子我们可以得出<code>select</code>的特点：</strong></p>
+<hr>
+<blockquote>
+<ul>
+<li>可监控的文件描述符个数取决于 sizeof(fd_set) 的值。假设服务器上 sizeof(fd_set)＝512，每 bit 表示一个文件描述符，则服务器上支持的最大文件描述符是 512*8=4096。</li>
+<li>将 fd 加入 select 监控集的同时，还要再使用一个数据结构 array 保存放到 select 监控集中的 fd，一是用于在 select 返回后，array 作为源数据和 fd_set 进行 FD_ISSET 判断。二是 select 返回后会把以前加入的但并无事件发生的 fd 清空，则每次开始 select 前都要重新从 array 取得 fd 逐一加入（FD_ZERO 最先），扫描 array 的同时取得 fd 最大值 maxfd，用于 select 的第一个参数，可见 select 模型必须在 select 前循环 array（加 fd，取 maxfd），select 返回后循环 array（FD_ISSET 判断是否有事件发生）</li>
+<li>select会将rset全量拷贝到内核态，由内核态判读rset是否有数据，这是因为如果由用户态判断，也是交给内核态真正执行，每一个位的判断都需要用户态和内核态的切换，所以select直接将rset拷贝到内核态</li>
+</ul>
+</blockquote>
+<hr>
+<p><strong>所以，select 有如下的缺点：</strong></p>
+<hr>
+<blockquote>
+<ul>
+<li>监听能力有限：使用 32 个整数的 32 位，即 32*32=1024 来标识 fd，最多只能监听 1024 个文件描述符（可调整）</li>
+<li>内存拷贝开销大：每次调用 select，都需要把 fd 集合从用户态拷贝到内核态，这个开销在 fd 很多时会很大</li>
+<li>时间复杂度 𝑂(𝑛)：每次 kernel 都需要线性扫描整个 fd_set，所以随着监控的描述符 fd 数量增长，其 I/O 性能会线性下降，而且，rset不可重用，每次循环都要对rset置空再赋值，性能有损耗</li>
+</ul>
+</blockquote>
+<hr>
+<p>对比<code>select</code>，poll 的实现和 select 非常相似，只是描述 fd 集合的方式不同，poll 使用 pollfd 结构而不是 select 的 fd_set 结构， <code>poll</code> 函数使用链表存储文件描述符，摆脱了 1024 的数量上限。但是同样需要从用户态拷贝所有的 fd 到内核态，也需要线性遍历所有的 fd 集合</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// fds是一个poll函数监听的结构列表，nfds表示fds数组的长度</span></span><br><span class="line"><span class="comment">// 返回值：小于0，表示出错，等于0，表示poll函数等待超时，大于0，表示struct pollfd结构体数组中有多少个非0的revents，也就是这一次调用poll产生事件的描述符的数量。</span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">poll</span> <span class="params">(struct pollfd *fds, <span class="keyword">unsigned</span> <span class="keyword">int</span> nfds, <span class="keyword">int</span> timeout)</span></span>;</span><br></pre></td></tr></table></figure>
+
+<p>与<code>select</code>不同，poll传入的是pollfd结构体数组，所以没有1024个描述符的限制</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">pollfd</span> &#123;</span></span><br><span class="line">      <span class="keyword">int</span> fd; <span class="comment">// 文件描述符</span></span><br><span class="line">      <span class="keyword">short</span> events; <span class="comment">// 关心的事件类型</span></span><br><span class="line">      <span class="keyword">short</span> revents; <span class="comment">// 实际发生了的事件类型</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>事件类型如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">define</span> POLLIN         0x001        <span class="comment">// 有数据可读</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> POLLPRI        0x002        <span class="comment">// 有紧迫数据可读</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> POLLOUT        0x004        <span class="comment">// 现在写数据不会导致阻塞</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta"># <span class="meta-keyword">define</span> POLLRDNORM    0x040        <span class="comment">// 有普通数据可读</span></span></span><br><span class="line"><span class="meta"># <span class="meta-keyword">define</span> POLLRDBAND    0x080        <span class="comment">// 有优先数据可读</span></span></span><br><span class="line"><span class="meta"># <span class="meta-keyword">define</span> POLLWRNORM    0x100        <span class="comment">// 写普通数据不会导致阻塞</span></span></span><br><span class="line"><span class="meta"># <span class="meta-keyword">define</span> POLLWRBAND    0x200        <span class="comment">// 写优先数据不会导致阻塞</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> POLLERR        0x008        <span class="comment">// 发生错误</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> POLLHUP        0x010        <span class="comment">// 挂起</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> POLLNVAL       0x020        <span class="comment">// 无效文件描述符</span></span></span><br></pre></td></tr></table></figure>
+
+<p>当一个文件描述符要同时监听读写事件时，可以写成 events = POLLIN | POLLOUT</p>
+<p>下面是<code>poll</code>的例子，与<code>select</code>用法相似，仍然需要从用户态拷贝所有的 <code>fd</code> 到内核态，也需要线性遍历所有的 <code>fd</code> 集合</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"> <span class="comment">// 5个文件描述符</span></span><br><span class="line"> <span class="keyword">for</span> (i=<span class="number">0</span>;i&lt;<span class="number">5</span>;i++) </span><br><span class="line"> &#123;</span><br><span class="line">   <span class="built_in">memset</span>(&amp;client, <span class="number">0</span>, <span class="keyword">sizeof</span> (client));</span><br><span class="line">   addrlen = <span class="keyword">sizeof</span>(client);</span><br><span class="line">   <span class="comment">// 声明文件描述符</span></span><br><span class="line">   pollfds[i].fd = accept(sockfd,(struct sockaddr*)&amp;client, &amp;addrlen);</span><br><span class="line">   <span class="comment">// events是读事件</span></span><br><span class="line">   pollfds[i].events = POLLIN;</span><br><span class="line"> &#125;</span><br><span class="line"> sleep(<span class="number">1</span>);</span><br><span class="line"> <span class="keyword">while</span>(<span class="number">1</span>)&#123;</span><br><span class="line"> <span class="built_in">puts</span>(<span class="string">"round again"</span>);</span><br><span class="line"> <span class="comment">// 传入pollfd数组，并且数组中有5个元素，50000是超时</span></span><br><span class="line">poll(pollfds, <span class="number">5</span>, <span class="number">50000</span>);</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span>(i=<span class="number">0</span>;i&lt;<span class="number">5</span>;i++) &#123;</span><br><span class="line">   <span class="comment">// 判断revents是否被置位为POLLIN</span></span><br><span class="line">	<span class="keyword">if</span> (pollfds[i].revents &amp; POLLIN)&#123;</span><br><span class="line">     <span class="comment">// 恢复为0</span></span><br><span class="line">		pollfds[i].revents = <span class="number">0</span>;</span><br><span class="line">		<span class="built_in">memset</span>(buffer,<span class="number">0</span>,MAXBUF);</span><br><span class="line">		read(pollfds[i].fd, buffer, MAXBUF);</span><br><span class="line">		<span class="built_in">puts</span>(buffer);</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"> &#125;</span><br></pre></td></tr></table></figure>
+
+<p>与<code>select</code>不同的是，<code>poll</code>不是对bitmap置位，而且改变<code>revents</code>字段（<code>select</code>对bitmap置位导致rset不可重用），这里会对<code>revents</code>字段赋值为<code>POLLIN</code>，即读事件，<code>poll</code>返回后需要对<code>revents</code>字段恢复为0。<code>poll</code>解决了<code>select</code>监听能力受限的问题，也解决了bitmap重用的问题，但是仍然需要内存拷贝以及时间复杂度𝑂(𝑛)的问题。</p>
+<h2 id="epoll"><a href="#epoll" class="headerlink" title="epoll"></a>epoll</h2>
       
     </div>
     
@@ -382,11 +453,11 @@
   <!-- JS库 sweetalert 可修改路径 -->
   <script src="https://cdn.bootcss.com/jquery/2.0.0/jquery.min.js"></script>
   <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
-  <p><span>本文标题:</span><a href="/2021/08/24/IOMultiplexing/">深入理解Golang NetPoller</a></p>
+  <p><span>本文标题:</span><a href="/2021/08/24/IOMultiplexing/">深入理解Golang网络轮询器NetPoller</a></p>
   <p><span>文章作者:</span><a href="/" title="访问 Wxning 的个人博客">Wxning</a></p>
   <p><span>发布时间:</span>2021年08月24日 - 17:08</p>
-  <p><span>最后更新:</span>2021年08月24日 - 17:08</p>
-  <p><span>原始链接:</span><a href="/2021/08/24/IOMultiplexing/" title="深入理解Golang NetPoller">http://yoursite.com/2021/08/24/IOMultiplexing/</a>
+  <p><span>最后更新:</span>2021年08月25日 - 18:08</p>
+  <p><span>原始链接:</span><a href="/2021/08/24/IOMultiplexing/" title="深入理解Golang网络轮询器NetPoller">http://yoursite.com/2021/08/24/IOMultiplexing/</a>
     <span class="copy-path" title="点击复制文章链接"><i class="fa fa-clipboard" data-clipboard-text="http://yoursite.com/2021/08/24/IOMultiplexing/" aria-label="复制成功！"></i></span>
   </p>
   <p><span>许可协议:</span><i class="fa fa-creative-commons"></i> <a rel="license" href="https://creativecommons.org/licenses/by-nc-nd/4.0/" target="_blank" title="Attribution-NonCommercial-NoDerivatives 4.0 International (CC BY-NC-ND 4.0)">署名-非商业性使用-禁止演绎 4.0 国际</a> 转载请保留原文链接及作者。</p>
@@ -499,8 +570,17 @@
       
 
       
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
 
-      <section class="site-overview-wrap sidebar-panel sidebar-panel-active">
+      <section class="site-overview-wrap sidebar-panel">
         <div class="site-overview">
           <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
             
@@ -572,6 +652,22 @@
         </div>
       </section>
 
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#阻塞I-O与非阻塞I-O"><span class="nav-number">1.</span> <span class="nav-text">阻塞I/O与非阻塞I/O</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#I-O多路复用"><span class="nav-number">2.</span> <span class="nav-text">I/O多路复用</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#select-amp-poll"><span class="nav-number">3.</span> <span class="nav-text">select &amp; poll</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#epoll"><span class="nav-number">4.</span> <span class="nav-text">epoll</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
       
 
       

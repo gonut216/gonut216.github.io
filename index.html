@@ -279,7 +279,7 @@
         
           <h1 class="post-title" itemprop="name headline">
                 
-                <a class="post-title-link" href="/2021/08/24/IOMultiplexing/" itemprop="url">深入理解Golang NetPoller</a></h1>
+                <a class="post-title-link" href="/2021/08/24/IOMultiplexing/" itemprop="url">深入理解Golang网络轮询器NetPoller</a></h1>
         
 
         <div class="post-meta">
@@ -353,8 +353,15 @@
       
         
           
-          
-          
+          操作系统上的 I/O 是用户空间和内核空间的数据交互，通常包含以下两个步骤：
+
+
+等待网络数据到达网卡(读就绪)/等待网卡可写(写就绪) –&gt; 读取/写入到内核缓冲区
+从内核缓冲区复制数据 –&gt; 用户空间(读)/从用户空间复制数据 -&gt; 内核缓冲区(写)
+
+
+而判定一个 I/O 模
+          ...
           <!--noindex-->
           <div class="post-button text-center">
             <a class="btn" href="/2021/08/24/IOMultiplexing/#more" rel="contents">
