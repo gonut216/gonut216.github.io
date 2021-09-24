@@ -135,7 +135,7 @@
 <meta property="og:image" content="http://yoursite.com/images/redis-52.jpg">
 <meta property="og:image" content="http://yoursite.com/images/redis-53.jpg">
 <meta property="og:image" content="http://yoursite.com/images/redis-54.jpg">
-<meta property="og:updated_time" content="2021-09-24T08:26:43.515Z">
+<meta property="og:updated_time" content="2021-09-24T08:41:55.699Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="redis知识汇总">
 <meta name="twitter:description" content="Redis单线程优势Redis 是完全开源免费的，遵守BSD协议，是一个高性能的key-value数据库。 NoSQL数据库的产生就是为了解决大规模数据集合，多重数据种类带来的挑战。 Redis 与其他 key - value 缓存产品有以下三个特点：  Redis支持数据的持久化，可以将内存中的数据保存在磁盘中，重启的时候可以再次加载进行使用。 Redis不仅仅支持简单的key-value类型的">
@@ -1220,10 +1220,10 @@
 <h3 id="内部的阻塞式操作"><a href="#内部的阻塞式操作" class="headerlink" title="内部的阻塞式操作"></a>内部的阻塞式操作</h3><p><strong>Redis 实例有哪些阻塞点？</strong></p>
 <p>Redis 实例在运行时，要和许多对象进行交互，这些不同的交互就会涉及不同的操作，下面我们来看看和 Redis 实例交互的对象，以及交互时会发生的操作。</p>
 <blockquote>
-<p>客户端：网络 IO，键值对增删改查操作，数据库操作；</p>
-<p>磁盘：生成 RDB 快照，记录 AOF 日志，AOF 日志重写；</p>
-<p>主从节点：主库生成、传输 RDB 文件，从库接收 RDB 文件、清空数据库、加载 RDB<br>文件；</p>
-<p>切片集群实例：向其他实例传输哈希槽信息，数据迁移。</p>
+<p><strong>客户端</strong>：网络 IO，键值对增删改查操作，数据库操作；</p>
+<p><strong>磁盘</strong>：生成 RDB 快照，记录 AOF 日志，AOF 日志重写；</p>
+<p><strong>主从节点</strong>：主库生成、传输 RDB 文件，从库接收 RDB 文件、清空数据库、加载 RDB 文件；</p>
+<p><strong>切片集群实例</strong>：向其他实例传输哈希槽信息，数据迁移。</p>
 </blockquote>
 <p><img src="/images/redis-51.jpg" alt="redis-3"></p>
 <hr>
@@ -1257,11 +1257,11 @@
 <p>不过，如果你使用了 Redis Cluster 方案，而且同时正好迁移的是 bigkey 的话，就会造成主线程的阻塞，因为 Redis Cluster 使用了同步迁移。这里你只需要知道，当没有 bigkey 时，切片集群的各实例在进行交互时不会阻塞主线程。</p>
 <p>好了，你现在已经了解了 Redis 的各种关键操作，以及其中的阻塞式操作，我们来总结下刚刚找到的五个阻塞点：</p>
 <blockquote>
-<p>集合全量查询和聚合操作；</p>
-<p>bigkey 删除；</p>
-<p>清空数据库；</p>
-<p>AOF 日志同步写；</p>
-<p>从库加载 RDB 文件。</p>
+<p><strong>集合全量查询和聚合操作</strong>；</p>
+<p><strong>bigkey 删除</strong>；</p>
+<p><strong>清空数据库</strong>；</p>
+<p><strong>AOF 日志同步写</strong>；</p>
+<p><strong>从库加载 RDB 文件</strong>。</p>
 </blockquote>
 <p>如果在主线程中执行这些操作，必然会导致主线程长时间无法服务其他请求。为了避免阻塞式操作，Redis 提供了异步线程机制。所谓的异步线程机制，就是指，Redis 会启动一些子线程，然后把一些任务交给这些子线程，让它们在后台完成，而不再由主线程来执行这些任务。使用异步线程机制执行操作，可以避免阻塞主线程。</p>
 <p>不过，这个时候，问题来了：这五大阻塞式操作都可以被异步执行吗？</p>
