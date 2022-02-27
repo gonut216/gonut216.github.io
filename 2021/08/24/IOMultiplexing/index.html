@@ -90,7 +90,7 @@
 <meta property="og:image" content="http://yoursite.com/images/io-1.png">
 <meta property="og:image" content="http://yoursite.com/images/io-2.png">
 <meta property="og:image" content="http://yoursite.com/images/io-3.png">
-<meta property="og:updated_time" content="2021-08-30T09:30:18.173Z">
+<meta property="og:updated_time" content="2022-02-26T13:27:54.649Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="深入理解Golang网络轮询器NetPoller">
 <meta name="twitter:description" content="操作系统上的 I/O 是用户空间和内核空间的数据交互，通常包含以下两个步骤：   等待网络数据到达网卡(读就绪)/等待网卡可写(写就绪) –&amp;gt; 读取/写入到内核缓冲区 从内核缓冲区复制数据 –&amp;gt; 用户空间(读)/从用户空间复制数据 -&amp;gt; 内核缓冲区(写)   而判定一个 I/O 模型是同步还是异步，主要看第二步：数据在用户和内核空间之间复制的时候是不是会阻塞当前进程，如果会，则是">
@@ -446,6 +446,8 @@
 <p><strong>由于使用 <code>epoll</code> 的 I/O 多路复用需要用户进程自己负责 I/O 读写，从用户进程的角度看，读写过程是阻塞的，所以 <code>select</code>&amp;<code>poll</code>&amp;<code>epoll</code> 本质上都是同步 I/O 模型，而像 Windows 的 IOCP 这一类的异步 I/O，只需要在调用 WSARecv 或 WSASend 方法读写数据的时候把用户空间的内存 buffer 提交给 kernel，kernel 负责数据在用户空间和内核空间拷贝，完成之后就会通知用户进程，整个过程不需要用户进程参与，所以是真正的异步 I/O。</strong></p>
 <p><code>epoll</code> 的工作模式:</p>
 <p>epoll对文件描述符的操作有两种模式：<strong>LT（level trigger）</strong>和<strong>ET（edge trigger）</strong>。LT模式是默认模式，LT模式与ET模式的区别如下：<br>　　<strong>LT模式</strong>：当epoll_wait检测到描述符事件发生并将此事件通知应用程序，<code>应用程序可以不立即处理该事件</code>。下次调用epoll_wait时，会再次响应应用程序并通知此事件。<br>　　<strong>ET模式</strong>：当epoll_wait检测到描述符事件发生并将此事件通知应用程序，<code>应用程序必须立即处理该事件</code>。如果不处理，下次调用epoll_wait时，不会再次响应应用程序并通知此事件。</p>
+<p><strong>EPOLLET触发模式的意义：</strong></p>
+<p>若用<code>EPOLLLT</code>，系统中一旦有大量无需读写的就绪文件描述符，它们每次调用<code>epoll_wait</code>都会返回，这大大降低处理程序检索自己关心的就绪文件描述符的效率。 而采用<code>EPOLLET</code>，当被监控的文件描述符上有可读写事件发生时，<code>epoll_wait</code>会通知处理程序去读写。如果这次没有把数据全部读写完(如读写缓冲区太小)，那么下次调用<code>epoll_wait</code>时，它不会通知你，即只会通知你一次，直到该文件描述符上出现第二次可读写事件才会通知你。这比水平触发效率高，系统不会充斥大量你不关心的就绪文件描述符。</p>
 <h2 id="go-netPoller"><a href="#go-netPoller" class="headerlink" title="go netPoller"></a>go netPoller</h2><p><strong>Go netpoller 基本原理</strong></p>
 <blockquote>
 <p>Go netpoller 通过在底层对 epoll/kqueue/iocp 的封装，从而实现了使用同步编程模式达到异步执行的效果。总结来说，所有的网络操作都以网络描述符 <code>netFD</code> 为中心实现。netFD 与底层 <code>PollDesc</code> 结构绑定，当在一个 netFD 上读写遇到 EAGAIN 错误时，就将当前 goroutine 存储到这个 netFD 对应的 PollDesc 中，同时调用 <code>gopark</code> 把当前 goroutine 给 park 住，直到这个 netFD 上再次发生读写事件，才将此 goroutine 给 ready 激活重新运行。显然，在底层通知 goroutine 再次发生读写等事件的方式就是 epoll/kqueue/iocp 等事件驱动机制。</p>
@@ -636,7 +638,7 @@
   <p><span>本文标题:</span><a href="/2021/08/24/IOMultiplexing/">深入理解Golang网络轮询器NetPoller</a></p>
   <p><span>文章作者:</span><a href="/" title="访问 Wxning 的个人博客">Wxning</a></p>
   <p><span>发布时间:</span>2021年08月24日 - 17:08</p>
-  <p><span>最后更新:</span>2021年08月30日 - 17:08</p>
+  <p><span>最后更新:</span>2022年02月26日 - 21:02</p>
   <p><span>原始链接:</span><a href="/2021/08/24/IOMultiplexing/" title="深入理解Golang网络轮询器NetPoller">http://yoursite.com/2021/08/24/IOMultiplexing/</a>
     <span class="copy-path" title="点击复制文章链接"><i class="fa fa-clipboard" data-clipboard-text="http://yoursite.com/2021/08/24/IOMultiplexing/" aria-label="复制成功！"></i></span>
   </p>
@@ -687,8 +689,8 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2021/04/28/channel/" rel="next" title="深入理解 channel">
-                <i class="fa fa-chevron-left"></i> 深入理解 channel
+              <a href="/2020/11/08/api-server/" rel="next" title="深入理解Kubernetes之API Server">
+                <i class="fa fa-chevron-left"></i> 深入理解Kubernetes之API Server
               </a>
             
           </div>
@@ -783,7 +785,7 @@
               
                 <a href="/archives/">
               
-                  <span class="site-state-item-count">41</span>
+                  <span class="site-state-item-count">31</span>
                   <span class="site-state-item-name">日志</span>
                 </a>
               </div>

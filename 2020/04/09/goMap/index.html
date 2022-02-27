@@ -95,7 +95,11 @@
 <meta property="og:image" content="http://yoursite.com/images/map-08">
 <meta property="og:image" content="http://yoursite.com/images/map-09.png">
 <meta property="og:image" content="http://yoursite.com/images/map-10.png">
-<meta property="og:updated_time" content="2020-04-09T10:50:05.432Z">
+<meta property="og:image" content="http://yoursite.com/images/map3.jpg">
+<meta property="og:image" content="http://yoursite.com/images/map4.jpg">
+<meta property="og:image" content="http://yoursite.com/images/map5.jpg">
+<meta property="og:image" content="http://yoursite.com/images/map6.jpg">
+<meta property="og:updated_time" content="2022-02-27T06:35:04.761Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="go语言map底层实现">
 <meta name="twitter:description" content="map底层实现Go中的map在底层是用哈希表实现的，一个哈希表里可以有多个哈希表节点，也即bucket，而每个bucket就保存了map中的一个或一组键值对。 map的数据结构12345678910111213type hmap struct &amp;#123;	count     int // 当前保存的元素个数	flags     uint8	B         uint8  // 指示bucket">
@@ -446,6 +450,43 @@
 <li>查找该key是否已经存在，如果存在则直接更新值</li>
 <li>如果没找到将key，将key插入</li>
 </ol>
+<h2 id="线程不安全"><a href="#线程不安全" class="headerlink" title="线程不安全"></a>线程不安全</h2><p>golang的map和众多其他语言一样也是线程不安全的，在多协程对map操作时就会引发线程安全问题，对于这个老生常谈的问题，通常解决办法是加锁，go官方也对map线程安全问题给出说明：</p>
+<p><img src="/images/map3.jpg" alt></p>
+<p>对map加锁是用包sync的RWMutex，本文不再阐述加锁方法，本文的重点是在1.9版本后引入sync包下的并发安全的map，让我们来看一下吧！</p>
+<p><img src="/images/map4.jpg" alt></p>
+<p><strong>map主要字段</strong></p>
+<ol>
+<li><p>mu</p>
+<p>mu是一个Mutex，是一个互斥锁，主要作用是锁定dirty map。</p>
+</li>
+<li><p>dirty</p>
+<p>dirty是一个map，包含着map的内容并且需要mu去锁定，在read map中它也包含不可删除的入口以确保dirty map能快速转化为read map。</p>
+</li>
+<li><p>read</p>
+<p>优先读map，安全的</p>
+</li>
+<li><p>misses</p>
+<p>misses主要记录read读取不到数据加锁时读取read map和dirty map的次数，当nisses等于dirty的长度时，会将dirty复制到read</p>
+</li>
+</ol>
+<p><strong>readOnly</strong></p>
+<p>readOnly是一个不可改变的struct，并且原子得存储在map.read字段</p>
+<p><img src="/images/map5.jpg" alt></p>
+<p><strong>entry</strong></p>
+<p>entry是在map中与特定key对应的插槽</p>
+<p><img src="/images/map6.jpg" alt></p>
+<h2 id="sync-Map工作原理"><a href="#sync-Map工作原理" class="headerlink" title="sync.Map工作原理"></a>sync.Map工作原理</h2><p>使用空间换时间的策略，通过冗余read和dirty实现加锁对性能的影响，通过引入两个map将读写分离到不同map，其中read map提供并发读和已存元素的原子写，而dirty map则负责读写，这样read map就可以在不加锁的情况下进行并发读取，当read map中没有读渠道值时，再加锁进行后续读取，并累加未命中数，当未命中数大于等于dirty map的长度，将dirty map上升为read map，从之前的结构体定义可以发现，虽然引入了两个map，但是底层存储的是指针，指向的是同一个值。</p>
+<p><strong>流程</strong></p>
+<p>开始时sync.Map写入数据，dirty map会接受到写请求，此时read map是没有数据的，读取数据的时候从read map中读取，此时read map并没有数据，misses记录从read map读取失败的次数，当misses&gt;=len(dirty map)时，将dirty map直接升级为read map，这里直接对dirty map进行地址拷贝并且dirty map会被清空，misses被置为0。如果需要修改数据，sync.Map会直接修改read map的元素，如果需要添加元素操作就需要dirty map了，如果misses达到阙值后dirty map直接升级为read map并且dirty map为空map，则dirty map需要从read map复制数据，如果是删除操作，分为几种情况：1.read map存在该元素且read的amended==false，直接将read中 元素置为nil。2. 元素刚刚写入dirty map且未升级为read map，直接调用golang内置函数delete删除dirty map元素。3. read map和dirty map同时存在该元素，则将read map中的元素置为nil，因为read map和dirty map使用的均为元素地址，所以均被置为nil。</p>
+<p><strong>总结:</strong></p>
+<ol>
+<li>空间换时间，通过冗余的两个数据结构read和dirty实现加锁对性能的影响。</li>
+<li>使用只读数据read避免读写冲突。</li>
+<li>动态调整，miss次数多了之后，将dirty数据提升为read</li>
+<li>double-checking双重检测</li>
+<li>延迟删除，删除一个键值只是打标记，只有在提升为dirty的时候才彻底清理掉数据。</li>
+<li>优先从read读取，更新，删除，因为对read的读取不需要加锁。</li>
+</ol>
 <h2 id="参考资料："><a href="#参考资料：" class="headerlink" title="参考资料："></a>参考资料：</h2><ol>
 <li><a href="https://books.studygolang.com/GoExpertProgramming/" target="_blank" rel="noopener">Go专家编程</a></li>
 <li><a href="https://books.studygolang.com/go-internals/" target="_blank" rel="noopener">深入解析Go</a></li>
@@ -481,7 +522,7 @@
   <p><span>本文标题:</span><a href="/2020/04/09/goMap/">go语言map底层实现</a></p>
   <p><span>文章作者:</span><a href="/" title="访问 Wxning 的个人博客">Wxning</a></p>
   <p><span>发布时间:</span>2020年04月09日 - 15:04</p>
-  <p><span>最后更新:</span>2020年04月09日 - 18:04</p>
+  <p><span>最后更新:</span>2022年02月27日 - 14:02</p>
   <p><span>原始链接:</span><a href="/2020/04/09/goMap/" title="go语言map底层实现">http://yoursite.com/2020/04/09/goMap/</a>
     <span class="copy-path" title="点击复制文章链接"><i class="fa fa-clipboard" data-clipboard-text="http://yoursite.com/2020/04/09/goMap/" aria-label="复制成功！"></i></span>
   </p>
@@ -624,7 +665,7 @@
               
                 <a href="/archives/">
               
-                  <span class="site-state-item-count">41</span>
+                  <span class="site-state-item-count">31</span>
                   <span class="site-state-item-name">日志</span>
                 </a>
               </div>
@@ -689,7 +730,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#map底层实现"><span class="nav-number">1.</span> <span class="nav-text">map底层实现</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#map的数据结构"><span class="nav-number">2.</span> <span class="nav-text">map的数据结构</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#负载因子"><span class="nav-number">3.</span> <span class="nav-text">负载因子</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#map扩容"><span class="nav-number">4.</span> <span class="nav-text">map扩容</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#增量扩容"><span class="nav-number">5.</span> <span class="nav-text">增量扩容</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#等量扩容"><span class="nav-number">6.</span> <span class="nav-text">等量扩容</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#哈希冲突"><span class="nav-number">7.</span> <span class="nav-text">哈希冲突</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#查找过程"><span class="nav-number">8.</span> <span class="nav-text">查找过程</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#插入过程"><span class="nav-number">9.</span> <span class="nav-text">插入过程</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考资料："><span class="nav-number">10.</span> <span class="nav-text">参考资料：</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#map底层实现"><span class="nav-number">1.</span> <span class="nav-text">map底层实现</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#map的数据结构"><span class="nav-number">2.</span> <span class="nav-text">map的数据结构</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#负载因子"><span class="nav-number">3.</span> <span class="nav-text">负载因子</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#map扩容"><span class="nav-number">4.</span> <span class="nav-text">map扩容</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#增量扩容"><span class="nav-number">5.</span> <span class="nav-text">增量扩容</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#等量扩容"><span class="nav-number">6.</span> <span class="nav-text">等量扩容</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#哈希冲突"><span class="nav-number">7.</span> <span class="nav-text">哈希冲突</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#查找过程"><span class="nav-number">8.</span> <span class="nav-text">查找过程</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#插入过程"><span class="nav-number">9.</span> <span class="nav-text">插入过程</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#线程不安全"><span class="nav-number">10.</span> <span class="nav-text">线程不安全</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#sync-Map工作原理"><span class="nav-number">11.</span> <span class="nav-text">sync.Map工作原理</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考资料："><span class="nav-number">12.</span> <span class="nav-text">参考资料：</span></a></li></ol></div>
             
 
           </div>
